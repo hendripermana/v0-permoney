@@ -15,9 +15,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, AlertCircle, Plus, Minus, CheckCircle, Calendar, DollarSign } from "lucide-react"
+import { Loader2, AlertCircle, Plus, Minus, CheckCircle, Calendar, DollarSign, Wand2 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { toast } from "@/hooks/use-toast"
+import dynamic from "next/dynamic"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 // Validation schema
 const transactionSchema = z.object({
@@ -47,6 +49,7 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
   const [loading, setLoading] = useState(false)
   const [accounts, setAccounts] = useState<any[]>([])
   const [accountsLoading, setAccountsLoading] = useState(true)
+  const [showOcr, setShowOcr] = useState(false)
   const [categories] = useState([
     { id: "food", name: "Food & Dining", icon: "🍽️" },
     { id: "transport", name: "Transportation", icon: "🚗" },
@@ -174,8 +177,31 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
             </Badge>
           )}
         </CardDescription>
+        <div className="mt-2 flex justify-end">
+          <Button type="button" variant="secondary" size="sm" onClick={() => setShowOcr((v) => !v)} className="inline-flex items-center gap-2">
+            <Wand2 className="h-4 w-4" /> {showOcr ? "Hide OCR" : "Scan Receipt (OCR)"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
+        <Collapsible open={showOcr} onOpenChange={setShowOcr}>
+          <CollapsibleContent className="mb-4">
+            <LazyReceiptOcrUpload
+              onSuggestionSelected={(s) => {
+                try {
+                  form.setValue("description", s.description)
+                  form.setValue("amount", Math.abs(s.amount).toString())
+                  form.setValue("type", s.amount >= 0 ? "income" : "expense")
+                  form.setValue("date", s.date)
+                  if (s.suggestedCategoryId) {
+                    form.setValue("categoryId", s.suggestedCategoryId)
+                  }
+                  toast({ title: "Applied", description: "Suggestion applied to form." })
+                } catch {}
+              }}
+            />
+          </CollapsibleContent>
+        </Collapsible>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -396,3 +422,8 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
     </Card>
   )
 }
+
+const LazyReceiptOcrUpload = dynamic(() => import("@/components/ocr/receipt-ocr-upload"), {
+  ssr: false,
+  loading: () => <div className="mb-4"><div className="h-20 animate-pulse rounded-md bg-muted" /></div>,
+})

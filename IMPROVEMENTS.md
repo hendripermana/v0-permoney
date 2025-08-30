@@ -6,6 +6,24 @@ This document outlines the comprehensive improvements made to the Permoney perso
 
 The improvements maintain full backward compatibility while significantly enhancing the application's functionality, reliability, and user experience. All existing features remain intact with additional enhancements.
 
+## ✅ Medium Priority Enhancements (This Update)
+
+- AI Insights display: Added a lazy‑loaded AI insights panel with dismissal and monthly report generation. File: `components/insights/ai-insights-panel.tsx`. API client extended with AI endpoints.
+- Islamic finance UI: Added quick Zakat calculator and Sharia compliance management panel. Files: `components/islamic/zakat-quick-calculator.tsx`, `components/islamic/sharia-compliance-panel.tsx`. Uses backend Islamic Finance module.
+- OCR receipts: Added receipt OCR upload, processing, and transaction suggestion application. File: `components/ocr/receipt-ocr-upload.tsx`. Integrated into `components/forms/transaction-form.tsx` via a collapsible panel.
+- Lazy loading & splitting: Advanced panels are dynamically imported with `next/dynamic` to reduce initial bundle size. See `components/modals/account-modal.tsx` and `components/forms/transaction-form.tsx`.
+- UX polish: Added subtle transitions, badges, and responsive improvements across new panels. Dialog content width improved for mobile (`w-[95vw] sm:max-w-2xl`).
+
+### Backward Compatibility
+
+- Existing forms and flows remain unchanged by default. Advanced features live behind tabs/collapsible sections and do not alter existing props or behavior.
+- API client changes are backward compatible; JSON Content-Type is now applied conditionally to support multipart uploads without impacting existing JSON requests.
+
+### Developer Notes
+
+- New API client methods for AI, Islamic Finance, and OCR are in `lib/api-client.ts`.
+- Advanced features in the Account Modal are organized under Tabs: Details, AI Insights, Islamic, OCR. The first tab preserves the original behavior.
+
 ## 🚀 High Priority Improvements Implemented
 
 ### 1. Interactive Forms & CRUD Operations

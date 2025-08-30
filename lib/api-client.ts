@@ -24,16 +24,22 @@ class ApiClient {
     this.token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  public async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
+    // Build headers conditionally to support multipart uploads (FormData)
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData
+    const baseHeaders: Record<string, string> = {
+      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+    }
+
     const config: RequestInit = {
-      headers: {
-        "Content-Type": "application/json",
-        ...(this.token && { Authorization: `Bearer ${this.token}` }),
-        ...options.headers,
-      },
       ...options,
+      headers: {
+        ...baseHeaders,
+        ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers as any),
+      },
     }
 
     return this.requestWithRetry(url, config)
@@ -230,6 +236,92 @@ class ApiClient {
 
   async getNetWorth(currency = "IDR") {
     return this.request<any>(`/accounts/net-worth?currency=${currency}`)
+  }
+
+  // -------- AI Insights API --------
+  async getAIInsights(householdId: string) {
+    return this.request<any[]>(`/ai-insights/${householdId}/insights`, { method: "GET" })
+  }
+
+  async generateAIMonthlyReport(householdId: string, year: number, month: number, options?: any) {
+    return this.request<any>(`/ai-insights/${householdId}/monthly-report/${year}/${month}`, {
+      method: "POST",
+      body: JSON.stringify(options ?? {}),
+    })
+  }
+
+  async dismissAIInsight(insightId: string) {
+    return this.request<void>(`/ai-insights/insights/${insightId}`, { method: "DELETE" })
+  }
+
+  // -------- Islamic Finance API --------
+  async calculateZakat(data: { householdId: string; calculationDate?: string; assetTypes?: string[] }) {
+    return this.request<any>("/islamic-finance/zakat/calculate", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getAccountCompliance(accountId: string) {
+    return this.request<any>(`/islamic-finance/compliance/accounts/${accountId}`, { method: "GET" })
+  }
+
+  async updateAccountCompliance(data: { accountId: string; complianceStatus: string; complianceNotes?: string }) {
+    return this.request<any>(`/islamic-finance/compliance/accounts`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async autoAssessAccountCompliance(accountId: string) {
+    return this.request<{ accountId: string; suggestedStatus: string }>(
+      `/islamic-finance/compliance/accounts/${accountId}/auto-assess`,
+      { method: "POST" }
+    )
+  }
+
+  async getIslamicFinanceDashboard(householdId: string) {
+    return this.request<any>(`/islamic-finance/dashboard/${householdId}`, { method: "GET" })
+  }
+
+  // -------- OCR & Document Processing API --------
+  async uploadDocument(file: File | Blob, fields: { householdId: string; documentType: string; description?: string }) {
+    const form = new FormData()
+    form.append("file", file)
+    form.append("householdId", fields.householdId)
+    form.append("documentType", fields.documentType)
+    if (fields.description) form.append("description", fields.description)
+
+    return this.request<any>(`/ocr/upload`, {
+      method: "POST",
+      body: form,
+    })
+  }
+
+  async processDocument(documentId: string) {
+    return this.request<any>(`/ocr/process`, {
+      method: "POST",
+      body: JSON.stringify({ documentId }),
+    })
+  }
+
+  async getTransactionSuggestions(documentId: string) {
+    return this.request<any[]>(`/ocr/documents/${documentId}/suggestions`, { method: "GET" })
+  }
+
+  async approveTransactionSuggestion(suggestionId: string) {
+    return this.request<any>(`/ocr/suggestions/approve`, {
+      method: "POST",
+      body: JSON.stringify({ suggestionId }),
+    })
+  }
+
+  async getDocumentsByHousehold(householdId: string) {
+    return this.request<any[]>(`/ocr/documents/${householdId}`, { method: "GET" })
+  }
+
+  async getDocumentById(documentId: string) {
+    return this.request<any>(`/ocr/documents/${documentId}`, { method: "GET" })
   }
 
   // Transactions API
