@@ -1,0 +1,182 @@
+### Islamic Finance & Zakat Management Manual Tests
+### Base URL: http://localhost:3000/api
+
+### 1. Calculate Zakat for a Household
+POST {{baseUrl}}/islamic-finance/zakat/calculate
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "householdId": "household-123",
+  "calculationDate": "2024-01-01",
+  "assetTypes": ["CASH", "SAVINGS", "INVESTMENT"]
+}
+
+### 2. Get Zakat Calculations History
+GET {{baseUrl}}/islamic-finance/zakat/calculations/household-123?limit=5
+Authorization: Bearer {{authToken}}
+
+### 3. Get Latest Zakat Calculation
+GET {{baseUrl}}/islamic-finance/zakat/calculations/household-123/latest
+Authorization: Bearer {{authToken}}
+
+### 4. Record Zakat Payment
+POST {{baseUrl}}/islamic-finance/zakat/payments
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "householdId": "household-123",
+  "amount": 2500000,
+  "currency": "IDR",
+  "paymentDate": "2024-01-15",
+  "hijriDate": "5/7/1445 AH",
+  "transactionId": "transaction-456",
+  "notes": "Annual zakat payment for 1445 AH"
+}
+
+### 5. Get Zakat Payment History
+GET {{baseUrl}}/islamic-finance/zakat/payments/household-123
+Authorization: Bearer {{authToken}}
+
+### 6. Create Zakat Reminder
+POST {{baseUrl}}/islamic-finance/zakat/reminders
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "householdId": "household-123",
+  "reminderType": "ANNUAL_CALCULATION",
+  "scheduledDate": "2024-12-01",
+  "hijriDate": "28/5/1446 AH",
+  "message": "Time to calculate your annual zakat for 1446 AH"
+}
+
+### 7. Get Zakat Reminders
+GET {{baseUrl}}/islamic-finance/zakat/reminders/household-123?activeOnly=true
+Authorization: Bearer {{authToken}}
+
+### 8. Get Upcoming Zakat Reminders
+GET {{baseUrl}}/islamic-finance/zakat/reminders/household-123/upcoming?daysAhead=30
+Authorization: Bearer {{authToken}}
+
+### 9. Update Account Sharia Compliance
+PUT {{baseUrl}}/islamic-finance/compliance/accounts
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "accountId": "account-789",
+  "complianceStatus": "COMPLIANT",
+  "complianceNotes": "Islamic savings account with Bank Syariah Indonesia"
+}
+
+### 10. Get Account Compliance Status
+GET {{baseUrl}}/islamic-finance/compliance/accounts/account-789
+Authorization: Bearer {{authToken}}
+
+### 11. Get Household Compliance Overview
+GET {{baseUrl}}/islamic-finance/compliance/households/household-123
+Authorization: Bearer {{authToken}}
+
+### 12. Get Compliance Summary
+GET {{baseUrl}}/islamic-finance/compliance/households/household-123/summary
+Authorization: Bearer {{authToken}}
+
+### 13. Auto-Assess Account Compliance
+POST {{baseUrl}}/islamic-finance/compliance/accounts/account-789/auto-assess
+Authorization: Bearer {{authToken}}
+
+### 14. Bulk Assess Household Compliance
+POST {{baseUrl}}/islamic-finance/compliance/households/household-123/bulk-assess
+Authorization: Bearer {{authToken}}
+
+### 15. Generate Zakat Calculation Report
+POST {{baseUrl}}/islamic-finance/reports
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "householdId": "household-123",
+  "reportType": "ZAKAT_CALCULATION",
+  "startDate": "2024-01-01",
+  "endDate": "2024-12-31",
+  "periodType": "YEARLY"
+}
+
+### 16. Generate Comprehensive Islamic Finance Report
+POST {{baseUrl}}/islamic-finance/reports
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "householdId": "household-123",
+  "reportType": "COMPREHENSIVE",
+  "startDate": "2024-01-01",
+  "endDate": "2024-12-31",
+  "periodType": "YEARLY"
+}
+
+### 17. Get Islamic Finance Reports
+GET {{baseUrl}}/islamic-finance/reports/household-123?reportType=ZAKAT_CALCULATION&limit=5
+Authorization: Bearer {{authToken}}
+
+### 18. Get Latest Report by Type
+GET {{baseUrl}}/islamic-finance/reports/household-123/latest/COMPREHENSIVE
+Authorization: Bearer {{authToken}}
+
+### 19. Get Islamic Finance Dashboard
+GET {{baseUrl}}/islamic-finance/dashboard/household-123
+Authorization: Bearer {{authToken}}
+
+### 20. Initialize Islamic Finance Features
+POST {{baseUrl}}/islamic-finance/initialize/household-123
+Authorization: Bearer {{authToken}}
+
+### 21. Get Zakat Asset Types Constants
+GET {{baseUrl}}/islamic-finance/constants/zakat-asset-types
+Authorization: Bearer {{authToken}}
+
+### 22. Get Reminder Types Constants
+GET {{baseUrl}}/islamic-finance/constants/reminder-types
+Authorization: Bearer {{authToken}}
+
+### 23. Get Report Types Constants
+GET {{baseUrl}}/islamic-finance/constants/report-types
+Authorization: Bearer {{authToken}}
+
+### 24. Update Zakat Reminder
+PUT {{baseUrl}}/islamic-finance/zakat/reminders/reminder-123
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "scheduledDate": "2024-11-15",
+  "message": "Updated reminder: Calculate your zakat before Ramadan",
+  "isActive": true
+}
+
+### 25. Delete Zakat Reminder
+DELETE {{baseUrl}}/islamic-finance/zakat/reminders/reminder-123
+Authorization: Bearer {{authToken}}
+
+### 26. Get Accounts Due for Compliance Review
+GET {{baseUrl}}/islamic-finance/compliance/accounts/due-for-review?householdId=household-123
+Authorization: Bearer {{authToken}}
+
+### Variables for testing
+@baseUrl = http://localhost:3000/api
+@authToken = your-jwt-token-here
+
+### Test Data Setup
+### Before running these tests, ensure you have:
+### 1. A valid household with ID "household-123"
+### 2. Some accounts associated with the household
+### 3. Valid authentication token
+### 4. Database is running and migrated
+
+### Expected Responses:
+### - Zakat calculations should return proper calculation results
+### - Compliance updates should reflect in subsequent queries
+### - Reports should contain comprehensive Islamic finance data
+### - Dashboard should provide overview of all Islamic finance features

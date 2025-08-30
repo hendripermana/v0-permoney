@@ -1,0 +1,172 @@
+### Recurring Transaction Manual Tests
+### These tests demonstrate the recurring transaction system functionality
+
+@baseUrl = http://localhost:3001/api
+@householdId = household-123
+@authToken = Bearer your-jwt-token-here
+
+### 1. Create a recurring transaction (Monthly Rent)
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Monthly Rent",
+  "description": "Monthly apartment rent payment",
+  "amountCents": 150000000,
+  "currency": "IDR",
+  "accountId": "account-123",
+  "categoryId": "category-housing",
+  "merchant": "Landlord",
+  "frequency": "MONTHLY",
+  "intervalValue": 1,
+  "startDate": "2024-01-01"
+}
+
+### 2. Create a weekly recurring transaction (Groceries)
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Weekly Groceries",
+  "description": "Weekly grocery shopping",
+  "amountCents": 50000000,
+  "currency": "IDR",
+  "accountId": "account-123",
+  "categoryId": "category-food",
+  "merchant": "Supermarket",
+  "frequency": "WEEKLY",
+  "intervalValue": 1,
+  "startDate": "2024-01-01",
+  "endDate": "2024-12-31",
+  "maxExecutions": 52
+}
+
+### 3. Get all recurring transactions for household
+GET {{baseUrl}}/households/{{householdId}}/recurring-transactions
+Authorization: {{authToken}}
+
+### 4. Get recurring transactions with filters
+GET {{baseUrl}}/households/{{householdId}}/recurring-transactions?status=ACTIVE&frequency=MONTHLY
+Authorization: {{authToken}}
+
+### 5. Get specific recurring transaction by ID
+@recurringTransactionId = recurring-123
+GET {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}
+Authorization: {{authToken}}
+
+### 6. Update recurring transaction
+PUT {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Monthly Rent",
+  "amountCents": 160000000,
+  "description": "Updated monthly apartment rent payment"
+}
+
+### 7. Pause recurring transaction
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}/pause
+Authorization: {{authToken}}
+
+### 8. Resume recurring transaction
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}/resume
+Authorization: {{authToken}}
+
+### 9. Manually execute recurring transaction
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}/execute
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "executionDate": "2024-02-01",
+  "force": true
+}
+
+### 10. Get execution history
+GET {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}/executions
+Authorization: {{authToken}}
+
+### 11. Cancel recurring transaction
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}/cancel
+Authorization: {{authToken}}
+
+### 12. Delete recurring transaction
+DELETE {{baseUrl}}/households/{{householdId}}/recurring-transactions/{{recurringTransactionId}}
+Authorization: {{authToken}}
+
+### Example responses and use cases:
+
+### Daily recurring transaction (Coffee subscription)
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Daily Coffee",
+  "description": "Daily coffee subscription",
+  "amountCents": 2500000,
+  "currency": "IDR",
+  "accountId": "account-123",
+  "categoryId": "category-food",
+  "merchant": "Coffee Shop",
+  "frequency": "DAILY",
+  "intervalValue": 1,
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31",
+  "maxExecutions": 31
+}
+
+### Bi-weekly salary (every 2 weeks)
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Bi-weekly Salary",
+  "description": "Bi-weekly salary deposit",
+  "amountCents": -1500000000,
+  "currency": "IDR",
+  "accountId": "account-salary",
+  "categoryId": "category-income",
+  "frequency": "WEEKLY",
+  "intervalValue": 2,
+  "startDate": "2024-01-01"
+}
+
+### Annual insurance payment
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Annual Insurance",
+  "description": "Annual car insurance payment",
+  "amountCents": 500000000,
+  "currency": "IDR",
+  "accountId": "account-123",
+  "categoryId": "category-insurance",
+  "merchant": "Insurance Company",
+  "frequency": "YEARLY",
+  "intervalValue": 1,
+  "startDate": "2024-01-01"
+}
+
+### Custom frequency (every 45 days)
+POST {{baseUrl}}/households/{{householdId}}/recurring-transactions
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Quarterly Report",
+  "description": "Quarterly business expense",
+  "amountCents": 75000000,
+  "currency": "IDR",
+  "accountId": "account-business",
+  "categoryId": "category-business",
+  "frequency": "CUSTOM",
+  "intervalValue": 45,
+  "startDate": "2024-01-01"
+}
