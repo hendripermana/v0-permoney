@@ -74,14 +74,14 @@ export function useDashboardData(): UseDashboardDataReturn {
       console.error("Failed to fetch dashboard data:", err)
       setError(err instanceof Error ? err.message : "Failed to fetch dashboard data")
 
-      // Fallback to mock data if API fails
+      // No mock fallback in development. Return empty datasets to reflect real API state.
       setData({
-        accounts: getMockAccounts(),
-        transactions: getMockTransactions(),
-        budgets: getMockBudgets(),
+        accounts: [],
+        transactions: [],
+        budgets: [],
         analytics: null,
-        netWorth: getMockNetWorth(),
-        accountStats: getMockAccountStats(),
+        netWorth: null,
+        accountStats: null,
       })
     } finally {
       setLoading(false)

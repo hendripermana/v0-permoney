@@ -91,15 +91,11 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
       console.error("Failed to fetch accounts:", error)
       toast({
         title: "Warning",
-        description: "Failed to load accounts. Using fallback data.",
+        description: "Failed to load accounts. Please seed your database or check API.",
         variant: "destructive",
       })
-      // Fallback to mock accounts
-      setAccounts([
-        { id: "1", name: "BCA Checking", type: "ASSET" },
-        { id: "2", name: "Mandiri Savings", type: "ASSET" },
-        { id: "3", name: "Cash Wallet", type: "ASSET" },
-      ])
+      // No mock fallback: keep list empty per best practices
+      setAccounts([])
     } finally {
       setAccountsLoading(false)
     }
