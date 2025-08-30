@@ -32,10 +32,10 @@ export function AccountModal({ open, onOpenChange, account, onSuccess }: Account
         {/* Lazy-load advanced panels to keep initial payload small */}
         <Tabs defaultValue="details" className="mt-2">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="insights">AI Insights</TabsTrigger>
-            <TabsTrigger value="islamic">Islamic</TabsTrigger>
-            <TabsTrigger value="ocr">OCR</TabsTrigger>
+            <TabsTrigger value="details" aria-label="Account details">Details</TabsTrigger>
+            <TabsTrigger value="insights" aria-label="AI insights">AI Insights</TabsTrigger>
+            <TabsTrigger value="islamic" aria-label="Islamic finance tools">Islamic</TabsTrigger>
+            <TabsTrigger value="ocr" aria-label="Receipt OCR">OCR</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-4">

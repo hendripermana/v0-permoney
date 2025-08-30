@@ -245,23 +245,20 @@ export const transactionApi = {
     return response.json();
   },
 
-  // Get AI category suggestions (mock for now)
+  // Get AI category suggestions (calls real service when available)
   async getAISuggestions(description: string, merchant?: string): Promise<AISuggestion[]> {
-    // This would typically call an AI service endpoint
-    // For now, return mock suggestions
-    return [
-      {
-        categoryId: 'food-dining',
-        categoryName: 'Food & Dining',
-        confidence: 0.85,
-        reason: 'Merchant name suggests restaurant/food service'
-      },
-      {
-        categoryId: 'groceries',
-        categoryName: 'Groceries',
-        confidence: 0.65,
-        reason: 'Transaction description contains food-related keywords'
-      }
-    ];
+    try {
+      const params = new URLSearchParams()
+      if (description) params.append('description', description)
+      if (merchant) params.append('merchant', merchant)
+      // Prefer server-provided suggestions if exposed
+      const res = await fetch(`/api/v1/ai/suggestions?${params.toString()}`)
+      if (!res.ok) return []
+      const json = await res.json()
+      return (json?.suggestions || []) as AISuggestion[]
+    } catch {
+      // No mock fallbacks; return empty suggestions in absence of a live service
+      return []
+    }
   }
 };

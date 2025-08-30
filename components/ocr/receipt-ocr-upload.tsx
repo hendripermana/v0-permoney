@@ -85,6 +85,7 @@ export default function ReceiptOcrUpload({ householdId, onSuggestionSelected }: 
             <Input
               type="file"
               accept="image/*,application/pdf"
+              aria-label="Upload receipt image or PDF"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
           </div>
@@ -136,4 +137,3 @@ export default function ReceiptOcrUpload({ householdId, onSuggestionSelected }: 
     </Card>
   )
 }
-
