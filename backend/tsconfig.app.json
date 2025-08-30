@@ -6,8 +6,9 @@
     "types": ["node"],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2020",
-    "lib": ["es2020"],
+    "strictPropertyInitialization": false,
+    "target": "ES2022",
+    "lib": ["ES2022"],
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
@@ -26,7 +27,12 @@
     "noImplicitOverride": false,
     "exactOptionalPropertyTypes": false,
     "noUncheckedIndexedAccess": false,
-    "noImplicitThis": false
+    "noImplicitThis": false,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@prisma/client": ["../node_modules/@prisma/client"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": [

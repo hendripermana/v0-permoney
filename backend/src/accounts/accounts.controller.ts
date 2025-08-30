@@ -15,7 +15,7 @@ import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdAccessGuard } from '../household/guards/household-access.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { AccountType } from '@prisma/client';
+import { AccountType } from '../types/database.types';
 
 interface UserPayload {
   sub: string;
@@ -32,11 +32,10 @@ export class AccountsController {
   async createAccount(
     @Body() createAccountDto: CreateAccountDto,
     @CurrentUser() user: UserPayload,
-  ) {
+  ): Promise<any> {
     return this.accountsService.createAccount(
-      user.householdId,
       createAccountDto,
-      user.sub,
+      user.householdId,
     );
   }
 
@@ -44,11 +43,10 @@ export class AccountsController {
   async getAccounts(
     @Query() filters: AccountFiltersDto,
     @CurrentUser() user: UserPayload,
-  ) {
-    return this.accountsService.getAccountsByHousehold(
+  ): Promise<any[]> {
+    return this.accountsService.getAccounts(
       user.householdId,
       filters,
-      user.sub,
     );
   }
 
@@ -56,16 +54,17 @@ export class AccountsController {
   async getAccountsGrouped(
     @Query() filters: AccountFiltersDto,
     @CurrentUser() user: UserPayload,
-  ) {
+  ): Promise<any> {
     return this.accountsService.getAccountsGrouped(
       user.householdId,
       filters,
-      user.sub,
     );
   }
 
   @Get('stats')
-  async getAccountStats(@CurrentUser() user: UserPayload) {
+  async getAccountStats(
+    @CurrentUser() user: UserPayload
+  ): Promise<any> {
     return this.accountsService.getAccountStats(user.householdId);
   }
 
@@ -74,8 +73,8 @@ export class AccountsController {
     @Query('currency') currency = 'IDR',
     @Query() filters: AccountFiltersDto,
     @CurrentUser() user: UserPayload,
-  ) {
-    return this.accountsService.getNetWorthSummary(
+  ): Promise<any> {
+    return this.accountsService.getNetWorth(
       user.householdId,
       currency,
       filters,
@@ -83,7 +82,9 @@ export class AccountsController {
   }
 
   @Get('subtypes/:type')
-  async getAccountSubtypes(@Param('type') type: AccountType) {
+  async getAccountSubtypes(
+    @Param('type') type: AccountType
+  ): Promise<string[]> {
     return this.accountsService.getAccountSubtypes(type);
   }
 
@@ -91,17 +92,16 @@ export class AccountsController {
   async getAccount(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: UserPayload,
-  ) {
-    return this.accountsService.getAccountById(id, user.householdId);
+  ): Promise<any> {
+    return this.accountsService.getAccount(id, user.householdId);
   }
 
   @Get(':id/balance')
   async getAccountBalance(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: UserPayload,
-  ) {
-    const balance = await this.accountsService.getAccountBalance(id, user.householdId);
-    return { balance: balance.toString() }; // Convert BigInt to string for JSON
+  ): Promise<any> {
+    return this.accountsService.getAccountBalance(id, user.householdId);
   }
 
   @Get(':id/history')
@@ -110,22 +110,13 @@ export class AccountsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @CurrentUser() user: UserPayload,
-  ) {
-    const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default to 30 days ago
-    const end = endDate ? new Date(endDate) : new Date(); // Default to today
-
-    const history = await this.accountsService.getAccountHistory(
+  ): Promise<any[]> {
+    return this.accountsService.getAccountHistory(
       id,
       user.householdId,
-      start,
-      end,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
     );
-
-    // Convert BigInt to string for JSON serialization
-    return history.map(point => ({
-      date: point.date,
-      balance: point.balance.toString(),
-    }));
   }
 
   @Put(':id')
@@ -133,15 +124,15 @@ export class AccountsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAccountDto: UpdateAccountDto,
     @CurrentUser() user: UserPayload,
-  ) {
-    return this.accountsService.updateAccount(id, user.householdId, updateAccountDto);
+  ): Promise<any> {
+    return this.accountsService.updateAccount(id, updateAccountDto, user.householdId);
   }
 
   @Delete(':id')
   async deleteAccount(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: UserPayload,
-  ) {
+  ): Promise<any> {
     return this.accountsService.deleteAccount(id, user.householdId);
   }
 
@@ -149,17 +140,15 @@ export class AccountsController {
   async validateAccountIntegrity(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: UserPayload,
-  ) {
-    const isValid = await this.accountsService.validateAccountIntegrity(id, user.householdId);
-    return { isValid };
+  ): Promise<any> {
+    return this.accountsService.validateAccountIntegrity(id, user.householdId);
   }
 
   @Post(':id/sync')
   async syncAccountBalance(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: UserPayload,
-  ) {
-    await this.accountsService.syncAccountBalance(id, user.householdId);
-    return { message: 'Account balance synchronized successfully' };
+  ): Promise<any> {
+    return this.accountsService.syncAccountBalance(id, user.householdId);
   }
 }

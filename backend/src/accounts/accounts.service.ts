@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { AccountsRepository, AccountWithBalance, BalanceHistoryPoint } from './accounts.repository';
 import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto } from './dto';
-import { Account, AccountType } from '@prisma/client';
+import { Account, AccountType } from '../types/database.types';
 
 export interface NetWorthSummary {
   totalAssets: bigint;

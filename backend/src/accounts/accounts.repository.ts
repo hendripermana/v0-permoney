@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Account, AccountType, Prisma } from '@prisma/client';
+import { Account, AccountType, AccountWhereInput } from '../types/database.types';
 import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto, ViewType } from './dto';
 
 export interface AccountWithBalance extends Account {

@@ -1,5 +1,5 @@
-import { IsOptional, IsEnum, IsString, IsBoolean, IsUUID } from 'class-validator';
-import { AccountType } from '@prisma/client';
+import { IsOptional, IsEnum, IsBoolean, IsString, IsUUID } from 'class-validator';
+import { AccountType } from '../../types/database.types';
 import { Transform } from 'class-transformer';
 
 export enum ViewType {
