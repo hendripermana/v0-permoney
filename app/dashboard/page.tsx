@@ -5,6 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SpendingPatternsChart } from "@/components/charts/spending-patterns-chart"
+import { BudgetProgressChart } from "@/components/charts/budget-progress-chart"
+import { NetWorthChart } from "@/components/charts/net-worth-chart"
 import {
   TrendingUp,
   TrendingDown,
@@ -16,12 +20,30 @@ import {
   Plus,
   Loader2,
   AlertCircle,
+  Activity,
+  BarChart3,
+  PieChart,
+  RefreshCw,
 } from "lucide-react"
 import { useDashboardData } from "@/hooks/use-dashboard-data"
+import { toast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("month")
+  const [chartPeriod, setChartPeriod] = useState("30d")
   const { data, loading, error, refetch } = useDashboardData()
+
+  const handleCategoryClick = (category: string) => {
+    toast({
+      title: "Category Selected",
+      description: `Viewing details for ${category}`,
+    })
+  }
+
+  const handlePeriodChange = (period: string) => {
+    setChartPeriod(period)
+    // In a real app, this would trigger a data refetch
+  }
 
   const formatCurrency = (amount: number) => {
     const actualAmount = amount > 1000000 ? amount / 100 : amount
@@ -61,13 +83,73 @@ export default function DashboardPage() {
   const budgets =
     data?.budgets?.flatMap(
       (budget) =>
-        budget.categories?.map((category) => ({
+        budget.categories?.map((category: any) => ({
           category: category.category?.name || "Unknown",
           spent: category.spentAmountCents || 0,
           budget: category.allocatedAmountCents || 0,
           color: "bg-green-500",
         })) || [],
     ) || []
+
+  // Prepare chart data
+  const spendingData = recentTransactions
+    .filter(t => t.type === "expense")
+    .reduce((acc: any[], transaction) => {
+      const existing = acc.find(item => item.category === transaction.category)
+      if (existing) {
+        existing.amount += Math.abs(transaction.amount)
+        existing.transactions += 1
+      } else {
+        acc.push({
+          category: transaction.category,
+          amount: Math.abs(transaction.amount),
+          transactions: 1,
+          trend: "stable" as const,
+          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+        })
+      }
+      return acc
+    }, [])
+    .map((item, index, array) => ({
+      ...item,
+      percentage: array.reduce((sum, i) => sum + i.amount, 0) > 0 
+        ? (item.amount / array.reduce((sum, i) => sum + i.amount, 0)) * 100 
+        : 0
+    }))
+    .sort((a, b) => b.amount - a.amount)
+
+  const budgetData = budgets.map((budget) => ({
+    category: budget.category,
+    budgeted: budget.budget / 100,
+    spent: budget.spent / 100,
+    remaining: (budget.budget - budget.spent) / 100,
+    percentage: budget.budget > 0 ? (budget.spent / budget.budget) * 100 : 0,
+    status: budget.budget > 0 
+      ? (budget.spent / budget.budget) > 1 
+        ? "over-budget" as const
+        : (budget.spent / budget.budget) > 0.8 
+          ? "warning" as const 
+          : "on-track" as const
+      : "on-track" as const,
+    transactions: Math.floor(Math.random() * 20) + 1, // Mock data
+  }))
+
+  // Mock net worth data - in real app this would come from API
+  const netWorthData = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date()
+    date.setDate(date.getDate() - (29 - i))
+    const baseNetWorth = accountSummary.savings
+    const variation = (Math.random() - 0.5) * 0.1 * baseNetWorth
+    const netWorth = baseNetWorth + variation
+    return {
+      date: date.toISOString(),
+      assets: netWorth + Math.random() * 1000000,
+      liabilities: Math.random() * 500000,
+      netWorth: netWorth,
+      change: i > 0 ? variation : 0,
+      changePercentage: i > 0 ? (variation / baseNetWorth) * 100 : 0,
+    }
+  })
 
   if (loading) {
     return (
@@ -311,6 +393,147 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Enhanced Analytics Section */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Financial Analytics</h2>
+              <p className="text-muted-foreground">Detailed insights into your financial patterns</p>
+            </div>
+            <Button variant="outline" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Data
+            </Button>
+          </div>
+
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="spending">Spending</TabsTrigger>
+              <TabsTrigger value="budgets">Budgets</TabsTrigger>
+              <TabsTrigger value="trends">Trends</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SpendingPatternsChart
+                  data={spendingData}
+                  period={chartPeriod as any}
+                  onPeriodChange={handlePeriodChange}
+                  loading={loading}
+                />
+                <NetWorthChart
+                  data={netWorthData}
+                  period={chartPeriod as any}
+                  onPeriodChange={handlePeriodChange}
+                  loading={loading}
+                  showBreakdown={true}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="spending" className="space-y-6">
+              <SpendingPatternsChart
+                data={spendingData}
+                period={chartPeriod as any}
+                onPeriodChange={handlePeriodChange}
+                loading={loading}
+                className="col-span-full"
+              />
+              
+              {/* Top Spending Categories */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5" />
+                    Top Spending Categories
+                  </CardTitle>
+                  <CardDescription>Your highest expense categories this period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {spendingData.slice(0, 5).map((item, index) => (
+                      <div key={item.category} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium">{item.category}</p>
+                            <p className="text-sm text-muted-foreground">{item.transactions} transactions</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatCurrency(item.amount)}</p>
+                          <Badge variant="secondary" className="text-xs">
+                            {item.percentage.toFixed(1)}%
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="budgets" className="space-y-6">
+              <BudgetProgressChart
+                data={budgetData}
+                period={selectedPeriod}
+                loading={loading}
+                onCategoryClick={handleCategoryClick}
+              />
+            </TabsContent>
+
+            <TabsContent value="trends" className="space-y-6">
+              <div className="grid grid-cols-1 gap-6">
+                <NetWorthChart
+                  data={netWorthData}
+                  period={chartPeriod as any}
+                  onPeriodChange={handlePeriodChange}
+                  loading={loading}
+                  showBreakdown={true}
+                  className="col-span-full"
+                />
+                
+                {/* Financial Health Score */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      Financial Health Score
+                    </CardTitle>
+                    <CardDescription>Overall assessment of your financial wellness</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-green-600 mb-2">85</div>
+                        <p className="text-sm font-medium">Health Score</p>
+                        <p className="text-xs text-muted-foreground">Excellent</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-blue-600 mb-2">
+                          {budgetData.filter(b => b.status === "on-track").length}
+                        </div>
+                        <p className="text-sm font-medium">Budgets On Track</p>
+                        <p className="text-xs text-muted-foreground">of {budgetData.length} total</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-purple-600 mb-2">
+                          {((accountSummary.monthlyIncome - accountSummary.monthlyExpenses) / accountSummary.monthlyIncome * 100).toFixed(0)}%
+                        </div>
+                        <p className="text-sm font-medium">Savings Rate</p>
+                        <p className="text-xs text-muted-foreground">This month</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

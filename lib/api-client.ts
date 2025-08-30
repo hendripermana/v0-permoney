@@ -6,9 +6,18 @@ interface ApiResponse<T> {
   message?: string
 }
 
+interface ApiError {
+  message: string
+  code?: string
+  status?: number
+  details?: any
+}
+
 class ApiClient {
   private baseURL: string
   private token: string | null = null
+  private retryAttempts: number = 3
+  private retryDelay: number = 1000
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL
@@ -27,19 +36,145 @@ class ApiClient {
       ...options,
     }
 
+    return this.requestWithRetry(url, config)
+  }
+
+  private async requestWithRetry<T>(url: string, config: RequestInit, attempt: number = 1): Promise<T> {
     try {
-      const response = await fetch(url, config)
+      // Check network connectivity
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        throw this.createApiError("No internet connection", "NETWORK_ERROR", 0)
+      }
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+        throw this.createApiError(
+          errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          errorData.code || this.getErrorCodeFromStatus(response.status),
+          response.status,
+          errorData
+        )
       }
 
-      return await response.json()
-    } catch (error) {
-      console.error(`API request failed: ${endpoint}`, error)
-      throw error
+      const data = await response.json()
+      return data
+    } catch (error: any) {
+      // Handle abort errors
+      if (error.name === "AbortError") {
+        throw this.createApiError("Request timeout", "TIMEOUT_ERROR", 408)
+      }
+
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        throw this.createApiError("Network error - please check your connection", "NETWORK_ERROR", 0)
+      }
+
+      // Retry logic for certain errors
+      if (this.shouldRetry(error, attempt)) {
+        const delay = this.calculateRetryDelay(attempt)
+        await this.sleep(delay)
+        return this.requestWithRetry(url, config, attempt + 1)
+      }
+
+      // Re-throw API errors as-is
+      if (this.isApiError(error)) {
+        throw error
+      }
+
+      // Wrap unknown errors
+      throw this.createApiError(
+        error.message || "An unexpected error occurred",
+        "UNKNOWN_ERROR",
+        undefined,
+        error
+      )
     }
+  }
+
+  private createApiError(message: string, code?: string, status?: number, details?: any): ApiError {
+    return {
+      message,
+      code,
+      status,
+      details,
+    }
+  }
+
+  private isApiError(error: any): error is ApiError {
+    return error && typeof error.message === "string" && (error.code || error.status)
+  }
+
+  private getErrorCodeFromStatus(status: number): string {
+    switch (status) {
+      case 400:
+        return "BAD_REQUEST"
+      case 401:
+        return "UNAUTHORIZED"
+      case 403:
+        return "FORBIDDEN"
+      case 404:
+        return "NOT_FOUND"
+      case 409:
+        return "CONFLICT"
+      case 422:
+        return "VALIDATION_ERROR"
+      case 429:
+        return "RATE_LIMIT"
+      case 500:
+        return "INTERNAL_ERROR"
+      case 502:
+        return "BAD_GATEWAY"
+      case 503:
+        return "SERVICE_UNAVAILABLE"
+      case 504:
+        return "GATEWAY_TIMEOUT"
+      default:
+        return "HTTP_ERROR"
+    }
+  }
+
+  private shouldRetry(error: any, attempt: number): boolean {
+    if (attempt >= this.retryAttempts) {
+      return false
+    }
+
+    // Retry on network errors
+    if (error.code === "NETWORK_ERROR" || error.code === "TIMEOUT_ERROR") {
+      return true
+    }
+
+    // Retry on server errors (5xx)
+    if (error.status && error.status >= 500) {
+      return true
+    }
+
+    // Retry on rate limiting
+    if (error.status === 429) {
+      return true
+    }
+
+    return false
+  }
+
+  private calculateRetryDelay(attempt: number): number {
+    // Exponential backoff with jitter
+    const baseDelay = this.retryDelay * Math.pow(2, attempt - 1)
+    const jitter = Math.random() * 0.1 * baseDelay
+    return Math.min(baseDelay + jitter, 10000) // Max 10 seconds
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
   // Authentication methods
