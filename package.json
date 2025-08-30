@@ -175,7 +175,7 @@
     "postgres": "latest",
     "prisma": "latest",
     "prom-client": "latest",
-    "react": "^19",
+    "react": "^19.1.1",
     "react-day-picker": "latest",
     "react-dom": "^19",
     "react-hook-form": "latest",
@@ -212,8 +212,8 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
