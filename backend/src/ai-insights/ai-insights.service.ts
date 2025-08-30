@@ -11,6 +11,7 @@ import {
   FinancialAnomaly,
   PersonalizedRecommendation,
 } from './types/ai-insights.types';
+import { CategorySuggestionDto } from './dto/ai-suggestions.dto';
 
 @Injectable()
 export class AIInsightsService {
@@ -111,6 +112,85 @@ export class AIInsightsService {
   async getRecommendations(householdId: string): Promise<PersonalizedRecommendation[]> {
     this.validateHouseholdId(householdId);
     return this.recommendationService.generateRecommendations(householdId);
+  }
+
+  /**
+   * Suggest likely categories for a transaction based on historical data.
+   * Signals considered: merchant name (normalized/raw), description keywords, optional household scope.
+   */
+  async suggestCategories(params: {
+    householdId?: string;
+    description?: string;
+    merchant?: string;
+  }): Promise<CategorySuggestionDto[]> {
+    const { householdId, description, merchant } = params;
+
+    // Early exit when missing inputs
+    if (!description && !merchant) {
+      return [];
+    }
+
+    // Query historical transactions to find category signals
+    // Prefer merchant matches, then description keyword matches
+    const whereClauses: string[] = [];
+    const values: any[] = [];
+
+    if (householdId) {
+      values.push(householdId);
+      whereClauses.push(`t.household_id = $${values.length}`);
+    }
+
+    if (merchant) {
+      values.push(`%${merchant}%`);
+      whereClauses.push(`(t.merchant ILIKE $${values.length} OR t.merchant_name ILIKE $${values.length})`);
+    }
+
+    if (description) {
+      // Use fuzzy match on description as a secondary condition
+      values.push(`%${description}%`);
+      whereClauses.push(`t.description ILIKE $${values.length}`);
+    }
+
+    // Require a category assignment in history
+    whereClauses.push(`t.category_id IS NOT NULL`);
+
+    const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    // Aggregate top categories by frequency for recent 12 months
+    const sql = `
+      SELECT t.category_id as "categoryId", c.name as "categoryName", COUNT(*)::int as cnt
+      FROM transactions t
+      JOIN categories c ON c.id = t.category_id
+      ${whereSql}
+      AND t.date >= NOW() - INTERVAL '12 months'
+      GROUP BY t.category_id, c.name
+      ORDER BY cnt DESC
+      LIMIT 5
+    ` as any;
+
+    let rows: Array<{ categoryId: string; categoryName: string; cnt: number }> = [];
+    try {
+      rows = await (this.prisma as any).$queryRaw(sql, ...values);
+    } catch (e) {
+      this.logger.warn('Category suggestions query failed; returning empty suggestions');
+      return [];
+    }
+
+    if (!rows || rows.length === 0) return [];
+
+    const total = rows.reduce((sum, r) => sum + (r.cnt || 0), 0) || 1;
+    const suggestions: CategorySuggestionDto[] = rows.map((r, idx) => ({
+      categoryId: r.categoryId,
+      categoryName: r.categoryName,
+      confidence: Math.min(1, (r.cnt || 0) / total),
+      reason: merchant
+        ? `Frequently used for merchant "${merchant}"`
+        : description
+        ? `Matches past transactions with similar descriptions`
+        : `Commonly used category`,
+    }));
+
+    return suggestions;
   }
 
   /**

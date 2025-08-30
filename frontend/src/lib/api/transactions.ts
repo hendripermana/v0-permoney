@@ -252,7 +252,7 @@ export const transactionApi = {
       if (description) params.append('description', description)
       if (merchant) params.append('merchant', merchant)
       // Prefer server-provided suggestions if exposed
-      const res = await fetch(`/api/v1/ai/suggestions?${params.toString()}`)
+      const res = await fetch(`/api/ai-insights/suggestions?${params.toString()}`)
       if (!res.ok) return []
       const json = await res.json()
       return (json?.suggestions || []) as AISuggestion[]

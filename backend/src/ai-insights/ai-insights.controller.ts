@@ -16,6 +16,8 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AIInsightsService } from './ai-insights.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiQuery } from '@nestjs/swagger';
+import { CategorySuggestionDto, CategorySuggestionQueryDto } from './dto/ai-suggestions.dto';
 import {
   AIInsight,
   MonthlyReport,
@@ -143,6 +145,24 @@ export class AIInsightsController {
   ): Promise<void> {
     this.validateInsightId(insightId);
     return this.aiInsightsService.dismissInsight(insightId);
+  }
+
+  /**
+   * Category suggestions based on historical data
+   */
+  @Get('suggestions')
+  @ApiOperation({ summary: 'Suggest categories for a transaction' })
+  @ApiQuery({ name: 'description', required: false, type: String })
+  @ApiQuery({ name: 'merchant', required: false, type: String })
+  @ApiQuery({ name: 'householdId', required: false, type: String })
+  @ApiResponse({ status: 200, description: 'Suggestions returned', type: [CategorySuggestionDto] })
+  async getCategorySuggestions(
+    @Query('description') description?: string,
+    @Query('merchant') merchant?: string,
+    @Query('householdId') householdId?: string,
+  ): Promise<CategorySuggestionDto[]> {
+    const query: CategorySuggestionQueryDto = { description, merchant, householdId };
+    return this.aiInsightsService.suggestCategories(query);
   }
 
   /**
