@@ -13,6 +13,18 @@ interface ApiError {
   details?: any
 }
 
+export interface AnalyticsFilters {
+  startDate: string
+  endDate: string
+  categoryIds?: string[]
+  accountIds?: string[]
+  merchantIds?: string[]
+  tags?: string[]
+  amountRange?: { min: number; max: number }
+  currency?: string
+  includeTransfers?: boolean
+}
+
 class ApiClient {
   private baseURL: string
   private token: string | null = null
@@ -199,11 +211,18 @@ class ApiClient {
   }
 
   // Accounts API
-  async getAccounts(filters?: any) {
-    return this.request<any[]>("/accounts", {
-      method: "GET",
-      ...(filters && { body: JSON.stringify(filters) }),
-    })
+  async getAccounts(arg?: any): Promise<any[]> {
+    // Supports both getAccounts(filters) and getAccounts(householdId: string)
+    const params = new URLSearchParams()
+    if (typeof arg === "string") {
+      params.append("householdId", arg)
+    } else if (arg && typeof arg === "object") {
+      Object.entries(arg).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) params.append(k, String(v))
+      })
+    }
+    const qs = params.toString()
+    return this.request<any[]>(`/accounts${qs ? `?${qs}` : ""}`)
   }
 
   async getAccountById(id: string) {
@@ -234,8 +253,28 @@ class ApiClient {
     return this.request<any>("/accounts/stats")
   }
 
-  async getNetWorth(currency = "IDR") {
-    return this.request<any>(`/accounts/net-worth?currency=${currency}`)
+  async getNetWorth(arg1?: string, arg2?: string) {
+    // getNetWorth(currency?) or getNetWorth(householdId, currency?)
+    let householdId: string | undefined
+    let currency = "IDR"
+    if (arg1 && arg1.length === 3) {
+      currency = arg1
+    } else if (arg1) {
+      householdId = arg1
+      if (arg2) currency = arg2
+    }
+    const params = new URLSearchParams({ currency })
+    if (householdId) params.append("householdId", householdId)
+    return this.request<any>(`/accounts/net-worth?${params.toString()}`)
+  }
+
+  async getAccountStats(householdId?: string) {
+    const qs = householdId ? `?householdId=${householdId}` : ""
+    return this.request<any>(`/accounts/stats${qs}`)
+  }
+
+  async getAccountsGrouped(householdId: string) {
+    return this.request<any>(`/accounts/grouped?householdId=${householdId}`)
   }
 
   // -------- AI Insights API --------
@@ -325,13 +364,19 @@ class ApiClient {
   }
 
   // Transactions API
-  async getTransactions(filters?: any) {
+  async getTransactions(arg1?: any, arg2?: any) {
+    // getTransactions(filters?) or getTransactions(householdId, params?)
     const params = new URLSearchParams()
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, String(value))
-        }
+    if (typeof arg1 === "string") {
+      params.append("householdId", arg1)
+      if (arg2) {
+        Object.entries(arg2).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) params.append(k, String(v))
+        })
+      }
+    } else if (arg1 && typeof arg1 === "object") {
+      Object.entries(arg1).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) params.append(k, String(v))
       })
     }
     return this.request<any[]>(`/transactions?${params.toString()}`)
@@ -362,17 +407,23 @@ class ApiClient {
   }
 
   async getTransactionStats(filters?: any) {
-    return this.request<any>("/transactions/stats", {
-      method: "GET",
-      ...(filters && { body: JSON.stringify(filters) }),
-    })
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) params.append(k, String(v))
+      })
+    }
+    return this.request<any>(`/transactions/stats?${params.toString()}`)
   }
 
   async getCategoryBreakdown(filters?: any) {
-    return this.request<any>("/transactions/category-breakdown", {
-      method: "GET",
-      ...(filters && { body: JSON.stringify(filters) }),
-    })
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) params.append(k, String(v))
+      })
+    }
+    return this.request<any>(`/transactions/category-breakdown?${params.toString()}`)
   }
 
   async searchTransactions(searchParams: any) {
@@ -446,6 +497,20 @@ class ApiClient {
     })
   }
 
+  // Unified convenience: used by hooks/use-dashboard.ts
+  async getDashboardData(householdId: string, filters?: AnalyticsFilters) {
+    const defaultFilters = filters ?? {
+      startDate: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
+      endDate: new Date().toISOString(),
+      currency: "IDR",
+      includeTransfers: false,
+    }
+    return this.request<any>(`/analytics/${householdId}/dashboard`, {
+      method: "POST",
+      body: JSON.stringify(defaultFilters),
+    })
+  }
+
   async getSpendingAnalytics(householdId: string, filters: any) {
     return this.request<any>(`/analytics/${householdId}/spending`, {
       method: "POST",
@@ -495,6 +560,16 @@ class ApiClient {
   // Health check
   async healthCheck() {
     return this.request<any>("/health")
+  }
+
+  // Households
+  async getHouseholds(): Promise<any[]> {
+    return this.request<any[]>("/households")
+  }
+
+  async getCurrentHousehold(): Promise<any | null> {
+    const households = await this.getHouseholds()
+    return households?.[0] ?? null
   }
 }
 
