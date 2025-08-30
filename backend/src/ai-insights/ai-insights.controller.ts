@@ -16,13 +16,6 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AIInsightsService } from './ai-insights.service';
 import {
-  AIInsight,
-  MonthlyReport,
-  SpendingPattern,
-  FinancialAnomaly,
-  PersonalizedRecommendation,
-} from './types/ai-insights.types';
-import {
   GenerateInsightsDto,
   PatternAnalysisDto,
   AnomalyDetectionDto,
@@ -44,7 +37,7 @@ export class AIInsightsController {
   async generateInsights(
     @Param('householdId', ParseUUIDPipe) householdId: string,
     @Body() options?: GenerateInsightsDto
-  ): Promise<AIInsight[]> {
+  ) {
     this.validateHouseholdId(householdId);
     return this.aiInsightsService.generateInsights(householdId, options);
   }
@@ -55,7 +48,7 @@ export class AIInsightsController {
   @Get(':householdId/insights')
   async getInsights(
     @Param('householdId', ParseUUIDPipe) householdId: string
-  ): Promise<AIInsight[]> {
+  ) {
     this.validateHouseholdId(householdId);
     return this.aiInsightsService.getStoredInsights(householdId);
   }
@@ -70,7 +63,7 @@ export class AIInsightsController {
     @Param('year', ParseIntPipe) year: number,
     @Param('month', ParseIntPipe) month: number,
     @Body() options?: MonthlyReportDto
-  ): Promise<MonthlyReport> {
+  ) {
     this.validateHouseholdId(householdId);
     this.validateDateParams(year, month);
     return this.aiInsightsService.generateMonthlyReport(
@@ -88,7 +81,7 @@ export class AIInsightsController {
   async getSpendingPatterns(
     @Param('householdId', ParseUUIDPipe) householdId: string,
     @Body() options?: PatternAnalysisDto
-  ): Promise<SpendingPattern[]> {
+  ) {
     this.validateHouseholdId(householdId);
     return this.aiInsightsService.getSpendingPatterns(householdId, options);
   }
@@ -100,7 +93,7 @@ export class AIInsightsController {
   async detectAnomalies(
     @Param('householdId', ParseUUIDPipe) householdId: string,
     @Body() options?: AnomalyDetectionDto
-  ): Promise<FinancialAnomaly[]> {
+  ) {
     this.validateHouseholdId(householdId);
     return this.aiInsightsService.detectAnomalies(householdId, options);
   }
@@ -111,7 +104,7 @@ export class AIInsightsController {
   @Get(':householdId/recommendations')
   async getRecommendations(
     @Param('householdId', ParseUUIDPipe) householdId: string
-  ): Promise<PersonalizedRecommendation[]> {
+  ) {
     this.validateHouseholdId(householdId);
     return this.aiInsightsService.getRecommendations(householdId);
   }
@@ -122,7 +115,7 @@ export class AIInsightsController {
   @Delete('insights/:insightId')
   async dismissInsight(
     @Param('insightId', ParseUUIDPipe) insightId: string
-  ): Promise<void> {
+  ) {
     this.validateInsightId(insightId);
     return this.aiInsightsService.dismissInsight(insightId);
   }
