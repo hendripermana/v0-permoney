@@ -102,7 +102,18 @@ async function bootstrap() {
         'X-Request-ID',
       ],
     });
-    
+    // Backward-compatible API version alias: /api/v1 -> /api
+    app.use((req: any, _res: any, next: any) => {
+      const base = `/${appConfig.apiPrefix}`;
+      const v1 = `${base}/v1`;
+      if (req.url === v1) {
+        req.url = base;
+      } else if (req.url.startsWith(v1 + '/')) {
+        req.url = base + req.url.substring(v1.length);
+      }
+      next();
+    });
+
     app.setGlobalPrefix(appConfig.apiPrefix);
     
     await app.listen(appConfig.port);

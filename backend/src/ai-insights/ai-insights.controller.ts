@@ -11,6 +11,7 @@ import {
   HttpStatus,
   HttpCode,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 // import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
