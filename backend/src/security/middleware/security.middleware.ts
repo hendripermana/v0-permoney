@@ -24,7 +24,7 @@ export class SecurityMiddleware implements NestMiddleware {
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:'],
           scriptSrc: ["'self'"],
-          connectSrc: ["'self'"],
+          connectSrc: ["'self'", 'https:', 'wss:'],
           frameSrc: ["'none'"],
           objectSrc: ["'none'"],
           mediaSrc: ["'self'"],
@@ -281,4 +281,5 @@ export class SecurityMiddleware implements NestMiddleware {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
   }
+}
 }

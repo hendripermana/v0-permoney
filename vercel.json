@@ -20,7 +20,8 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "ENABLE_CSRF": "false"
   },
   "functions": {
     "backend/src/main.ts": {
