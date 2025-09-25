@@ -1,432 +1,374 @@
-'use client';
+"use client"
 
-import { useState, useMemo } from 'react';
-import { Plus, Calendar, List, BarChart3, Filter } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
-
-import { TransactionForm } from '@/components/transactions/transaction-form';
-import { TransactionList } from '@/components/transactions/transaction-list';
-import { TransactionFiltersComponent } from '@/components/transactions/transaction-filters';
-import { TransactionCalendar } from '@/components/transactions/transaction-calendar';
-import { TransactionDetails } from '@/components/transactions/transaction-details';
-
-import { 
-  useTransactions, 
-  useCreateTransaction, 
-  useUpdateTransaction, 
-  useDeleteTransaction,
-  useCategorizeTransaction,
-  useTransactionStats,
-  useTransactionCategoryBreakdown
-} from '@/hooks/use-transactions';
-import { Transaction, TransactionFilters, CreateTransactionData, UpdateTransactionData, Account, Category } from '@/types/transaction';
-
-// Mock data - in real app, these would come from API calls
-const mockAccounts: Account[] = [
-  { id: '1', name: 'BCA Checking', type: 'ASSET', subtype: 'BANK', currency: 'IDR', balance: 5000000, isActive: true },
-  { id: '2', name: 'Mandiri Savings', type: 'ASSET', subtype: 'BANK', currency: 'IDR', balance: 10000000, isActive: true },
-  { id: '3', name: 'USD Account', type: 'ASSET', subtype: 'BANK', currency: 'USD', balance: 150000, isActive: true },
-];
-
-const mockCategories: Category[] = [
-  { id: 'food-dining', name: 'Food & Dining', color: '#ef4444', icon: 'utensils' },
-  { id: 'groceries', name: 'Groceries', color: '#22c55e', icon: 'shopping-cart' },
-  { id: 'transportation', name: 'Transportation', color: '#3b82f6', icon: 'car' },
-  { id: 'entertainment', name: 'Entertainment', color: '#a855f7', icon: 'film' },
-  { id: 'utilities', name: 'Utilities', color: '#f59e0b', icon: 'zap' },
-  { id: 'healthcare', name: 'Healthcare', color: '#ec4899', icon: 'heart' },
-  { id: 'salary', name: 'Salary', color: '#10b981', icon: 'briefcase' },
-  { id: 'freelance', name: 'Freelance', color: '#06b6d4', icon: 'laptop' },
-];
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Search,
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  Calendar,
+  Download,
+  Loader2,
+  AlertCircle,
+} from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { TransactionModal } from "@/components/modals/transaction-modal"
 
 export default function TransactionsPage() {
-  const [activeTab, setActiveTab] = useState('list');
-  const [filters, setFilters] = useState<TransactionFilters>({
-    page: 1,
-    limit: 50,
-    sortBy: 'date',
-    sortOrder: 'desc',
-  });
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [showFiltersSheet, setShowFiltersSheet] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedType, setSelectedType] = useState("all")
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
 
-  // API hooks
-  const { data: transactionsData, isLoading } = useTransactions(filters);
-  const { data: stats } = useTransactionStats(filters);
-  const { data: categoryBreakdown } = useTransactionCategoryBreakdown(filters);
-  const createTransactionMutation = useCreateTransaction();
-  const updateTransactionMutation = useUpdateTransaction();
-  const deleteTransactionMutation = useDeleteTransaction();
-  const categorizeTransactionMutation = useCategorizeTransaction();
+  useEffect(() => {
+    fetchTransactions()
+  }, [])
 
-  const transactions = transactionsData?.transactions || [];
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-  // Filter active count
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (filters.accountId) count++;
-    if (filters.categoryId) count++;
-    if (filters.type) count++;
-    if (filters.startDate) count++;
-    if (filters.endDate) count++;
-    if (filters.minAmount) count++;
-    if (filters.maxAmount) count++;
-    if (filters.merchant) count++;
-    if (filters.tags && filters.tags.length > 0) count++;
-    return count;
-  }, [filters]);
+      // Get transactions from API
+      const apiTransactions = await apiClient.getTransactions({
+        limit: 50,
+        orderBy: "date",
+        orderDirection: "desc",
+      })
 
-  const handleCreateTransaction = (data: CreateTransactionData | UpdateTransactionData) => {
-    createTransactionMutation.mutate(data as CreateTransactionData, {
-      onSuccess: () => {
-        setShowCreateDialog(false);
-      },
-    });
-  };
+      // Transform API data to match component format
+      const transformedTransactions = apiTransactions.map((transaction: any) => ({
+        id: transaction.id,
+        description: transaction.description || "Unknown Transaction",
+        amount: transaction.amountCents / 100, // Convert from cents
+        type: transaction.amountCents > 0 ? "income" : "expense",
+        date: new Date(transaction.date || transaction.createdAt).toLocaleDateString("id-ID"),
+        category: transaction.category?.name || "Uncategorized",
+        account: transaction.account?.name || "Unknown Account",
+      }))
 
-  const handleUpdateTransaction = (data: UpdateTransactionData) => {
-    if (!selectedTransaction) return;
-    
-    updateTransactionMutation.mutate(
-      { id: selectedTransaction.id, data },
-      {
-        onSuccess: () => {
-          setShowEditDialog(false);
-          setSelectedTransaction(null);
-        },
-      }
-    );
-  };
+      setTransactions(transformedTransactions)
+    } catch (err) {
+      console.error("Failed to fetch transactions:", err)
+      setError(err instanceof Error ? err.message : "Failed to fetch transactions")
 
-  const handleDeleteTransaction = (transactionId: string) => {
-    deleteTransactionMutation.mutate(transactionId);
-  };
+      // Fallback to mock data if API fails
+      setTransactions(getMockTransactions())
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const handleCategorizeTransaction = (categoryId: string) => {
-    if (!selectedTransaction) return;
-    
-    categorizeTransactionMutation.mutate({
-      id: selectedTransaction.id,
-      categoryId,
-    });
-  };
+  const getMockTransactions = () => [
+    {
+      id: 1,
+      description: "Salary - PT Tech Indonesia",
+      amount: 12500000,
+      type: "income",
+      date: "2024-01-15",
+      category: "Salary",
+      account: "BCA Checking",
+    },
+    {
+      id: 2,
+      description: "Groceries - Superindo",
+      amount: -450000,
+      type: "expense",
+      date: "2024-01-14",
+      category: "Food",
+      account: "BCA Checking",
+    },
+    {
+      id: 3,
+      description: "Electricity Bill - PLN",
+      amount: -275000,
+      type: "expense",
+      date: "2024-01-13",
+      category: "Utilities",
+      account: "BCA Checking",
+    },
+    {
+      id: 4,
+      description: "Investment - Mutual Fund",
+      amount: -1000000,
+      type: "investment",
+      date: "2024-01-12",
+      category: "Investment",
+      account: "Mandiri Savings",
+    },
+    {
+      id: 5,
+      description: "Freelance Project Payment",
+      amount: 2500000,
+      type: "income",
+      date: "2024-01-11",
+      category: "Freelance",
+      account: "BCA Checking",
+    },
+  ]
 
-  const handleTransactionEdit = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setShowEditDialog(true);
-  };
+  const categories = ["all", "Food", "Transportation", "Utilities", "Investment", "Salary", "Freelance", "Education"]
+  const types = ["all", "income", "expense", "investment"]
 
-  const handleTransactionView = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setShowDetailsDialog(true);
-  };
-
-  const handleAddTransactionForDate = (date: Date) => {
-    setSelectedDate(date);
-    setShowCreateDialog(true);
-  };
-
-  const handleFiltersReset = () => {
-    setFilters({
-      page: 1,
-      limit: 50,
-      sortBy: 'date',
-      sortOrder: 'desc',
-    });
-  };
-
-  const formatCurrency = (amount: number, currency = 'IDR') => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency,
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount / 100);
-  };
+    }).format(amount)
+  }
 
-  return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage and track all your financial transactions
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sheet open={showFiltersSheet} onOpenChange={setShowFiltersSheet}>
-            <SheetTrigger asChild>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-                {activeFiltersCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {activeFiltersCount}
-                  </Badge>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-96">
-              <SheetHeader>
-                <SheetTitle>Transaction Filters</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6">
-                <TransactionFiltersComponent
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  accounts={mockAccounts}
-                  categories={mockCategories}
-                  onReset={handleFiltersReset}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Transaction
-          </Button>
+  const filteredTransactions = transactions.filter((transaction) => {
+    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === "all" || transaction.category === selectedCategory
+    const matchesType = selectedType === "all" || transaction.type === selectedType
+    return matchesSearch && matchesCategory && matchesType
+  })
+
+  const totalIncome = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
+  const totalExpenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + Math.abs(t.amount), 0)
+  const netFlow = totalIncome - totalExpenses
+
+  const handleTransactionCreated = () => {
+    fetchTransactions() // Refresh the transactions list
+    setIsTransactionModalOpen(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>Loading transactions...</span>
+            </div>
+          </div>
         </div>
       </div>
+    )
+  }
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Transactions
-              </CardTitle>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Transactions</h1>
+            <p className="text-muted-foreground">Track and manage all your financial transactions</p>
+            {error && (
+              <div className="flex items-center space-x-2 text-red-600 text-sm mt-1">
+                <AlertCircle className="h-4 w-4" />
+                <span>Using offline data - {error}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button
+              size="sm"
+              className="bg-green-500 hover:bg-green-600"
+              onClick={() => setIsTransactionModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Transaction
+            </Button>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-green-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+              <ArrowUpRight className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTransactions}</div>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
+              <p className="text-xs text-muted-foreground">
+                From {transactions.filter((t) => t.type === "income").length} transactions
+              </p>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Income
-              </CardTitle>
+
+          <Card className="border-red-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+              <ArrowDownRight className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(stats.totalIncome)}
-              </div>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
+              <p className="text-xs text-muted-foreground">
+                From {transactions.filter((t) => t.type === "expense").length} transactions
+              </p>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Expenses
-              </CardTitle>
+
+          <Card className={netFlow >= 0 ? "border-green-200" : "border-red-200"}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Flow</CardTitle>
+              <Target className={`h-4 w-4 ${netFlow >= 0 ? "text-green-500" : "text-red-500"}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {formatCurrency(stats.totalExpenses)}
+              <div className={`text-2xl font-bold ${netFlow >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {formatCurrency(netFlow)}
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Net Amount
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${
-                stats.totalIncome - stats.totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {formatCurrency(stats.totalIncome - stats.totalExpenses)}
-              </div>
+              <p className="text-xs text-muted-foreground">Net cash flow</p>
             </CardContent>
           </Card>
         </div>
-      )}
 
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            List View
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Calendar View
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Filter Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category === "all" ? "All Categories" : category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {types.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type === "all" ? "All Types" : type.charAt(0).toUpperCase() + type.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="list" className="mt-6">
-          <TransactionList
-            transactions={transactions}
-            isLoading={isLoading}
-            onEdit={handleTransactionEdit}
-            onDelete={handleDeleteTransaction}
-            onView={handleTransactionView}
-            filters={filters}
-            onFiltersChange={setFilters}
-            showFilters={false}
-          />
-        </TabsContent>
-
-        <TabsContent value="calendar" className="mt-6">
-          <TransactionCalendar
-            transactions={transactions}
-            onDateSelect={setSelectedDate}
-            onTransactionClick={handleTransactionView}
-            onAddTransaction={handleAddTransactionForDate}
-            selectedDate={selectedDate}
-          />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Category Breakdown */}
-            {categoryBreakdown && categoryBreakdown.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Category Breakdown</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {categoryBreakdown.slice(0, 10).map((item) => (
-                      <div key={item.categoryId} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full" />
-                          <span className="text-sm">{item.categoryName}</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium">
-                            {formatCurrency(item.totalAmount)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {item.percentage.toFixed(1)}%
-                          </div>
+        {/* Transactions List */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Transaction History</CardTitle>
+                <CardDescription>
+                  Showing {filteredTransactions.length} of {transactions.length} transactions
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchTransactions} disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredTransactions.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No transactions found matching your filters</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 bg-transparent"
+                    onClick={() => {
+                      setSearchTerm("")
+                      setSelectedCategory("all")
+                      setSelectedType("all")
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              ) : (
+                filteredTransactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div
+                        className={`p-2 rounded-full ${
+                          transaction.type === "income"
+                            ? "bg-green-100 text-green-600"
+                            : transaction.type === "expense"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-blue-100 text-blue-600"
+                        }`}
+                      >
+                        {transaction.type === "income" ? (
+                          <ArrowUpRight className="h-4 w-4" />
+                        ) : transaction.type === "expense" ? (
+                          <ArrowDownRight className="h-4 w-4" />
+                        ) : (
+                          <Target className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{transaction.description}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          <span>{transaction.date}</span>
+                          <span>•</span>
+                          <span>{transaction.account}</span>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className={`font-semibold text-lg ${transaction.amount > 0 ? "text-green-600" : "text-red-600"}`}
+                      >
+                        {transaction.amount > 0 ? "+" : ""}
+                        {formatCurrency(transaction.amount)}
+                      </p>
+                      <Badge variant="secondary" className="text-xs">
+                        {transaction.category}
+                      </Badge>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Additional analytics cards can be added here */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Transaction Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-gray-500">
-                  Chart visualization would go here
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Create Transaction Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New Transaction</DialogTitle>
-          </DialogHeader>
-          <TransactionForm
-            initialData={selectedDate ? { date: selectedDate.toISOString() } : undefined}
-            accounts={mockAccounts}
-            categories={mockCategories}
-            onSubmit={handleCreateTransaction}
-            onCancel={() => setShowCreateDialog(false)}
-            isLoading={createTransactionMutation.isPending}
-            mode="create"
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Transaction Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Transaction</DialogTitle>
-          </DialogHeader>
-          {selectedTransaction && (
-            <TransactionForm
-              initialData={{
-                amountCents: selectedTransaction.amountCents,
-                currency: selectedTransaction.currency,
-                originalAmountCents: selectedTransaction.originalAmountCents,
-                originalCurrency: selectedTransaction.originalCurrency,
-                exchangeRate: selectedTransaction.exchangeRate,
-                description: selectedTransaction.description,
-                categoryId: selectedTransaction.categoryId,
-                merchant: selectedTransaction.merchant,
-                date: selectedTransaction.date,
-                accountId: selectedTransaction.accountId,
-                transferAccountId: selectedTransaction.transferAccountId,
-                receiptUrl: selectedTransaction.receiptUrl,
-                tags: selectedTransaction.tags.map(t => t.tag),
-                splits: selectedTransaction.splits.map(s => ({
-                  categoryId: s.categoryId,
-                  amountCents: s.amountCents,
-                  description: s.description,
-                })),
-              }}
-              accounts={mockAccounts}
-              categories={mockCategories}
-              onSubmit={handleUpdateTransaction}
-              onCancel={() => {
-                setShowEditDialog(false);
-                setSelectedTransaction(null);
-              }}
-              isLoading={updateTransactionMutation.isPending}
-              mode="edit"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Transaction Details Dialog */}
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedTransaction && (
-            <TransactionDetails
-              transaction={selectedTransaction}
-              onEdit={() => {
-                setShowDetailsDialog(false);
-                setShowEditDialog(true);
-              }}
-              onDelete={() => {
-                handleDeleteTransaction(selectedTransaction.id);
-                setShowDetailsDialog(false);
-                setSelectedTransaction(null);
-              }}
-              onClose={() => {
-                setShowDetailsDialog(false);
-                setSelectedTransaction(null);
-              }}
-              onCategorize={handleCategorizeTransaction}
-              categories={mockCategories}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Transaction Modal */}
+      <TransactionModal
+        isOpen={isTransactionModalOpen}
+        onClose={() => setIsTransactionModalOpen(false)}
+        onSuccess={handleTransactionCreated}
+      />
     </div>
-  );
+  )
 }

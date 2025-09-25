@@ -1,10 +1,11 @@
+"use client"
+
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
 
 const ToastProvider = ToastPrimitives.Provider
 
@@ -30,7 +31,7 @@ const toastVariants = cva(
       variant: {
         default: "border bg-background text-foreground",
         destructive:
-          "destructive border-destructive bg-destructive text-destructive-foreground",
+          "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
     },
     defaultVariants: {
@@ -114,23 +115,6 @@ ToastDescription.displayName = ToastPrimitives.Description.displayName
 type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 
 type ToastActionElement = React.ReactElement<typeof ToastAction>
-
-// Re-export useToast from the hook
-export { useToast, toast } from "@/hooks/use-toast"
-
-// Create useToastActions for backward compatibility
-export function useToastActions() {
-  const { toast, dismiss } = useToast()
-  
-  return {
-    showToast: toast,
-    dismissToast: dismiss,
-    showSuccess: (message: string) => toast({ title: "Success", description: message }),
-    showError: (message: string) => toast({ title: "Error", description: message, variant: "destructive" }),
-    showWarning: (message: string) => toast({ title: "Warning", description: message }),
-    showInfo: (message: string) => toast({ title: "Info", description: message }),
-  }
-}
 
 export {
   type ToastProps,

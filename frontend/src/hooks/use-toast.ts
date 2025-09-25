@@ -1,3 +1,6 @@
+"use client"
+
+// Inspired by react-hot-toast library
 import * as React from "react"
 
 import type {
@@ -185,83 +188,6 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
-  }
-}
-
-// Additional toast utilities for backward compatibility
-export function useToastActions() {
-  const { toast, dismiss } = useToast()
-  return {
-    showToast: toast,
-    dismissToast: dismiss,
-    showSuccess: (message: string, title?: string) => toast({
-      title: title || "Success",
-      description: message,
-      variant: "default",
-    }),
-    showError: (message: string, title?: string, options?: any) => toast({
-      title: title || "Error", 
-      description: message,
-      variant: "destructive",
-      ...options,
-    }),
-    showInfo: (message: string, title?: string) => toast({
-      title: title || "Info",
-      description: message,
-      variant: "default",
-    }),
-    showWarning: (message: string, title?: string, options?: any) => toast({
-      title: title || "Warning",
-      description: message,
-      variant: "default",
-      ...options,
-    }),
-    showLoading: (message: string, title?: string) => toast({
-      title: title || "Loading",
-      description: message,
-      variant: "default",
-    }),
-    showSyncStatus: (message: string, options?: any) => {
-      if (typeof options === 'object' && options.toastId) {
-        // Update existing toast
-        return options.toastId.update({
-          description: options.message || message,
-          ...options,
-        });
-      } else {
-        // Create new toast
-        return toast({
-          title: typeof options === 'string' ? options : "Sync Status",
-          description: message,
-          variant: "default",
-        });
-      }
-    },
-    // Legacy aliases
-    toast,
-    dismiss,
-    success: (message: string, title?: string) => toast({
-      title: title || "Success",
-      description: message,
-      variant: "default",
-    }),
-    error: (message: string, title?: string, options?: any) => toast({
-      title: title || "Error", 
-      description: message,
-      variant: "destructive",
-      ...options,
-    }),
-    info: (message: string, title?: string) => toast({
-      title: title || "Info",
-      description: message,
-      variant: "default",
-    }),
-    warning: (message: string, title?: string, options?: unknown) => toast({
-      title: title || "Warning",
-      description: message,
-      variant: "default",
-      ...options,
-    }),
   }
 }
 

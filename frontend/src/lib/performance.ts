@@ -1,306 +1,375 @@
-'use client';
+"use client"
 
-/**
- * Performance optimization utilities for Permoney
- * Implements comprehensive performance monitoring and optimization
- */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-// Performance metrics collection
+// Debounce hook for performance optimization
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// Throttle hook for performance optimization
+export function useThrottle<T>(value: T, limit: number): T {
+  const [throttledValue, setThrottledValue] = useState<T>(value)
+  const lastRan = useRef<number>(Date.now())
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (Date.now() - lastRan.current >= limit) {
+        setThrottledValue(value)
+        lastRan.current = Date.now()
+      }
+    }, limit - (Date.now() - lastRan.current))
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, limit])
+
+  return throttledValue
+}
+
+// Intersection Observer hook for lazy loading
+export function useIntersectionObserver(
+  elementRef: React.RefObject<Element>,
+  options?: IntersectionObserverInit
+) {
+  const [isIntersecting, setIsIntersecting] = useState(false)
+  const [hasIntersected, setHasIntersected] = useState(false)
+
+  useEffect(() => {
+    const element = elementRef.current
+    if (!element) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsIntersecting(entry.isIntersecting)
+        if (entry.isIntersecting && !hasIntersected) {
+          setHasIntersected(true)
+        }
+      },
+      {
+        threshold: 0.1,
+        ...options,
+      }
+    )
+
+    observer.observe(element)
+
+    return () => {
+      observer.unobserve(element)
+    }
+  }, [elementRef, options, hasIntersected])
+
+  return { isIntersecting, hasIntersected }
+}
+
+// Virtual scrolling hook for large lists
+export function useVirtualScroll({
+  itemCount,
+  itemHeight,
+  containerHeight,
+  overscan = 5,
+}: {
+  itemCount: number
+  itemHeight: number
+  containerHeight: number
+  overscan?: number
+}) {
+  const [scrollTop, setScrollTop] = useState(0)
+
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan)
+  const endIndex = Math.min(
+    itemCount - 1,
+    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
+  )
+
+  const visibleItems = useMemo(() => {
+    const items = []
+    for (let i = startIndex; i <= endIndex; i++) {
+      items.push({
+        index: i,
+        offsetTop: i * itemHeight,
+      })
+    }
+    return items
+  }, [startIndex, endIndex, itemHeight])
+
+  const totalHeight = itemCount * itemHeight
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop)
+  }, [])
+
+  return {
+    visibleItems,
+    totalHeight,
+    handleScroll,
+    startIndex,
+    endIndex,
+  }
+}
+
+// Memoized component wrapper
+export function memo<P extends object>(
+  Component: React.ComponentType<P>,
+  propsAreEqual?: (prevProps: P, nextProps: P) => boolean
+) {
+  return React.memo(Component, propsAreEqual)
+}
+
+// Performance monitoring utilities
 export class PerformanceMonitor {
-  private static metrics: Map<string, number[]> = new Map();
-  private static observers: Map<string, PerformanceObserver> = new Map();
+  private static instance: PerformanceMonitor
+  private metrics: Map<string, number[]> = new Map()
 
-  static startTiming(label: string): void {
-    performance.mark(`${label}-start`);
+  static getInstance(): PerformanceMonitor {
+    if (!PerformanceMonitor.instance) {
+      PerformanceMonitor.instance = new PerformanceMonitor()
+    }
+    return PerformanceMonitor.instance
   }
 
-  static endTiming(label: string): number {
-    performance.mark(`${label}-end`);
-    performance.measure(label, `${label}-start`, `${label}-end`);
-    
-    const measure = performance.getEntriesByName(label, 'measure')[0];
-    const duration = measure?.duration || 0;
-    
-    // Store metric
-    const existing = this.metrics.get(label) || [];
-    existing.push(duration);
-    this.metrics.set(label, existing.slice(-100)); // Keep last 100 measurements
-    
-    return duration;
-  }
-
-  static getAverageTime(label: string): number {
-    const times = this.metrics.get(label) || [];
-    return times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
-  }
-
-  static observeLCP(): void {
-    if ('PerformanceObserver' in window) {
-      const observer = new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1];
-        console.log('LCP:', lastEntry.startTime);
-      });
-      
-      observer.observe({ entryTypes: ['largest-contentful-paint'] });
-      this.observers.set('lcp', observer);
+  startTiming(label: string): void {
+    if (typeof window !== "undefined" && window.performance) {
+      performance.mark(`${label}-start`)
     }
   }
 
-  static observeFID(): void {
-    if ('PerformanceObserver' in window) {
-      const observer = new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        entries.forEach((entry) => {
-          const fidEntry = entry as any; // FID entries have processingStart property
-          if (fidEntry.processingStart) {
-            console.log('FID:', fidEntry.processingStart - entry.startTime);
-          }
-        });
-      });
+  endTiming(label: string): number | null {
+    if (typeof window !== "undefined" && window.performance) {
+      performance.mark(`${label}-end`)
+      performance.measure(label, `${label}-start`, `${label}-end`)
       
-      observer.observe({ entryTypes: ['first-input'] });
-      this.observers.set('fid', observer);
+      const measure = performance.getEntriesByName(label, "measure")[0]
+      const duration = measure?.duration || 0
+      
+      // Store metric
+      const existing = this.metrics.get(label) || []
+      existing.push(duration)
+      this.metrics.set(label, existing.slice(-100)) // Keep last 100 measurements
+      
+      // Clean up
+      performance.clearMarks(`${label}-start`)
+      performance.clearMarks(`${label}-end`)
+      performance.clearMeasures(label)
+      
+      return duration
     }
+    return null
   }
 
-  static observeCLS(): void {
-    if ('PerformanceObserver' in window) {
-      let clsValue = 0;
-      const observer = new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value;
-          }
-        });
-        console.log('CLS:', clsValue);
-      });
-      
-      observer.observe({ entryTypes: ['layout-shift'] });
-      this.observers.set('cls', observer);
-    }
+  getMetrics(label: string): { avg: number; min: number; max: number; count: number } | null {
+    const measurements = this.metrics.get(label)
+    if (!measurements || measurements.length === 0) return null
+
+    const avg = measurements.reduce((sum, val) => sum + val, 0) / measurements.length
+    const min = Math.min(...measurements)
+    const max = Math.max(...measurements)
+    
+    return { avg, min, max, count: measurements.length }
   }
 
-  static disconnect(): void {
-    this.observers.forEach(observer => observer.disconnect());
-    this.observers.clear();
+  getAllMetrics(): Record<string, { avg: number; min: number; max: number; count: number }> {
+    const result: Record<string, any> = {}
+    for (const [label] of this.metrics) {
+      const metrics = this.getMetrics(label)
+      if (metrics) {
+        result[label] = metrics
+      }
+    }
+    return result
   }
+
+  clearMetrics(label?: string): void {
+    if (label) {
+      this.metrics.delete(label)
+    } else {
+      this.metrics.clear()
+    }
+  }
+}
+
+// Performance timing hook
+export function usePerformanceTiming(label: string) {
+  const monitor = PerformanceMonitor.getInstance()
+  
+  const startTiming = useCallback(() => {
+    monitor.startTiming(label)
+  }, [monitor, label])
+  
+  const endTiming = useCallback(() => {
+    return monitor.endTiming(label)
+  }, [monitor, label])
+  
+  const getMetrics = useCallback(() => {
+    return monitor.getMetrics(label)
+  }, [monitor, label])
+  
+  return { startTiming, endTiming, getMetrics }
+}
+
+// Image lazy loading hook
+export function useLazyImage(src: string, placeholder?: string) {
+  const [imageSrc, setImageSrc] = useState(placeholder || '')
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const { hasIntersected } = useIntersectionObserver(imgRef as React.RefObject<Element>)
+
+  useEffect(() => {
+    if (hasIntersected && src) {
+      const img = new Image()
+      img.onload = () => {
+        setImageSrc(src)
+        setIsLoaded(true)
+      }
+      img.onerror = () => {
+        setIsError(true)
+      }
+      img.src = src
+    }
+  }, [hasIntersected, src])
+
+  return { imageSrc, isLoaded, isError, imgRef }
+}
+
+// Bundle size analyzer (development only)
+export function analyzeBundleSize() {
+  if (process.env.NODE_ENV !== 'development') return
+  
+  const scripts = Array.from(document.querySelectorAll('script[src]'))
+  const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+  
+  console.group('Bundle Analysis')
+  console.log('Scripts:', scripts.length)
+  console.log('Stylesheets:', styles.length)
+  
+  // Estimate bundle sizes (rough approximation)
+  scripts.forEach((script: any) => {
+    if (script.src.includes('/_next/static/')) {
+      console.log(`Script: ${script.src.split('/').pop()}`)
+    }
+  })
+  
+  console.groupEnd()
 }
 
 // Memory usage monitoring
-export class MemoryMonitor {
-  static getMemoryUsage(): any {
-    if ('memory' in performance) {
-      return {
-        used: (performance as any).memory.usedJSHeapSize,
-        total: (performance as any).memory.totalJSHeapSize,
-        limit: (performance as any).memory.jsHeapSizeLimit,
-      };
-    }
-    return null;
-  }
-
-  static logMemoryUsage(label: string): void {
-    const memory = this.getMemoryUsage();
-    if (memory) {
-      console.log(`Memory ${label}:`, {
-        used: `${(memory.used / 1024 / 1024).toFixed(2)} MB`,
-        total: `${(memory.total / 1024 / 1024).toFixed(2)} MB`,
-        limit: `${(memory.limit / 1024 / 1024).toFixed(2)} MB`,
-      });
-    }
-  }
-}
-
-// Debounce utility for performance
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number,
-  immediate?: boolean
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+export function useMemoryMonitoring() {
+  const [memoryInfo, setMemoryInfo] = useState<any>(null)
   
-  return function executedFunction(...args: Parameters<T>) {
-    const later = () => {
-      timeout = null;
-      if (!immediate) func(...args);
-    };
-    
-    const callNow = immediate && !timeout;
-    
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-    
-    if (callNow) func(...args);
-  };
-}
-
-// Throttle utility for performance
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
-  
-  return function executedFunction(this: any, ...args: Parameters<T>) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
-    }
-  };
-}
-
-// Lazy loading utility
-export function createIntersectionObserver(
-  callback: (entries: IntersectionObserverEntry[]) => void,
-  options?: IntersectionObserverInit
-): IntersectionObserver | null {
-  if (typeof IntersectionObserver === 'undefined') {
-    return null;
-  }
-  
-  return new IntersectionObserver(callback, {
-    rootMargin: '50px',
-    threshold: 0.1,
-    ...options,
-  });
-}
-
-// Bundle size analyzer
-export class BundleAnalyzer {
-  static logBundleSize(): void {
-    if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-      const connection = (navigator as any).connection;
-      console.log('Network info:', {
-        effectiveType: connection.effectiveType,
-        downlink: connection.downlink,
-        rtt: connection.rtt,
-      });
-    }
-  }
-
-  static measureResourceTiming(): void {
-    const resources = performance.getEntriesByType('resource');
-    const totalSize = resources.reduce((total: number, resource: any) => {
-      return total + (resource.transferSize || 0);
-    }, 0);
-    
-    console.log('Total resource size:', `${(totalSize / 1024).toFixed(2)} KB`);
-    
-    // Log largest resources
-    const sortedResources = resources
-      .filter((resource: any) => resource.transferSize > 0)
-      .sort((a: any, b: any) => b.transferSize - a.transferSize)
-      .slice(0, 10);
-    
-    console.log('Largest resources:', sortedResources.map((resource: any) => ({
-      name: resource.name.split('/').pop(),
-      size: `${(resource.transferSize / 1024).toFixed(2)} KB`,
-      duration: `${resource.duration.toFixed(2)} ms`,
-    })));
-  }
-}
-
-// Image optimization utilities
-export function createOptimizedImageUrl(
-  src: string,
-  width?: number,
-  height?: number,
-  quality: number = 75
-): string {
-  if (!src) return '';
-  
-  // For Next.js Image optimization
-  const params = new URLSearchParams();
-  if (width) params.set('w', width.toString());
-  if (height) params.set('h', height.toString());
-  params.set('q', quality.toString());
-  
-  return `/_next/image?url=${encodeURIComponent(src)}&${params.toString()}`;
-}
-
-// Virtual scrolling helper
-export class VirtualScrollManager {
-  private containerHeight: number;
-  private itemHeight: number;
-  private scrollTop: number = 0;
-  private totalItems: number;
-
-  constructor(containerHeight: number, itemHeight: number, totalItems: number) {
-    this.containerHeight = containerHeight;
-    this.itemHeight = itemHeight;
-    this.totalItems = totalItems;
-  }
-
-  updateScrollTop(scrollTop: number): void {
-    this.scrollTop = scrollTop;
-  }
-
-  getVisibleRange(): { start: number; end: number; offsetY: number } {
-    const start = Math.floor(this.scrollTop / this.itemHeight);
-    const visibleCount = Math.ceil(this.containerHeight / this.itemHeight);
-    const end = Math.min(start + visibleCount + 1, this.totalItems);
-    const offsetY = start * this.itemHeight;
-
-    return { start, end, offsetY };
-  }
-
-  getTotalHeight(): number {
-    return this.totalItems * this.itemHeight;
-  }
-}
-
-// Web Worker utilities
-export function createWebWorker(workerFunction: Function): Worker | null {
-  if (typeof Worker === 'undefined') {
-    return null;
-  }
-
-  const blob = new Blob([`(${workerFunction.toString()})()`], {
-    type: 'application/javascript',
-  });
-  
-  return new Worker(URL.createObjectURL(blob));
-}
-
-// Service Worker registration
-export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-  if ('serviceWorker' in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registered:', registration);
-      return registration;
-    } catch (error) {
-      console.error('Service Worker registration failed:', error);
-      return null;
-    }
-  }
-  return null;
-}
-
-// Performance budget checker
-export class PerformanceBudget {
-  private static budgets = {
-    lcp: 2500, // 2.5s
-    fid: 100,  // 100ms
-    cls: 0.1,  // 0.1
-    ttfb: 600, // 600ms
-  };
-
-  static checkBudget(metric: keyof typeof PerformanceBudget.budgets, value: number): boolean {
-    const budget = this.budgets[metric];
-    const passed = value <= budget;
-    
-    if (!passed) {
-      console.warn(`Performance budget exceeded for ${metric}: ${value} > ${budget}`);
+  useEffect(() => {
+    const updateMemoryInfo = () => {
+      if ('memory' in performance) {
+        setMemoryInfo((performance as any).memory)
+      }
     }
     
-    return passed;
-  }
+    updateMemoryInfo()
+    const interval = setInterval(updateMemoryInfo, 5000) // Update every 5 seconds
+    
+    return () => clearInterval(interval)
+  }, [])
+  
+  return memoryInfo
+}
 
-  static setBudget(metric: keyof typeof PerformanceBudget.budgets, value: number): void {
-    this.budgets[metric] = value;
+// Component render tracking
+export function useRenderTracking(componentName: string) {
+  const renderCount = useRef(0)
+  const lastRenderTime = useRef(Date.now())
+  
+  useEffect(() => {
+    renderCount.current += 1
+    const now = Date.now()
+    const timeSinceLastRender = now - lastRenderTime.current
+    lastRenderTime.current = now
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`${componentName} rendered ${renderCount.current} times. Time since last render: ${timeSinceLastRender}ms`)
+    }
+  })
+  
+  return {
+    renderCount: renderCount.current,
+    lastRenderTime: lastRenderTime.current,
   }
 }
+
+// Optimized search hook
+export function useOptimizedSearch<T>(
+  items: T[],
+  searchTerm: string,
+  searchFields: (keyof T)[],
+  debounceMs: number = 300
+) {
+  const debouncedSearchTerm = useDebounce(searchTerm, debounceMs)
+  
+  const filteredItems = useMemo(() => {
+    if (!debouncedSearchTerm.trim()) return items
+    
+    const lowercaseSearch = debouncedSearchTerm.toLowerCase()
+    
+    return items.filter(item => 
+      searchFields.some(field => {
+        const value = item[field]
+        return value && 
+          String(value).toLowerCase().includes(lowercaseSearch)
+      })
+    )
+  }, [items, debouncedSearchTerm, searchFields])
+  
+  return filteredItems
+}
+
+// Cache utilities
+export class SimpleCache<T> {
+  private cache = new Map<string, { data: T; timestamp: number; ttl: number }>()
+  
+  set(key: string, data: T, ttl: number = 5 * 60 * 1000): void { // Default 5 minutes
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl,
+    })
+  }
+  
+  get(key: string): T | null {
+    const item = this.cache.get(key)
+    if (!item) return null
+    
+    if (Date.now() - item.timestamp > item.ttl) {
+      this.cache.delete(key)
+      return null
+    }
+    
+    return item.data
+  }
+  
+  clear(): void {
+    this.cache.clear()
+  }
+  
+  delete(key: string): boolean {
+    return this.cache.delete(key)
+  }
+  
+  size(): number {
+    return this.cache.size
+  }
+}
+
+// Global cache instance
+export const globalCache = new SimpleCache()

@@ -1,72 +1,193 @@
-# PerMoney - Personal Finance Management System
+# 💰 Permoney - Personal Finance Management System
 
-A comprehensive, production-ready personal finance management application built with modern technologies and best practices.
+A comprehensive personal finance management system built with modern web technologies.
+
+## 🏗️ Architecture
+
+```
+permoney/
+├── frontend/          # Next.js 15 + React 19 + TypeScript
+│   ├── src/
+│   │   ├── app/       # Next.js App Router pages
+│   │   ├── components/ # Reusable UI components
+│   │   ├── hooks/     # Custom React hooks
+│   │   ├── lib/       # Utilities and configurations
+│   │   └── types/     # TypeScript type definitions
+│   └── package.json
+├── backend/           # NestJS + Prisma + PostgreSQL
+│   ├── src/           # Backend source code
+│   ├── prisma/        # Database schema and migrations
+│   └── package.json
+└── package.json       # Root workspace configuration
+```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ and npm
-- PostgreSQL 14+
-- Redis 6+
+- Node.js 18+
+- PostgreSQL database
+- npm or yarn
 
 ### Installation
-\`\`\`bash
+
+1. **Clone and install dependencies:**
+```bash
 git clone <repository-url>
-cd permoneydeploy
+cd permoney
 npm install
-cp .env.example .env
+```
+
+2. **Setup environment variables:**
+```bash
+# Backend (.env)
+DATABASE_URL="postgresql://username:password@localhost:5432/permoney"
+JWT_SECRET="your-jwt-secret"
+
+# Frontend (.env.local)
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+```
+
+3. **Setup database:**
+```bash
 npm run db:migrate
+npm run db:seed
+```
+
+4. **Start development servers:**
+```bash
 npm run dev
-\`\`\`
+```
 
-## 🏗️ Architecture
-
-This is a monorepo built with Nx, featuring:
-- **Backend**: NestJS API with TypeScript, PostgreSQL, Redis
-- **Frontend**: React with Vite, TypeScript, Tailwind CSS
-- **Database**: PostgreSQL with Drizzle ORM
-- **Caching**: Redis for session management and caching
-
-## 📚 Documentation
-
-### Core Documentation
-- [📖 **User Guide**](./docs/USER_GUIDE.md) - Complete user manual and feature guide
-- [🏗️ **Architecture Guide**](./docs/ARCHITECTURE.md) - System architecture and technical design
-- [🔧 **Developer Guide**](./docs/DEVELOPER_GUIDE.md) - Development setup and contribution guide
-- [🚀 **Deployment Guide**](./docs/DEPLOYMENT.md) - Production deployment and operations
-
-### Feature Documentation
-- [🔐 **Authentication System**](./docs/features/AUTHENTICATION.md) - Auth implementation and security
-- [💰 **Financial Management**](./docs/features/FINANCIAL_MANAGEMENT.md) - Core financial features
-- [🕌 **Islamic Finance**](./docs/features/ISLAMIC_FINANCE.md) - Sharia-compliant financial tools
-- [📊 **Analytics & Reporting**](./docs/features/ANALYTICS.md) - Data insights and reporting
-
-### Technical Documentation
-- [🗄️ **Database Schema**](./docs/technical/DATABASE.md) - Database design and implementation
-- [🔌 **API Reference**](./docs/technical/API.md) - Complete API documentation
-- [🧪 **Testing Guide**](./docs/technical/TESTING.md) - Testing strategies and implementation
-- [🔒 **Security Guide**](./docs/technical/SECURITY.md) - Security implementation and best practices
+This will start:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:3001
 
 ## 🎯 Features
 
-- **Multi-User Support**: Household-based financial management
-- **Comprehensive Tracking**: Accounts, transactions, budgets, debts, and goals
-- **Advanced Analytics**: AI-powered insights and spending pattern analysis
-- **Islamic Finance**: Sharia-compliant financial tracking and reporting
-- **Security First**: Enterprise-grade security with encryption and audit trails
-- **Real-time Monitoring**: Performance monitoring and health checks
-- **PWA Support**: Offline-capable progressive web application
+### ✅ Core Features
+- **Multi-user Households** - Family finance management
+- **Account Management** - Multiple bank accounts and institutions
+- **Transaction Tracking** - Income, expenses, and transfers
+- **Budget Planning** - Monthly/yearly budget allocation
+- **Category Management** - Customizable transaction categories
+- **Dashboard Analytics** - Financial insights and charts
+
+### ✅ Advanced Features
+- **Islamic Finance** - Zakat calculation and Sharia compliance
+- **OCR Receipt Processing** - Automatic transaction extraction
+- **AI Insights** - Smart financial recommendations
+- **Notification System** - Budget alerts and reminders
+- **Multi-currency Support** - International transactions
+- **Data Import/Export** - Bank statement processing
+
+### ✅ UI/UX Features
+- **Modern Design** - Clean, responsive interface
+- **Dark/Light Theme** - User preference support
+- **Mobile Optimized** - PWA-ready responsive design
+- **Accessibility** - WCAG compliant components
+
+## 🛠️ Development
+
+### Available Scripts
+
+```bash
+# Development
+npm run dev              # Start both frontend and backend
+npm run dev:frontend     # Start only frontend
+npm run dev:backend      # Start only backend
+
+# Building
+npm run build            # Build both applications
+npm run build:frontend   # Build frontend only
+npm run build:backend    # Build backend only
+
+# Database
+npm run db:generate      # Generate Prisma client
+npm run db:migrate       # Run database migrations
+npm run db:seed          # Seed database with initial data
+npm run db:studio        # Open Prisma Studio
+
+# Testing & Quality
+npm run lint             # Lint both applications
+npm run test             # Run all tests
+```
+
+### Project Structure
+
+- **Frontend (Next.js 15)**
+  - App Router with TypeScript
+  - Tailwind CSS + shadcn/ui components
+  - React Query for state management
+  - React Hook Form for forms
+
+- **Backend (NestJS)**
+  - RESTful API with GraphQL support
+  - Prisma ORM with PostgreSQL
+  - JWT authentication
+  - Bull queues for background jobs
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. **Connect repository to Vercel**
+2. **Set environment variables:**
+   - `DATABASE_URL`
+   - `JWT_SECRET`
+   - `NEXTAUTH_SECRET`
+   - `NEXTAUTH_URL`
+
+3. **Deploy:**
+```bash
+npm run build
+```
+
+The project is configured for Vercel deployment with:
+- Frontend: Static/SSR pages
+- Backend: Serverless functions
+- Database: PostgreSQL (Vercel Postgres recommended)
+
+## 📊 Database Schema
+
+The system uses a comprehensive PostgreSQL schema with:
+
+- **Users & Households** - Multi-user family accounts
+- **Financial Accounts** - Bank accounts, credit cards, investments
+- **Transactions** - All financial movements with categorization
+- **Budgets** - Planning and tracking spending limits
+- **Islamic Finance** - Zakat calculations and Sharia compliance
+- **Notifications** - System alerts and reminders
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Backend (.env):**
+```env
+DATABASE_URL="postgresql://..."
+JWT_SECRET="your-secret-key"
+REDIS_URL="redis://localhost:6379"
+```
+
+**Frontend (.env.local):**
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret"
+```
 
 ## 🤝 Contributing
 
-Please read our [Developer Guide](./docs/DEVELOPER_GUIDE.md) for details on our code of conduct and the process for submitting pull requests.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
-## 🆘 Support
+---
 
-- **Documentation**: Check the `/docs` folder for detailed guides
-- **Issues**: Report bugs and request features via GitHub Issues
-- **Discussions**: Join community discussions for help and ideas
+**Built with ❤️ for better financial management**
