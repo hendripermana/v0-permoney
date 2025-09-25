@@ -10,7 +10,7 @@ import {
   AISuggestion
 } from '@/types/transaction';
 
-const API_BASE = '/api/v1/transactions';
+const API_BASE = '/api/transactions';
 
 export const transactionApi = {
   // Create a new transaction

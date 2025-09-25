@@ -12,9 +12,9 @@ import {
   GoalProgress
 } from '../../types/budget';
 
-const API_BASE = '/api/v1/budgets';
-const GOALS_API_BASE = '/api/v1/goals';
-const CATEGORIES_API_BASE = '/api/v1/categories';
+const API_BASE = '/api/budgets';
+const GOALS_API_BASE = '/api/goals';
+const CATEGORIES_API_BASE = '/api/categories';
 
 // Budget API functions
 export const budgetApi = {
