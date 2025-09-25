@@ -10,6 +10,7 @@ interface RequestWithCsrf extends Request {
 @Injectable()
 export class CsrfMiddleware implements NestMiddleware {
   private readonly csrfSecret: string;
+  private readonly enabled: boolean;
   private readonly excludedPaths = [
     '/api/auth/passkey/authentication-options',
     '/api/auth/passkey/authenticate',
@@ -20,9 +21,16 @@ export class CsrfMiddleware implements NestMiddleware {
 
   constructor(private readonly configService: ConfigService) {
     this.csrfSecret = this.configService.get<string>('CSRF_SECRET') || 'default-csrf-secret';
+    const security = this.configService.get<any>('security');
+    this.enabled = security?.enableCsrf !== false;
   }
 
   use(req: RequestWithCsrf, res: Response, next: NextFunction) {
+    // If CSRF is disabled via config, no-op
+    if (!this.enabled) {
+      return next();
+    }
+
     // Skip CSRF protection for GET requests and excluded paths
     if (req.method === 'GET' || this.excludedPaths.includes(req.path)) {
       return next();
@@ -33,13 +41,13 @@ export class CsrfMiddleware implements NestMiddleware {
       return next();
     }
 
-    const token = req.headers['x-csrf-token'] as string || req.body._csrf;
+    const token = (req.headers['x-csrf-token'] as string) || (req.body && (req.body as any)._csrf);
     
     if (!token) {
       throw new ForbiddenException('CSRF token missing');
     }
 
-    if (!this.validateCsrfToken(token, req.sessionID || req.ip)) {
+    if (!this.validateCsrfToken(token, (req as any).sessionID || req.ip)) {
       throw new ForbiddenException('Invalid CSRF token');
     }
 

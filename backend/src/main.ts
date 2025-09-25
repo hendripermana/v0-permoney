@@ -51,7 +51,7 @@ async function bootstrap() {
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:'],
           scriptSrc: ["'self'"],
-          connectSrc: ["'self'"],
+          connectSrc: ["'self'", 'https:', 'wss:'],
           frameSrc: ["'none'"],
           objectSrc: ["'none'"],
         },
@@ -66,30 +66,38 @@ async function bootstrap() {
     // Compression
     app.use(compression());
 
-    // Session configuration for CSRF protection
-    const PgSession = (connectPgSimple as any)(session);
-    app.use(
-      session({
-        store: new PgSession({
-          conString: databaseConfig.url,
-          tableName: 'session',
-          createTableIfMissing: true,
+    // Session configuration for CSRF protection (serverless-safe)
+    // Only enable session when CSRF is explicitly enabled
+    if (securityConfig.enableCsrf) {
+      const PgSession = (connectPgSimple as any)(session);
+      app.use(
+        session({
+          store: new PgSession({
+            conString: databaseConfig.url,
+            tableName: 'session',
+            createTableIfMissing: true,
+          }),
+          secret: authConfig.sessionSecret,
+          resave: false,
+          saveUninitialized: false,
+          cookie: {
+            secure: appConfig.environment === 'production',
+            httpOnly: true,
+            maxAge: authConfig.sessionMaxAge,
+            sameSite: 'strict',
+          },
         }),
-        secret: authConfig.sessionSecret,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-          secure: appConfig.environment === 'production',
-          httpOnly: true,
-          maxAge: authConfig.sessionMaxAge,
-          sameSite: 'strict',
-        },
-      }),
-    );
+      );
+    }
     
-    // CORS configuration
+    // CORS configuration (allow configured origins plus common Vercel subdomains)
+    const corsOrigins = Array.isArray(securityConfig.corsOrigins) && securityConfig.corsOrigins.length > 0
+      ? securityConfig.corsOrigins
+      : ['http://localhost:3000'];
+    const corsOriginWithVercel = [...corsOrigins, /\.vercel\.app$/, /\.v0\.app$/];
+
     app.enableCors({
-      origin: securityConfig.corsOrigins,
+      origin: corsOriginWithVercel as any,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: [
