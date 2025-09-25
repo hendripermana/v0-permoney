@@ -2,17 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "src": "next.config.mjs",
+      "use": "@vercel/next"
     },
     {
       "src": "backend/src/main.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["backend/src/**", "packages/shared/**"]
+        "includeFiles": ["backend/src/**", "shared/**"]
       }
     }
   ],
@@ -20,10 +17,6 @@
     {
       "src": "/api/(.*)",
       "dest": "backend/src/main.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "client/dist/$1"
     }
   ],
   "env": {
