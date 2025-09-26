@@ -284,7 +284,7 @@ describe('Error Resilience & Fault Tolerance Integration Tests', () => {
 
       try {
         await Promise.race([slowOperation, timeoutPromise]);
-        fail('Should have timed out');
+        throw new Error('Should have timed out');
       } catch (error) {
         expect(error.message).toBe('Operation timeout');
       }

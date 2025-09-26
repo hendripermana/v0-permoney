@@ -31,6 +31,7 @@ import {
   Calendar,
   Filter
 } from "lucide-react"
+import { formatCurrency } from "@/lib/utils"
 
 interface BudgetData {
   category: string
@@ -117,14 +118,6 @@ export function BudgetProgressChart({
 }: BudgetProgressChartProps) {
   const [viewMode, setViewMode] = useState<"chart" | "list">("chart")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(value)
-  }
 
   const totalBudgeted = data.reduce((sum, item) => sum + item.budgeted, 0)
   const totalSpent = data.reduce((sum, item) => sum + item.spent, 0)

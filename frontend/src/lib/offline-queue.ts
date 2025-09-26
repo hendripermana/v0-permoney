@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 export interface QueuedAction {
   id: string;
@@ -22,7 +22,7 @@ export interface OfflineQueueState {
 class OfflineQueue {
   private state: OfflineQueueState = {
     actions: [],
-    isOnline: navigator.onLine,
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     isSyncing: false,
     syncErrors: [],
   };
@@ -30,32 +30,50 @@ class OfflineQueue {
   private listeners: Array<(state: OfflineQueueState) => void> = [];
   private syncInterval?: NodeJS.Timeout;
   private storageKey = 'permoney-offline-queue';
+  private handleOnline = () => {
+    this.updateState({ isOnline: true });
+    void this.syncQueue();
+  };
+  private handleOffline = () => {
+    this.updateState({ isOnline: false });
+  };
+  private handleVisibilityChange = () => {
+    if (document.hidden || !this.state.isOnline) {
+      return;
+    }
+    void this.syncQueue();
+  };
 
   constructor() {
+    if (!this.isBrowserEnvironment()) {
+      return;
+    }
+
     this.loadFromStorage();
     this.setupEventListeners();
     this.startPeriodicSync();
   }
 
+  private isBrowserEnvironment(): boolean {
+    return typeof window !== 'undefined' && typeof document !== 'undefined';
+  }
+
   private setupEventListeners() {
-    window.addEventListener('online', () => {
-      this.updateState({ isOnline: true });
-      this.syncQueue();
-    });
+    if (!this.isBrowserEnvironment()) {
+      return;
+    }
 
-    window.addEventListener('offline', () => {
-      this.updateState({ isOnline: false });
-    });
-
+    window.addEventListener('online', this.handleOnline);
+    window.addEventListener('offline', this.handleOffline);
     // Sync when page becomes visible (user returns to tab)
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && this.state.isOnline) {
-        this.syncQueue();
-      }
-    });
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
   }
 
   private startPeriodicSync() {
+    if (!this.isBrowserEnvironment()) {
+      return;
+    }
+
     // Sync every 30 seconds when online
     this.syncInterval = setInterval(() => {
       if (this.state.isOnline && this.state.actions.length > 0) {
@@ -65,6 +83,10 @@ class OfflineQueue {
   }
 
   private loadFromStorage() {
+    if (!this.isBrowserEnvironment() || typeof localStorage === 'undefined') {
+      return;
+    }
+
     try {
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
@@ -99,6 +121,10 @@ class OfflineQueue {
   }
 
   private saveToStorage() {
+    if (!this.isBrowserEnvironment() || typeof localStorage === 'undefined') {
+      return;
+    }
+
     try {
       localStorage.setItem(this.storageKey, JSON.stringify({
         actions: this.state.actions,
@@ -115,7 +141,7 @@ class OfflineQueue {
   }
 
   private notifyListeners() {
-    this.listeners.forEach(listener => listener(this.state));
+    this.listeners.forEach(listener => listener({ ...this.state }));
   }
 
   public subscribe(listener: (state: OfflineQueueState) => void) {
@@ -322,9 +348,13 @@ class OfflineQueue {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
     }
-    window.removeEventListener('online', this.syncQueue);
-    window.removeEventListener('offline', this.syncQueue);
-    document.removeEventListener('visibilitychange', this.syncQueue);
+    if (!this.isBrowserEnvironment()) {
+      return;
+    }
+
+    window.removeEventListener('online', this.handleOnline);
+    window.removeEventListener('offline', this.handleOffline);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
   }
 }
 

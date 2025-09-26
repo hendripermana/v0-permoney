@@ -1,87 +1,98 @@
-import { apiClient } from '../api';
+import apiClient from "@/lib/api-client"
 import type {
   WishlistItem,
   CreateWishlistItemRequest,
   UpdateWishlistItemRequest,
   PriceHistoryEntry,
   SavingsOpportunity,
-} from '@/types/wishlist';
+  PriceAlert,
+} from "@/types/wishlist"
+
+const WISHLIST_BASE_PATH = "/wishlist"
+
+const buildUrl = (path: string, params?: Record<string, string | number | undefined>) => {
+  const searchParams = new URLSearchParams()
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value))
+      }
+    })
+  }
+
+  const queryString = searchParams.toString()
+  return queryString ? `${path}?${queryString}` : path
+}
 
 export const wishlistApi = {
-  // Get all wishlist items for the household
-  getWishlistItems: async (): Promise<WishlistItem[]> => {
-    return apiClient['request']('/wishlist');
+  async getWishlistItems(): Promise<WishlistItem[]> {
+    return apiClient.request<WishlistItem[]>(WISHLIST_BASE_PATH)
   },
 
-  // Get a specific wishlist item
-  getWishlistItem: async (id: string): Promise<WishlistItem> => {
-    return apiClient['request'](`/wishlist/${id}`);
+  async getWishlistItem(id: string): Promise<WishlistItem> {
+    return apiClient.request<WishlistItem>(`${WISHLIST_BASE_PATH}/${id}`)
   },
 
-  // Create a new wishlist item
-  createWishlistItem: async (data: CreateWishlistItemRequest): Promise<WishlistItem> => {
-    return apiClient['request']('/wishlist', {
-      method: 'POST',
+  async createWishlistItem(data: CreateWishlistItemRequest): Promise<WishlistItem> {
+    return apiClient.request<WishlistItem>(WISHLIST_BASE_PATH, {
+      method: "POST",
       body: JSON.stringify(data),
-    });
+    })
   },
 
-  // Update a wishlist item
-  updateWishlistItem: async (id: string, data: UpdateWishlistItemRequest): Promise<WishlistItem> => {
-    return apiClient['request'](`/wishlist/${id}`, {
-      method: 'PUT',
+  async updateWishlistItem(id: string, data: UpdateWishlistItemRequest): Promise<WishlistItem> {
+    return apiClient.request<WishlistItem>(`${WISHLIST_BASE_PATH}/${id}`, {
+      method: "PUT",
       body: JSON.stringify(data),
-    });
+    })
   },
 
-  // Delete a wishlist item
-  deleteWishlistItem: async (id: string): Promise<void> => {
-    await apiClient['request'](`/wishlist/${id}`, {
-      method: 'DELETE',
-    });
+  async deleteWishlistItem(id: string): Promise<void> {
+    await apiClient.request<void>(`${WISHLIST_BASE_PATH}/${id}`, {
+      method: "DELETE",
+    })
   },
 
-  // Refresh price for a specific item
-  refreshPrice: async (id: string): Promise<{ item: WishlistItem; priceAlert: any }> => {
-    return apiClient['request'](`/wishlist/${id}/refresh-price`, {
-      method: 'POST',
-    });
+  async refreshPrice(id: string): Promise<{ item: WishlistItem; priceAlert: PriceAlert | null }> {
+    return apiClient.request<{ item: WishlistItem; priceAlert: PriceAlert | null }>(
+      `${WISHLIST_BASE_PATH}/${id}/refresh-price`,
+      { method: "POST" }
+    )
   },
 
-  // Get price history for an item
-  getPriceHistory: async (id: string, days = 30): Promise<PriceHistoryEntry[]> => {
-    return apiClient['request'](`/wishlist/${id}/price-history?days=${days}`);
+  async getPriceHistory(id: string, days = 30): Promise<PriceHistoryEntry[]> {
+    return apiClient.request<PriceHistoryEntry[]>(
+      buildUrl(`${WISHLIST_BASE_PATH}/${id}/price-history`, { days })
+    )
   },
 
-  // Get savings opportunity analysis
-  getSavingsOpportunity: async (id: string): Promise<SavingsOpportunity | null> => {
-    return apiClient['request'](`/wishlist/${id}/savings-opportunity`);
+  async getSavingsOpportunity(id: string): Promise<SavingsOpportunity | null> {
+    return apiClient.request<SavingsOpportunity | null>(
+      `${WISHLIST_BASE_PATH}/${id}/savings-opportunity`
+    )
   },
 
-  // Link item to a goal
-  linkToGoal: async (id: string, goalId: string): Promise<WishlistItem> => {
-    return apiClient['request'](`/wishlist/${id}/link-goal`, {
-      method: 'POST',
+  async linkToGoal(id: string, goalId: string): Promise<WishlistItem> {
+    return apiClient.request<WishlistItem>(`${WISHLIST_BASE_PATH}/${id}/link-goal`, {
+      method: "POST",
       body: JSON.stringify({ goalId }),
-    });
+    })
   },
 
-  // Unlink item from goal
-  unlinkFromGoal: async (id: string): Promise<WishlistItem> => {
-    return apiClient['request'](`/wishlist/${id}/unlink-goal`, {
-      method: 'POST',
-    });
+  async unlinkFromGoal(id: string): Promise<WishlistItem> {
+    return apiClient.request<WishlistItem>(`${WISHLIST_BASE_PATH}/${id}/unlink-goal`, {
+      method: "POST",
+    })
   },
 
-  // Mark item as purchased
-  markAsPurchased: async (id: string): Promise<WishlistItem> => {
-    return apiClient['request'](`/wishlist/${id}/mark-purchased`, {
-      method: 'POST',
-    });
+  async markAsPurchased(id: string): Promise<WishlistItem> {
+    return apiClient.request<WishlistItem>(`${WISHLIST_BASE_PATH}/${id}/mark-purchased`, {
+      method: "POST",
+    })
   },
 
-  // Get wishlist items by goal
-  getWishlistByGoal: async (goalId: string): Promise<WishlistItem[]> => {
-    return apiClient['request'](`/wishlist/goal/${goalId}`);
+  async getWishlistByGoal(goalId: string): Promise<WishlistItem[]> {
+    return apiClient.request<WishlistItem[]>(`${WISHLIST_BASE_PATH}/goal/${goalId}`)
   },
-};
+}

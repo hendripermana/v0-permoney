@@ -34,8 +34,9 @@ export class AccountsController {
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
     return this.accountsService.createAccount(
-      createAccountDto,
       user.householdId,
+      createAccountDto,
+      user.sub,
     );
   }
 
@@ -44,9 +45,10 @@ export class AccountsController {
     @Query() filters: AccountFiltersDto,
     @CurrentUser() user: UserPayload,
   ): Promise<any[]> {
-    return this.accountsService.getAccounts(
+    return this.accountsService.getAccountsByHousehold(
       user.householdId,
       filters,
+      user.sub,
     );
   }
 
@@ -58,6 +60,7 @@ export class AccountsController {
     return this.accountsService.getAccountsGrouped(
       user.householdId,
       filters,
+      user.sub,
     );
   }
 
@@ -74,7 +77,7 @@ export class AccountsController {
     @Query() filters: AccountFiltersDto,
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
-    return this.accountsService.getNetWorth(
+    return this.accountsService.getNetWorthSummary(
       user.householdId,
       currency,
       filters,
@@ -93,7 +96,7 @@ export class AccountsController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
-    return this.accountsService.getAccount(id, user.householdId);
+    return this.accountsService.getAccountById(id, user.householdId);
   }
 
   @Get(':id/balance')
@@ -125,7 +128,7 @@ export class AccountsController {
     @Body() updateAccountDto: UpdateAccountDto,
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
-    return this.accountsService.updateAccount(id, updateAccountDto, user.householdId);
+    return this.accountsService.updateAccount(id, user.householdId, updateAccountDto);
   }
 
   @Delete(':id')

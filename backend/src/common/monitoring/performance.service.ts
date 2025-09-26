@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StructuredLoggerService } from '../logging/logger.service';
 import { MetricsService } from '../metrics/metrics.service';
+import * as os from 'os';
 
 export interface PerformanceThreshold {
   metric: string;
@@ -171,8 +172,8 @@ export class PerformanceMonitoringService {
 
   private getMemoryMetrics() {
     const memUsage = process.memoryUsage();
-    const totalMemory = require('os').totalmem();
-    const freeMemory = require('os').freemem();
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
 
     return {
       heapUsed: memUsage.heapUsed,

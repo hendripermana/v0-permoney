@@ -1,6 +1,7 @@
 // Integration test for GraphQL API Layer
 import { GraphQLBigInt, GraphQLDateTime } from './types/common.types';
 import { ViewType, GroupBy, TimeInterval } from './types/common.types';
+import { existsSync } from 'fs';
 
 console.log('🧪 Running GraphQL Integration Test...\n');
 
@@ -60,12 +61,10 @@ try {
 console.log('\n4. Testing Module Imports:');
 try {
   // These would normally be imported, but we'll just check they exist
-  const fs = require('fs');
-  
-  const moduleExists = fs.existsSync('backend/src/graphql/graphql.module.ts');
-  const typesExist = fs.existsSync('backend/src/graphql/types/common.types.ts');
-  const loadersExist = fs.existsSync('backend/src/graphql/dataloaders/accounts.dataloader.ts');
-  const resolversExist = fs.existsSync('backend/src/graphql/resolvers/accounts.resolver.ts');
+  const moduleExists = existsSync('backend/src/graphql/graphql.module.ts');
+  const typesExist = existsSync('backend/src/graphql/types/common.types.ts');
+  const loadersExist = existsSync('backend/src/graphql/dataloaders/accounts.dataloader.ts');
+  const resolversExist = existsSync('backend/src/graphql/resolvers/accounts.resolver.ts');
   
   console.log(`   ✅ GraphQL Module: ${moduleExists ? 'Found' : 'Missing'}`);
   console.log(`   ✅ Type Definitions: ${typesExist ? 'Found' : 'Missing'}`);

@@ -1,0 +1,17 @@
+{
+  "/api/hello/route": "/api/hello",
+  "/accounts/page": "/accounts",
+  "/_not-found/page": "/_not-found",
+  "/analytics/page": "/analytics",
+  "/gratitude/page": "/gratitude",
+  "/dashboard/page": "/dashboard",
+  "/login/page": "/login",
+  "/goals/page": "/goals",
+  "/ux-demo/page": "/ux-demo",
+  "/settings/page": "/settings",
+  "/transactions/page": "/transactions",
+  "/budgets/page": "/budgets",
+  "/page": "/",
+  "/register/page": "/register",
+  "/wishlist/page": "/wishlist"
+}

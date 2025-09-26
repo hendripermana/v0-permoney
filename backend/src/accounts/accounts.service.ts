@@ -105,13 +105,16 @@ export class AccountsService {
   async getAccountHistory(
     id: string,
     householdId: string,
-    startDate: Date,
-    endDate: Date,
+    startDate?: Date,
+    endDate?: Date,
   ): Promise<BalanceHistoryPoint[]> {
     // Verify account exists and belongs to household
     await this.getAccountById(id, householdId);
 
-    return this.accountsRepository.getAccountHistory(id, startDate, endDate);
+    const resolvedEndDate = endDate ?? new Date();
+    const resolvedStartDate = startDate ?? new Date(resolvedEndDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    return this.accountsRepository.getAccountHistory(id, resolvedStartDate, resolvedEndDate);
   }
 
   async getNetWorthSummary(

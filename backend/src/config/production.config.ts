@@ -47,7 +47,6 @@ export default registerAs("production", () => ({
     maxRetriesPerRequest: Number.parseInt(process.env.REDIS_MAX_RETRIES || "3"),
     retryDelayOnFailover: Number.parseInt(process.env.REDIS_RETRY_DELAY || "1000"),
     enableReadyCheck: true,
-    maxRetriesPerRequest: 3,
     lazyConnect: true,
     keepAlive: 30000,
     family: 4,

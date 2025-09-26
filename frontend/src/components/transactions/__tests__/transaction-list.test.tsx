@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils/testing-library';
 import { TransactionList } from '../transaction-list';
 import { Transaction } from '@/types/transaction';
 

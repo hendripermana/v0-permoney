@@ -60,6 +60,24 @@ describe('RecurringTransactionService', () => {
     },
   };
 
+  const mockExecution = {
+    id: 'execution-123',
+    recurringTransactionId: mockRecurringTransactionId,
+    scheduledDate: new Date('2024-02-01'),
+    status: 'PENDING',
+    retryCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockTransaction = {
+    id: 'transaction-123',
+    description: 'Monthly Rent - Monthly rent payment',
+    amountCents: 150000000,
+    currency: 'IDR',
+    date: new Date('2024-02-01'),
+  };
+
   beforeEach(async () => {
     const mockRepository = {
       create: jest.fn(),
@@ -244,24 +262,6 @@ describe('RecurringTransactionService', () => {
   });
 
   describe('executeRecurringTransaction', () => {
-    const mockExecution = {
-      id: 'execution-123',
-      recurringTransactionId: mockRecurringTransactionId,
-      scheduledDate: new Date('2024-02-01'),
-      status: 'PENDING',
-      retryCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    const mockTransaction = {
-      id: 'transaction-123',
-      description: 'Monthly Rent - Monthly rent payment',
-      amountCents: 150000000,
-      currency: 'IDR',
-      date: new Date('2024-02-01'),
-    };
-
     it('should execute recurring transaction successfully', async () => {
       repository.findById.mockResolvedValue(mockRecurringTransaction);
       repository.createExecution.mockResolvedValue(mockExecution);

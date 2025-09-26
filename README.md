@@ -45,7 +45,31 @@ JWT_SECRET="your-jwt-secret"
 
 # Frontend (.env.local)
 NEXT_PUBLIC_API_URL="http://localhost:3001"
+
+# Optional overrides
+# NEXT_PUBLIC_CF_WORKER_URL="https://your-worker.permana.icu"
+# NEXT_PUBLIC_ORACLE_API_URL="https://api.permana.icu"
 ```
+
+### Environment configuration
+
+- `frontend/src/lib/config.ts` resolves the API base URL in the following order:
+  1. `NEXT_PUBLIC_API_URL`
+  2. `NEXT_PUBLIC_CF_WORKER_URL`
+  3. `NEXT_PUBLIC_ORACLE_API_URL`
+  4. `API_URL`
+  5. Fallback to `/api` (leverages the Next.js dev rewrite to `http://localhost:3001/api`).
+- Call `apiClient.setBaseURL(...)` during app bootstrap if you need to override the base dynamically (e.g. tenant-specific endpoints).
+
+#### MacBook M1 Pro tips
+- Use an ARM build of Node 18+ (`arch -arm64 node -v`) to avoid native module issues.
+- Install dependencies from the repository root (`npm install`) so the workspace installs both `frontend` and `backend` packages—commands such as `npm run lint` expect `next` to be available.
+- If Rosetta tooling is required, force the architecture when installing: `arch -arm64 npm install`.
+
+#### Oracle Cloud VM + Cloudflare DNS
+- Set `NEXT_PUBLIC_ORACLE_API_URL` (or `NEXT_PUBLIC_API_URL`) to the public HTTPS endpoint that Cloudflare proxies to your Oracle VM (`https://api.permana.icu` recommended).
+- For the free Cloudflare Worker tier, deploy a worker that forwards traffic to the Oracle API and expose it via `NEXT_PUBLIC_CF_WORKER_URL`; the `ApiClient` will automatically use it when present.
+- Keep DNS records for `permana.icu` in Cloudflare so you can switch between direct VM traffic and the worker without code changes.
 
 3. **Setup database:**
 ```bash

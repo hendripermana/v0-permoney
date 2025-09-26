@@ -19,6 +19,7 @@ import { OcrService } from './ocr.service';
 import { UploadDocumentDto, ProcessDocumentDto, ValidateOcrResultDto } from './dto/upload-document.dto';
 import { ApproveTransactionSuggestionDto } from './dto/create-transaction-suggestion.dto';
 import { DocumentUpload, OCRResult, TransactionSuggestion, ValidationResult } from './types/ocr.types';
+import type { Express } from 'express';
 
 @ApiTags('OCR & Document Processing')
 @ApiBearerAuth()

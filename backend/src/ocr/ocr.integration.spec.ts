@@ -7,6 +7,7 @@ import { ReceiptProcessingService } from './services/receipt-processing.service'
 import { BankStatementProcessingService } from './services/bank-statement-processing.service';
 import { TransactionSuggestionService } from './services/transaction-suggestion.service';
 import { DocumentType, ProcessingStatus } from './types/ocr.types';
+import type { Express } from 'express';
 
 describe('OCR Integration Tests', () => {
   let service: OcrService;

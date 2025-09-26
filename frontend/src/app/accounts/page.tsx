@@ -23,6 +23,25 @@ import {
 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { toast } from "@/hooks/use-toast"
+import { formatCurrency, fromCents, safeNumber } from "@/lib/utils"
+
+const getAccountIcon = (type: string, subtype: string) => {
+  if (type === "LIABILITY") return CreditCard
+
+  switch (subtype?.toUpperCase()) {
+    case "BANK":
+    case "CHECKING":
+      return CreditCard
+    case "SAVINGS":
+      return PiggyBank
+    case "INVESTMENT":
+      return TrendingUp
+    case "CASH":
+      return Wallet
+    default:
+      return Building2
+  }
+}
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([])
@@ -41,14 +60,24 @@ export default function AccountsPage() {
       setLoading(true)
       setError(null)
       const accountsData = await apiClient.getAccounts({ isActive: true })
-      
-      // Transform API data to include icons
-      const transformedAccounts = accountsData.map((account: any) => ({
-        ...account,
-        balance: account.balanceCents / 100,
-        icon: getAccountIcon(account.type, account.subtype),
-      }))
-      
+
+      // Transform API data to include normalized balances and icons
+      const transformedAccounts = accountsData.map((account: any) => {
+        const balanceCents = safeNumber(
+          account.balanceCents ?? account.currentBalanceCents ?? account.calculatedBalance,
+          0,
+        )
+        const currency = account.currency ?? "IDR"
+
+        return {
+          ...account,
+          balanceCents,
+          balance: fromCents(balanceCents),
+          currency,
+          icon: getAccountIcon(account.type, account.subtype),
+        }
+      })
+
       setAccounts(transformedAccounts)
     } catch (err) {
       console.error("Failed to fetch accounts:", err)
@@ -62,6 +91,7 @@ export default function AccountsPage() {
           type: "ASSET",
           subtype: "BANK",
           balance: 15750000,
+          balanceCents: 1575000000,
           currency: "IDR",
           isActive: true,
           icon: CreditCard,
@@ -72,6 +102,7 @@ export default function AccountsPage() {
           type: "ASSET",
           subtype: "SAVINGS",
           balance: 45200000,
+          balanceCents: 4520000000,
           currency: "IDR",
           isActive: true,
           icon: PiggyBank,
@@ -82,6 +113,7 @@ export default function AccountsPage() {
           type: "ASSET",
           subtype: "CASH",
           balance: 2500000,
+          balanceCents: 250000000,
           currency: "IDR",
           isActive: true,
           icon: Wallet,
@@ -89,24 +121,6 @@ export default function AccountsPage() {
       ])
     } finally {
       setLoading(false)
-    }
-  }
-
-  const getAccountIcon = (type: string, subtype: string) => {
-    if (type === "LIABILITY") return CreditCard
-    
-    switch (subtype) {
-      case "BANK":
-      case "CHECKING":
-        return CreditCard
-      case "SAVINGS":
-        return PiggyBank
-      case "INVESTMENT":
-        return TrendingUp
-      case "CASH":
-        return Wallet
-      default:
-        return Building2
     }
   }
 
@@ -147,14 +161,6 @@ export default function AccountsPage() {
 
   const handleAccountSuccess = () => {
     fetchAccounts()
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
   }
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
@@ -314,7 +320,7 @@ export default function AccountsPage() {
                       <p className={`text-2xl font-bold ${
                         isAsset ? "text-green-600" : "text-red-600"
                       }`}>
-                        {formatCurrency(account.balance)}
+                        {formatCurrency(account.balance, account.currency ?? "IDR")}
                       </p>
                       <p className="text-sm text-muted-foreground">Current Balance</p>
                     </div>

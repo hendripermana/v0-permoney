@@ -17,6 +17,7 @@ describe('Debts E2E Testing', () => {
   let householdId: string;
   let userId: string;
   let authToken: string;
+  let islamicDebtId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -102,7 +103,6 @@ describe('Debts E2E Testing', () => {
   describe('Complete Debt Lifecycle Testing', () => {
     let personalDebtId: string;
     let conventionalDebtId: string;
-    let islamicDebtId: string;
 
     describe('Debt Creation Workflow', () => {
       it('should create personal debt with complete validation', async () => {

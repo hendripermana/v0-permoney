@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatMonthDay } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -159,7 +159,7 @@ export function NetWorthChart({
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
                   dataKey="date"
-                  tickFormatter={(value) => formatDate(new Date(value), "MMM dd")}
+                  tickFormatter={(value) => formatMonthDay(value as string)}
                   className="text-xs"
                 />
                 <YAxis 
@@ -206,7 +206,7 @@ export function NetWorthChart({
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
                   dataKey="date"
-                  tickFormatter={(value) => formatDate(new Date(value), "MMM dd")}
+                  tickFormatter={(value) => formatMonthDay(value as string)}
                   className="text-xs"
                 />
                 <YAxis 

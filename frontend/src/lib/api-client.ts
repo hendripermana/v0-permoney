@@ -1,16 +1,35 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
+import {
+  API_BASE_URL,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  STORAGE_KEYS,
+  isBrowser,
+} from "./config"
+import type {
+  AvailablePermissionsResponse,
+  CreateHouseholdData,
+  FilteredViewData,
+  Household,
+  HouseholdMember,
+  HouseholdRoleResponse,
+  HouseholdSettings,
+  InviteMemberData,
+  PermissionCheckResponse,
+  UpdateMemberData,
+  ViewType,
+} from "@/types/household"
 
-interface ApiResponse<T> {
-  data: T
-  success: boolean
-  message?: string
-}
-
-interface ApiError {
-  message: string
+export class ApiClientError extends Error {
   code?: string
   status?: number
-  details?: any
+  details?: unknown
+
+  constructor(message: string, options: { code?: string; status?: number; details?: unknown } = {}) {
+    super(message)
+    this.name = "ApiClientError"
+    this.code = options.code
+    this.status = options.status
+    this.details = options.details
+  }
 }
 
 export interface AnalyticsFilters {
@@ -25,19 +44,70 @@ export interface AnalyticsFilters {
   includeTransfers?: boolean
 }
 
+const JSON_CONTENT_TYPE = "application/json"
+
+const normalizeBaseUrl = (baseUrl: string) => {
+  if (!baseUrl) {
+    return "/api"
+  }
+
+  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
+}
+
+const buildQueryString = (params?: Record<string, unknown>) => {
+  if (!params) {
+    return ""
+  }
+
+  const searchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item === undefined || item === null) return
+        searchParams.append(key, String(item))
+      })
+      return
+    }
+
+    if (value instanceof Date) {
+      searchParams.append(key, value.toISOString())
+      return
+    }
+
+    searchParams.append(key, String(value))
+  })
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ""
+}
+
 class ApiClient {
   private baseURL: string
   private token: string | null = null
-  private retryAttempts: number = 3
-  private retryDelay: number = 1000
+  private retryAttempts = 3
+  private retryDelay = 1000
+  private requestTimeout = DEFAULT_REQUEST_TIMEOUT_MS
 
   constructor(baseURL: string = API_BASE_URL) {
-    this.baseURL = baseURL
-    this.token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null
+    this.baseURL = normalizeBaseUrl(baseURL)
+    this.token = isBrowser ? localStorage.getItem(STORAGE_KEYS.authToken) : null
+  }
+
+  public setBaseURL(baseURL: string) {
+    this.baseURL = normalizeBaseUrl(baseURL)
+  }
+
+  public getBaseURL() {
+    return this.baseURL
   }
 
   public async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`
+    const url = this.buildUrl(endpoint)
 
     // Build headers conditionally to support multipart uploads (FormData)
     const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData
@@ -49,7 +119,7 @@ class ApiClient {
       ...options,
       headers: {
         ...baseHeaders,
-        ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+        ...(!isFormData ? { "Content-Type": JSON_CONTENT_TYPE } : {}),
         ...(options.headers as any),
       },
     }
@@ -57,15 +127,23 @@ class ApiClient {
     return this.requestWithRetry(url, config)
   }
 
+  private buildUrl(endpoint: string): string {
+    if (/^https?:/i.test(endpoint)) {
+      return endpoint
+    }
+
+    return `${this.baseURL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`
+  }
+
   private async requestWithRetry<T>(url: string, config: RequestInit, attempt: number = 1): Promise<T> {
     try {
       // Check network connectivity
-      if (typeof window !== "undefined" && !navigator.onLine) {
+      if (isBrowser && !navigator.onLine) {
         throw this.createApiError("No internet connection", "NETWORK_ERROR", 0)
       }
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout)
 
       const response = await fetch(url, {
         ...config,
@@ -82,6 +160,16 @@ class ApiClient {
           response.status,
           errorData
         )
+      }
+
+      if (response.status === 204) {
+        return undefined as T
+      }
+
+      const contentType = response.headers.get("content-type") ?? ""
+
+      if (!contentType.toLowerCase().includes("json")) {
+        return undefined as T
       }
 
       const data = await response.json()
@@ -119,17 +207,12 @@ class ApiClient {
     }
   }
 
-  private createApiError(message: string, code?: string, status?: number, details?: any): ApiError {
-    return {
-      message,
-      code,
-      status,
-      details,
-    }
+  private createApiError(message: string, code?: string, status?: number, details?: unknown) {
+    return new ApiClientError(message, { code, status, details })
   }
 
-  private isApiError(error: any): error is ApiError {
-    return error && typeof error.message === "string" && (error.code || error.status)
+  private isApiError(error: unknown): error is ApiClientError {
+    return error instanceof ApiClientError
   }
 
   private getErrorCodeFromStatus(status: number): string {
@@ -198,31 +281,22 @@ class ApiClient {
   // Authentication methods
   setToken(token: string) {
     this.token = token
-    if (typeof window !== "undefined") {
-      localStorage.setItem("auth_token", token)
+    if (isBrowser) {
+      localStorage.setItem(STORAGE_KEYS.authToken, token)
     }
   }
 
   clearToken() {
     this.token = null
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_token")
+    if (isBrowser) {
+      localStorage.removeItem(STORAGE_KEYS.authToken)
     }
   }
 
   // Accounts API
-  async getAccounts(arg?: any): Promise<any[]> {
-    // Supports both getAccounts(filters) and getAccounts(householdId: string)
-    const params = new URLSearchParams()
-    if (typeof arg === "string") {
-      params.append("householdId", arg)
-    } else if (arg && typeof arg === "object") {
-      Object.entries(arg).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) params.append(k, String(v))
-      })
-    }
-    const qs = params.toString()
-    return this.request<any[]>(`/accounts${qs ? `?${qs}` : ""}`)
+  async getAccounts(arg?: string | Record<string, unknown>): Promise<any[]> {
+    const query = typeof arg === "string" ? { householdId: arg } : arg
+    return this.request<any[]>(`/accounts${buildQueryString(query)}`)
   }
 
   async getAccountById(id: string) {
@@ -249,10 +323,6 @@ class ApiClient {
     })
   }
 
-  async getAccountStats() {
-    return this.request<any>("/accounts/stats")
-  }
-
   async getNetWorth(arg1?: string, arg2?: string) {
     // getNetWorth(currency?) or getNetWorth(householdId, currency?)
     let householdId: string | undefined
@@ -263,18 +333,17 @@ class ApiClient {
       householdId = arg1
       if (arg2) currency = arg2
     }
-    const params = new URLSearchParams({ currency })
-    if (householdId) params.append("householdId", householdId)
-    return this.request<any>(`/accounts/net-worth?${params.toString()}`)
+    const params: Record<string, unknown> = { currency }
+    if (householdId) params.householdId = householdId
+    return this.request<any>(`/accounts/net-worth${buildQueryString(params)}`)
   }
 
   async getAccountStats(householdId?: string) {
-    const qs = householdId ? `?householdId=${householdId}` : ""
-    return this.request<any>(`/accounts/stats${qs}`)
+    return this.request<any>(`/accounts/stats${buildQueryString(householdId ? { householdId } : undefined)}`)
   }
 
   async getAccountsGrouped(householdId: string) {
-    return this.request<any>(`/accounts/grouped?householdId=${householdId}`)
+    return this.request<any>(`/accounts/grouped${buildQueryString({ householdId })}`)
   }
 
   // -------- AI Insights API --------
@@ -366,20 +435,8 @@ class ApiClient {
   // Transactions API
   async getTransactions(arg1?: any, arg2?: any) {
     // getTransactions(filters?) or getTransactions(householdId, params?)
-    const params = new URLSearchParams()
-    if (typeof arg1 === "string") {
-      params.append("householdId", arg1)
-      if (arg2) {
-        Object.entries(arg2).forEach(([k, v]) => {
-          if (v !== undefined && v !== null) params.append(k, String(v))
-        })
-      }
-    } else if (arg1 && typeof arg1 === "object") {
-      Object.entries(arg1).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) params.append(k, String(v))
-      })
-    }
-    return this.request<any[]>(`/transactions?${params.toString()}`)
+    const query = typeof arg1 === "string" ? { householdId: arg1, ...(arg2 ?? {}) } : arg1
+    return this.request<any[]>(`/transactions${buildQueryString(query)}`)
   }
 
   async getTransactionById(id: string) {
@@ -407,46 +464,20 @@ class ApiClient {
   }
 
   async getTransactionStats(filters?: any) {
-    const params = new URLSearchParams()
-    if (filters) {
-      Object.entries(filters).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) params.append(k, String(v))
-      })
-    }
-    return this.request<any>(`/transactions/stats?${params.toString()}`)
+    return this.request<any>(`/transactions/stats${buildQueryString(filters)}`)
   }
 
   async getCategoryBreakdown(filters?: any) {
-    const params = new URLSearchParams()
-    if (filters) {
-      Object.entries(filters).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) params.append(k, String(v))
-      })
-    }
-    return this.request<any>(`/transactions/category-breakdown?${params.toString()}`)
+    return this.request<any>(`/transactions/category-breakdown${buildQueryString(filters)}`)
   }
 
   async searchTransactions(searchParams: any) {
-    const params = new URLSearchParams()
-    Object.entries(searchParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value))
-      }
-    })
-    return this.request<any[]>(`/transactions/search?${params.toString()}`)
+    return this.request<any[]>(`/transactions/search${buildQueryString(searchParams)}`)
   }
 
   // Budgets API
   async getBudgets(filters?: any) {
-    const params = new URLSearchParams()
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, String(value))
-        }
-      })
-    }
-    return this.request<any[]>(`/budgets?${params.toString()}`)
+    return this.request<any[]>(`/budgets${buildQueryString(filters)}`)
   }
 
   async getBudgetById(id: string) {
@@ -563,11 +594,97 @@ class ApiClient {
   }
 
   // Households
-  async getHouseholds(): Promise<any[]> {
-    return this.request<any[]>("/households")
+  async getHouseholds(): Promise<Household[]> {
+    return this.request<Household[]>("/households")
   }
 
-  async getCurrentHousehold(): Promise<any | null> {
+  async getHousehold(id: string): Promise<Household> {
+    return this.request<Household>(`/households/${id}`)
+  }
+
+  async createHousehold(data: CreateHouseholdData): Promise<Household> {
+    return this.request<Household>("/households", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateHousehold(
+    id: string,
+    data: Partial<CreateHouseholdData> & { settings?: HouseholdSettings }
+  ): Promise<Household> {
+    return this.request<Household>(`/households/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteHousehold(id: string): Promise<void> {
+    await this.request<void>(`/households/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  async getMembers(householdId: string): Promise<HouseholdMember[]> {
+    return this.request<HouseholdMember[]>(`/households/${householdId}/members`)
+  }
+
+  async inviteMember(householdId: string, data: InviteMemberData) {
+    return this.request<{ message: string }>(`/households/${householdId}/members`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateMember(
+    householdId: string,
+    memberId: string,
+    data: UpdateMemberData
+  ) {
+    return this.request<{ message: string }>(`/households/${householdId}/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async removeMember(householdId: string, memberId: string): Promise<void> {
+    await this.request<void>(`/households/${householdId}/members/${memberId}`, {
+      method: "DELETE",
+    })
+  }
+
+  async updateSettings(householdId: string, settings: Record<string, unknown>) {
+    return this.request<HouseholdSettings>(`/households/${householdId}/settings`, {
+      method: "PUT",
+      body: JSON.stringify(settings),
+    })
+  }
+
+  async getFilteredData(householdId: string, viewType: ViewType): Promise<FilteredViewData> {
+    return this.request<FilteredViewData>(
+      `/households/${householdId}/filtered-data${buildQueryString({ viewType })}`
+    )
+  }
+
+  async checkPermission(householdId: string, permission: string): Promise<PermissionCheckResponse> {
+    return this.request<PermissionCheckResponse>(
+      `/households/${householdId}/permissions/${permission}`
+    )
+  }
+
+  async getUserRole(householdId: string): Promise<HouseholdRoleResponse> {
+    return this.request<HouseholdRoleResponse>(`/households/${householdId}/role`)
+  }
+
+  async getAvailablePermissions(): Promise<AvailablePermissionsResponse> {
+    return this.request<AvailablePermissionsResponse>("/households/permissions")
+  }
+
+  async getHouseholdPermissions(householdId: string): Promise<string[]> {
+    return this.request<string[]>(`/households/${householdId}/permissions`)
+  }
+
+  async getCurrentHousehold(): Promise<Household | null> {
     const households = await this.getHouseholds()
     return households?.[0] ?? null
   }

@@ -1,5 +1,16 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
+export type {
+  ViewType,
+  Household,
+  HouseholdMember,
+  HouseholdSettings,
+  CreateHouseholdData,
+  InviteMemberData,
+  UpdateMemberData,
+  FilteredViewData,
+} from '@/types/household';
+
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 

@@ -12,8 +12,9 @@ const nextConfig = {
   },
   compress: true,
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
+    // keep placeholder for other experimental toggles if needed
   },
+  serverExternalPackages: ['@prisma/client'],
   async rewrites() {
     return [
       {

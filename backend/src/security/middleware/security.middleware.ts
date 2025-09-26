@@ -282,4 +282,3 @@ export class SecurityMiddleware implements NestMiddleware {
     return uuidRegex.test(str);
   }
 }
-}

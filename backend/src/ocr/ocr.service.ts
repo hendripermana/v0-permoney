@@ -6,6 +6,7 @@ import { ReceiptProcessingService } from './services/receipt-processing.service'
 import { BankStatementProcessingService } from './services/bank-statement-processing.service';
 import { TransactionSuggestionService } from './services/transaction-suggestion.service';
 import { OCRMetricsService } from './ocr.metrics';
+import type { Express } from 'express';
 import {
   DocumentUpload,
   DocumentType,
@@ -13,6 +14,7 @@ import {
   OCRResult,
   TransactionSuggestion,
   ValidationResult,
+  ExtractedData,
 } from './types/ocr.types';
 import { UploadDocumentDto, ProcessDocumentDto, ValidateOcrResultDto } from './dto/upload-document.dto';
 import { ApproveTransactionSuggestionDto } from './dto/create-transaction-suggestion.dto';

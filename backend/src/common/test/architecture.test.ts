@@ -165,31 +165,34 @@ describe('Core Backend Services Architecture', () => {
 });
 
 describe('Base Repository and Service Classes', () => {
-  it('should provide base repository interface', () => {
+  it('should provide base repository interface', async () => {
     // Test that the base repository interface is properly defined
-    expect(typeof require('../interfaces/base-repository.interface').BaseRepository).toBe('undefined'); // It's an interface
+    const module = await import('../interfaces/base-repository.interface');
+    expect(module.BaseRepository).toBeUndefined(); // It's an interface
   });
 
-  it('should provide base service interface', () => {
+  it('should provide base service interface', async () => {
     // Test that the base service interface is properly defined
-    expect(typeof require('../interfaces/base-service.interface').BaseService).toBe('undefined'); // It's an interface
+    const module = await import('../interfaces/base-service.interface');
+    expect(module.BaseService).toBeUndefined(); // It's an interface
   });
 
-  it('should provide abstract base repository', () => {
-    const { AbstractBaseRepository } = require('../base/base.repository');
-    expect(AbstractBaseRepository).toBeDefined();
-    expect(typeof AbstractBaseRepository).toBe('function');
+  it('should provide abstract base repository', async () => {
+    const module = await import('../base/base.repository');
+    expect(module.AbstractBaseRepository).toBeDefined();
+    expect(typeof module.AbstractBaseRepository).toBe('function');
   });
 
-  it('should provide abstract base service', () => {
-    const { AbstractBaseService } = require('../base/base.service');
-    expect(AbstractBaseService).toBeDefined();
-    expect(typeof AbstractBaseService).toBe('function');
+  it('should provide abstract base service', async () => {
+    const module = await import('../base/base.service');
+    expect(module.AbstractBaseService).toBeDefined();
+    expect(typeof module.AbstractBaseService).toBe('function');
   });
 });
 
 describe('Exception Handling', () => {
-  it('should provide custom exceptions', () => {
+  it('should provide custom exceptions', async () => {
+    const module = await import('../exceptions/custom.exceptions');
     const {
       BusinessLogicException,
       ValidationException,
@@ -197,7 +200,7 @@ describe('Exception Handling', () => {
       InsufficientFundsException,
       InvalidCurrencyException,
       AccountingIntegrityException,
-    } = require('../exceptions/custom.exceptions');
+    } = module;
 
     expect(BusinessLogicException).toBeDefined();
     expect(ValidationException).toBeDefined();
@@ -207,12 +210,13 @@ describe('Exception Handling', () => {
     expect(AccountingIntegrityException).toBeDefined();
   });
 
-  it('should create custom exceptions with proper messages', () => {
+  it('should create custom exceptions with proper messages', async () => {
+    const module = await import('../exceptions/custom.exceptions');
     const {
       PermissionDeniedException,
       InsufficientFundsException,
       InvalidCurrencyException,
-    } = require('../exceptions/custom.exceptions');
+    } = module;
 
     const permissionError = new PermissionDeniedException('account', 'read');
     expect(permissionError.message).toBe('Permission denied for read on account');

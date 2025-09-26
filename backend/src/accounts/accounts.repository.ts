@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Account, AccountType, AccountWhereInput } from '../types/database.types';
 import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto, ViewType } from './dto';

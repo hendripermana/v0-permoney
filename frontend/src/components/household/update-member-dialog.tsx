@@ -72,18 +72,27 @@ export function UpdateMemberDialog({
 }: UpdateMemberDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const updateMember = useUpdateMember();
+  const allowedRoles = ['ADMIN', 'PARTNER', 'FINANCE_STAFF'] as const;
+  const initialRole: typeof allowedRoles[number] =
+    member && allowedRoles.includes(member.role as typeof allowedRoles[number])
+      ? (member.role as typeof allowedRoles[number])
+      : 'PARTNER';
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      role: member?.role || 'PARTNER',
+      role: initialRole,
     },
   });
 
   useEffect(() => {
     if (member) {
+      const normalizedRole: typeof allowedRoles[number] =
+        allowedRoles.includes(member.role as typeof allowedRoles[number])
+          ? (member.role as typeof allowedRoles[number])
+          : 'PARTNER';
       form.reset({
-        role: member.role,
+        role: normalizedRole,
       });
     }
   }, [member, form]);

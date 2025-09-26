@@ -8,8 +8,6 @@ import { Progress } from "@/components/ui/progress"
 import {
   Target,
   Plus,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   CheckCircle,
   PieChart,
@@ -18,6 +16,7 @@ import {
 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { BudgetModal } from "@/components/modals/budget-modal"
+import { formatCurrency, fromCents } from "@/lib/utils"
 
 export default function BudgetsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("month")
@@ -25,6 +24,12 @@ export default function BudgetsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
+
+  function resolveBudgetBadge(percentage: number) {
+    if (percentage >= 90) return { severity: "danger" as const, color: "text-red-600", bg: "bg-red-100" }
+    if (percentage >= 75) return { severity: "warning" as const, color: "text-yellow-600", bg: "bg-yellow-100" }
+    return { severity: "good" as const, color: "text-green-600", bg: "bg-green-100" }
+  }
 
   useEffect(() => {
     fetchBudgets()
@@ -37,18 +42,28 @@ export default function BudgetsPage() {
 
       const apiBudgets = await apiClient.getBudgets({ isActive: true })
 
-      const transformedBudgets = apiBudgets.flatMap(
-        (budget: any) =>
-          budget.categories?.map((category: any) => ({
-            id: category.id,
+      const transformedBudgets = apiBudgets.flatMap((budget: any) =>
+        (budget.categories ?? []).map((category: any) => {
+          const budgeted = fromCents(category.allocatedAmountCents)
+          const spent = fromCents(category.spentAmountCents)
+          const percentage = budgeted > 0 ? (spent / budgeted) * 100 : 0
+          const remaining = budgeted - spent
+          const badge = resolveBudgetBadge(percentage)
+          const status = percentage >= 100 ? "over-budget" : percentage >= 80 ? "warning" : "on-track"
+
+          return {
+            id: category.id ?? `${budget.id}-${category.categoryId ?? "unknown"}`,
             category: category.category?.name || "Unknown Category",
-            spent: category.spentAmountCents / 100,
-            budget: category.allocatedAmountCents / 100,
-            color: "bg-green-500",
-            trend: Math.random() > 0.5 ? "up" : "down",
-            trendValue: (Math.random() * 20 - 10).toFixed(1),
-            transactions: Math.floor(Math.random() * 30) + 1,
-          })) || [],
+            spent,
+            budgeted,
+            remaining,
+            currency: budget.currency ?? category.currency ?? "IDR",
+            percentage,
+            status,
+            severity: badge,
+            transactions: category.transactionCount ?? category.transactions?.length ?? 0,
+          }
+        }),
       )
 
       setBudgets(transformedBudgets)
@@ -62,68 +77,59 @@ export default function BudgetsPage() {
     }
   }
 
-  const getMockBudgets = () => [
-    {
-      id: 1,
-      category: "Food & Dining",
-      spent: 2100000,
-      budget: 3000000,
-      color: "bg-red-500",
-      trend: "up",
-      trendValue: 12.5,
-      transactions: 24,
-    },
-    {
-      id: 2,
-      category: "Transportation",
-      spent: 800000,
-      budget: 1200000,
-      color: "bg-blue-500",
-      trend: "down",
-      trendValue: -5.2,
-      transactions: 18,
-    },
-    {
-      id: 3,
-      category: "Entertainment",
-      spent: 450000,
-      budget: 800000,
-      color: "bg-purple-500",
-      trend: "up",
-      trendValue: 8.1,
-      transactions: 12,
-    },
-    {
-      id: 4,
-      category: "Utilities",
-      spent: 650000,
-      budget: 1000000,
-      color: "bg-yellow-500",
-      trend: "down",
-      trendValue: -2.3,
-      transactions: 6,
-    },
-  ]
+  const getMockBudgets = () => {
+    const mockData = [
+      {
+        id: "mock-1",
+        category: "Food & Dining",
+        spent: 2100000,
+        budgeted: 3000000,
+        transactions: 24,
+      },
+      {
+        id: "mock-2",
+        category: "Transportation",
+        spent: 800000,
+        budgeted: 1200000,
+        transactions: 18,
+      },
+      {
+        id: "mock-3",
+        category: "Entertainment",
+        spent: 450000,
+        budgeted: 800000,
+        transactions: 12,
+      },
+      {
+        id: "mock-4",
+        category: "Utilities",
+        spent: 650000,
+        budgeted: 1000000,
+        transactions: 6,
+      },
+    ]
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
+    return mockData.map((item) => {
+      const percentage = item.budgeted > 0 ? (item.spent / item.budgeted) * 100 : 0
+      const remaining = item.budgeted - item.spent
+      const badge = resolveBudgetBadge(percentage)
+      const status = percentage >= 100 ? "over-budget" : percentage >= 80 ? "warning" : "on-track"
+
+      return {
+        ...item,
+        currency: "IDR",
+        percentage,
+        remaining,
+        status,
+        severity: badge,
+      }
+    })
   }
 
-  const totalBudget = budgets.reduce((sum, budget) => sum + budget.budget, 0)
+  const totalBudget = budgets.reduce((sum, budget) => sum + budget.budgeted, 0)
   const totalSpent = budgets.reduce((sum, budget) => sum + budget.spent, 0)
   const totalRemaining = totalBudget - totalSpent
   const overallProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0
-
-  const getBudgetStatus = (spent: number, budget: number) => {
-    const percentage = budget > 0 ? (spent / budget) * 100 : 0
-    if (percentage >= 90) return { status: "danger", color: "text-red-600", bg: "bg-red-100" }
-    if (percentage >= 75) return { status: "warning", color: "text-yellow-600", bg: "bg-yellow-100" }
-    return { status: "good", color: "text-green-600", bg: "bg-green-100" }
-  }
 
   const handleBudgetCreated = () => {
     fetchBudgets()
@@ -230,7 +236,7 @@ export default function BudgetsPage() {
             <CardContent>
               <div className="text-2xl font-bold">{budgets.length}</div>
               <p className="text-xs text-muted-foreground">
-                {budgets.filter((b) => b.budget > 0 && b.spent / b.budget >= 0.9).length} over 90%
+                {budgets.filter((b) => b.percentage >= 90).length} over 90%
               </p>
             </CardContent>
           </Card>
@@ -280,9 +286,11 @@ export default function BudgetsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {budgets.map((budget) => {
-              const percentage = budget.budget > 0 ? (budget.spent / budget.budget) * 100 : 0
-              const remaining = budget.budget - budget.spent
-              const status = getBudgetStatus(budget.spent, budget.budget)
+              const percentage = budget.percentage
+              const remaining = budget.remaining
+              const status = budget.severity
+              const statusLabel =
+                status.severity === "danger" ? "Over target" : status.severity === "warning" ? "Monitor usage" : "On track"
 
               return (
                 <Card key={budget.id} className="hover:shadow-md transition-shadow">
@@ -299,7 +307,7 @@ export default function BudgetsPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Progress</span>
                       <span className="text-sm text-muted-foreground">
-                        {formatCurrency(budget.spent)} / {formatCurrency(budget.budget)}
+                        {formatCurrency(budget.spent, budget.currency ?? "IDR")} / {formatCurrency(budget.budgeted, budget.currency ?? "IDR")}
                       </span>
                     </div>
 
@@ -309,24 +317,14 @@ export default function BudgetsPage() {
                       <Badge variant={percentage > 90 ? "destructive" : percentage > 75 ? "default" : "secondary"}>
                         {percentage.toFixed(1)}% used
                       </Badge>
-                      <div className="flex items-center gap-1 text-sm">
-                        {budget.trend === "up" ? (
-                          <TrendingUp className="h-3 w-3 text-red-500" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3 text-green-500" />
-                        )}
-                        <span className={budget.trend === "up" ? "text-red-500" : "text-green-500"}>
-                          {budget.trend === "up" ? "+" : ""}
-                          {budget.trendValue}%
-                        </span>
-                      </div>
+                      <span className={`text-xs font-medium ${status.color}`}>{statusLabel}</span>
                     </div>
 
                     <div className="pt-2 border-t">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Remaining</span>
                         <span className={`font-semibold ${remaining >= 0 ? "text-green-600" : "text-red-600"}`}>
-                          {formatCurrency(remaining)}
+                          {formatCurrency(remaining, budget.currency ?? "IDR")}
                         </span>
                       </div>
                     </div>
@@ -339,8 +337,8 @@ export default function BudgetsPage() {
       </div>
 
       <BudgetModal
-        isOpen={isBudgetModalOpen}
-        onClose={() => setIsBudgetModalOpen(false)}
+        open={isBudgetModalOpen}
+        onOpenChange={setIsBudgetModalOpen}
         onSuccess={handleBudgetCreated}
       />
     </div>

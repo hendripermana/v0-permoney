@@ -118,7 +118,10 @@ export function MemberManagement({ householdId }: MemberManagementProps) {
         <CardContent>
           <div className="space-y-4">
             {members?.map((member) => {
-              const RoleIcon = roleIcons[member.role];
+              const roleKey = member.role as keyof typeof roleIcons;
+              const RoleIcon = roleIcons[roleKey] ?? Users;
+              const roleBadgeClass = roleColors[member.role as keyof typeof roleColors] ??
+                'bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-200';
               return (
                 <div
                   key={member.id}
@@ -141,12 +144,12 @@ export function MemberManagement({ householdId }: MemberManagementProps) {
                         {member.user.email}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Joined {new Date(member.joinedAt).toLocaleDateString()}
+                        Joined {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString() : 'Unknown'}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Badge className={roleColors[member.role]}>
+                    <Badge className={roleBadgeClass}>
                       <RoleIcon className="mr-1 h-3 w-3" />
                       {member.role}
                     </Badge>

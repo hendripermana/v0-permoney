@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -27,129 +27,225 @@ import {
 } from "lucide-react"
 import { useDashboardData } from "@/hooks/use-dashboard-data"
 import { toast } from "@/hooks/use-toast"
+import {
+  formatCurrency,
+  formatShortDate,
+  fromCents,
+  getDeterministicColor,
+  safeNumber,
+} from "@/lib/utils"
 
 export default function DashboardPage() {
-  const [selectedPeriod, setSelectedPeriod] = useState("month")
-  const [chartPeriod, setChartPeriod] = useState("30d")
-  const { data, loading, error, refetch } = useDashboardData()
+const [selectedPeriod, setSelectedPeriod] = useState("month")
+const [chartPeriod, setChartPeriod] = useState("30d")
+const { data, loading, error, refetch } = useDashboardData()
+const handleCategoryClick = (category: string) => {
+  toast({
+    title: "Category Selected",
+    description: `Viewing details for ${category}`,
+  })
+}
 
-  const handleCategoryClick = (category: string) => {
-    toast({
-      title: "Category Selected",
-      description: `Viewing details for ${category}`,
-    })
+const handlePeriodChange = (period: string) => {
+  setChartPeriod(period)
+  // In a real app, this would trigger a data refetch
+}
+
+type NormalizedTransaction = {
+  id: string
+  description: string
+  amount: number
+  amountCents: number
+  type: "income" | "expense" | "transfer"
+  date: Date
+  formattedDate: string
+  category: string
+}
+
+const transactions = data?.transactions ?? []
+
+const normalizedTransactions = useMemo<NormalizedTransaction[]>(() => {
+  if (!transactions?.length) {
+    return []
   }
 
-  const handlePeriodChange = (period: string) => {
-    setChartPeriod(period)
-    // In a real app, this would trigger a data refetch
-  }
+  return transactions.map((transaction: any) => {
+    const amountCents = safeNumber(transaction.amountCents, 0)
+    const amount = fromCents(amountCents)
+    const isoDate = transaction.date ?? transaction.createdAt ?? new Date().toISOString()
+    const date = new Date(isoDate)
+    const type: NormalizedTransaction["type"] = amount > 0 ? "income" : amount < 0 ? "expense" : "transfer"
 
-  const formatCurrency = (amount: number) => {
-    const actualAmount = amount > 1000000 ? amount / 100 : amount
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(actualAmount)
-  }
-
-  const accountSummary = data
-    ? {
-        totalBalance: data.netWorth?.totalAssets || 0,
-        monthlyIncome:
-          data.transactions?.filter((t) => t.amountCents > 0).reduce((sum, t) => sum + t.amountCents, 0) || 0,
-        monthlyExpenses:
-          Math.abs(data.transactions?.filter((t) => t.amountCents < 0).reduce((sum, t) => sum + t.amountCents, 0)) || 0,
-        savings: data.netWorth?.netWorth || 0,
-      }
-    : {
-        totalBalance: 0,
-        monthlyIncome: 0,
-        monthlyExpenses: 0,
-        savings: 0,
-      }
-
-  const recentTransactions =
-    data?.transactions?.slice(0, 5).map((transaction) => ({
-      id: transaction.id,
-      description: transaction.description,
-      amount: transaction.amountCents / 100, // Convert from cents
-      type: transaction.amountCents > 0 ? "income" : "expense",
-      date: new Date(transaction.date).toLocaleDateString("id-ID"),
-      category: transaction.category?.name || "Uncategorized",
-    })) || []
-
-  const budgets =
-    data?.budgets?.flatMap(
-      (budget) =>
-        budget.categories?.map((category: any) => ({
-          category: category.category?.name || "Unknown",
-          spent: category.spentAmountCents || 0,
-          budget: category.allocatedAmountCents || 0,
-          color: "bg-green-500",
-        })) || [],
-    ) || []
-
-  // Prepare chart data
-  const spendingData = recentTransactions
-    .filter(t => t.type === "expense")
-    .reduce((acc: any[], transaction) => {
-      const existing = acc.find(item => item.category === transaction.category)
-      if (existing) {
-        existing.amount += Math.abs(transaction.amount)
-        existing.transactions += 1
-      } else {
-        acc.push({
-          category: transaction.category,
-          amount: Math.abs(transaction.amount),
-          transactions: 1,
-          trend: "stable" as const,
-          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
-        })
-      }
-      return acc
-    }, [])
-    .map((item, index, array) => ({
-      ...item,
-      percentage: array.reduce((sum, i) => sum + i.amount, 0) > 0 
-        ? (item.amount / array.reduce((sum, i) => sum + i.amount, 0)) * 100 
-        : 0
-    }))
-    .sort((a, b) => b.amount - a.amount)
-
-  const budgetData = budgets.map((budget) => ({
-    category: budget.category,
-    budgeted: budget.budget / 100,
-    spent: budget.spent / 100,
-    remaining: (budget.budget - budget.spent) / 100,
-    percentage: budget.budget > 0 ? (budget.spent / budget.budget) * 100 : 0,
-    status: budget.budget > 0 
-      ? (budget.spent / budget.budget) > 1 
-        ? "over-budget" as const
-        : (budget.spent / budget.budget) > 0.8 
-          ? "warning" as const 
-          : "on-track" as const
-      : "on-track" as const,
-    transactions: Math.floor(Math.random() * 20) + 1, // Mock data
-  }))
-
-  // Mock net worth data - in real app this would come from API
-  const netWorthData = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date()
-    date.setDate(date.getDate() - (29 - i))
-    const baseNetWorth = accountSummary.savings
-    const variation = (Math.random() - 0.5) * 0.1 * baseNetWorth
-    const netWorth = baseNetWorth + variation
     return {
-      date: date.toISOString(),
-      assets: netWorth + Math.random() * 1000000,
-      liabilities: Math.random() * 500000,
-      netWorth: netWorth,
-      change: i > 0 ? variation : 0,
-      changePercentage: i > 0 ? (variation / baseNetWorth) * 100 : 0,
+      id: transaction.id,
+      description: transaction.description ?? "Unknown Transaction",
+      amount,
+      amountCents,
+      type,
+      date,
+      formattedDate: formatShortDate(date),
+      category: transaction.category?.name ?? "Uncategorized",
     }
   })
+}, [transactions])
+
+const accountSummary = useMemo(() => {
+  if (!data) {
+    return {
+      totalBalance: 0,
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      savings: 0,
+      totalLiabilities: 0,
+    }
+  }
+
+  const incomeCents = transactions.reduce((sum: number, transaction: any) => {
+    const amountCents = safeNumber(transaction.amountCents, 0)
+    return amountCents > 0 ? sum + amountCents : sum
+  }, 0)
+
+  const expenseCents = transactions.reduce((sum: number, transaction: any) => {
+    const amountCents = safeNumber(transaction.amountCents, 0)
+    return amountCents < 0 ? sum + amountCents : sum
+  }, 0)
+
+  const totalAssets = fromCents(data.netWorth?.totalAssets)
+  const totalLiabilities = fromCents(data.netWorth?.totalLiabilities)
+  const netWorth = fromCents(data.netWorth?.netWorth)
+
+  return {
+    totalBalance: totalAssets,
+    monthlyIncome: fromCents(incomeCents),
+    monthlyExpenses: fromCents(Math.abs(expenseCents)),
+    savings: netWorth || totalAssets - totalLiabilities,
+    totalLiabilities,
+  }
+}, [data, transactions])
+
+const savingsRate = useMemo(() => {
+  if (accountSummary.monthlyIncome <= 0) {
+    return 0
+  }
+
+  const rate = ((accountSummary.monthlyIncome - accountSummary.monthlyExpenses) / accountSummary.monthlyIncome) * 100
+  return Number.isFinite(rate) ? Math.max(rate, 0) : 0
+}, [accountSummary])
+
+const recentTransactions = useMemo(() => normalizedTransactions.slice(0, 5), [normalizedTransactions])
+
+const budgetData = useMemo(() => {
+  if (!data?.budgets?.length) {
+    return []
+  }
+
+  return data.budgets.flatMap((budget: any) =>
+    (budget.categories ?? []).map((category: any) => {
+      const budgeted = fromCents(category.allocatedAmountCents)
+      const spent = fromCents(category.spentAmountCents)
+      const remaining = Math.max(0, budgeted - spent)
+      const percentage = budgeted > 0 ? (spent / budgeted) * 100 : 0
+
+      let status: "on-track" | "warning" | "over-budget" | "completed" = "on-track"
+      if (percentage >= 100) {
+        status = "over-budget"
+      } else if (percentage >= 80) {
+        status = "warning"
+      }
+
+      return {
+        id: category.id ?? `${budget.id}-${category.categoryId ?? "unknown"}`,
+        category: category.category?.name ?? "Unknown Category",
+        budgeted,
+        spent,
+        remaining,
+        percentage,
+        status,
+        transactions: category.transactionCount ?? category.transactions?.length ?? 0,
+        color: getDeterministicColor(category.category?.name ?? "Unknown Category"),
+      }
+    }),
+  )
+}, [data?.budgets])
+
+const budgetSnapshot = useMemo(() => budgetData.slice(0, 4), [budgetData])
+
+const spendingData = useMemo(() => {
+  if (!normalizedTransactions.length) {
+    return []
+  }
+
+  const expenseTotals = new Map<string, { amount: number; transactions: number }>()
+
+  normalizedTransactions
+    .filter((transaction) => transaction.amount < 0)
+    .forEach((transaction) => {
+      const category = transaction.category
+      const entry = expenseTotals.get(category) ?? { amount: 0, transactions: 0 }
+      entry.amount += Math.abs(transaction.amount)
+      entry.transactions += 1
+      expenseTotals.set(category, entry)
+    })
+
+  const totalAmount = Array.from(expenseTotals.values()).reduce((sum, value) => sum + value.amount, 0)
+
+  return Array.from(expenseTotals.entries())
+    .map(([category, value]) => ({
+      category,
+      amount: value.amount,
+      transactions: value.transactions,
+      trend: "stable" as const,
+      color: getDeterministicColor(category),
+      percentage: totalAmount > 0 ? (value.amount / totalAmount) * 100 : 0,
+    }))
+    .sort((a, b) => b.amount - a.amount)
+}, [normalizedTransactions])
+
+const netWorthData = useMemo(() => {
+  const baseNetWorth = accountSummary.savings
+  const totalLiabilities = accountSummary.totalLiabilities
+  const hasTransactions = normalizedTransactions.length > 0
+
+  if (!baseNetWorth && !hasTransactions) {
+    return []
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const dates = Array.from({ length: 30 }, (_, index) => {
+    const date = new Date(today)
+    date.setDate(date.getDate() - (29 - index))
+    return date
+  })
+
+  const dailyDelta = new Map<string, number>()
+  normalizedTransactions.forEach((transaction) => {
+    const key = transaction.date.toISOString().slice(0, 10)
+    const value = dailyDelta.get(key) ?? 0
+    dailyDelta.set(key, value + transaction.amount)
+  })
+
+  const totalChange = Array.from(dailyDelta.values()).reduce((sum, value) => sum + value, 0)
+  let runningNetWorth = baseNetWorth - totalChange
+
+  return dates.map((date) => {
+    const key = date.toISOString().slice(0, 10)
+    const change = dailyDelta.get(key) ?? 0
+    runningNetWorth += change
+
+    const assets = runningNetWorth + totalLiabilities
+
+    return {
+      date: date.toISOString(),
+      assets,
+      liabilities: totalLiabilities,
+      netWorth: runningNetWorth,
+      change,
+      changePercentage: baseNetWorth ? (change / baseNetWorth) * 100 : 0,
+    }
+  })
+}, [accountSummary.savings, accountSummary.totalLiabilities, normalizedTransactions])
 
   if (loading) {
     return (
@@ -329,7 +425,7 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">{transaction.description}</p>
-                        <p className="text-xs text-muted-foreground">{transaction.date}</p>
+                        <p className="text-xs text-muted-foreground">{transaction.formattedDate}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -359,7 +455,7 @@ export default function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-6">
-              {budgets.length === 0 ? (
+              {budgetSnapshot.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>No budgets set up yet</p>
                   <Button size="sm" variant="outline" className="mt-2 bg-transparent">
@@ -368,14 +464,14 @@ export default function DashboardPage() {
                   </Button>
                 </div>
               ) : (
-                budgets.slice(0, 4).map((budget, index) => {
-                  const percentage = budget.budget > 0 ? (budget.spent / budget.budget) * 100 : 0
+                budgetSnapshot.map((budget) => {
+                  const percentage = budget.percentage
                   return (
-                    <div key={index} className="space-y-2">
+                    <div key={budget.id} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">{budget.category}</span>
                         <span className="text-sm text-muted-foreground">
-                          {formatCurrency(budget.spent)} / {formatCurrency(budget.budget)}
+                          {formatCurrency(budget.spent)} / {formatCurrency(budget.budgeted)}
                         </span>
                       </div>
                       <Progress value={percentage} className="h-2" />
@@ -384,7 +480,7 @@ export default function DashboardPage() {
                           {percentage.toFixed(1)}% used
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {formatCurrency(Math.max(0, budget.budget - budget.spent))} remaining
+                          {formatCurrency(Math.max(0, budget.remaining))} remaining
                         </span>
                       </div>
                     </div>
@@ -523,7 +619,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-center">
                         <div className="text-3xl font-bold text-purple-600 mb-2">
-                          {((accountSummary.monthlyIncome - accountSummary.monthlyExpenses) / accountSummary.monthlyIncome * 100).toFixed(0)}%
+                          {savingsRate.toFixed(0)}%
                         </div>
                         <p className="text-sm font-medium">Savings Rate</p>
                         <p className="text-xs text-muted-foreground">This month</p>

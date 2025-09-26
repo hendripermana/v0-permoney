@@ -3,13 +3,12 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { PrismaService } from '../prisma/prisma.service';
 import { CacheService } from '../cache/cache.service';
-import { 
-  NotificationType, 
-  NotificationChannel, 
-  NotificationPriority, 
+import {
+  NotificationType,
+  NotificationChannel,
   NotificationStatus,
   NotificationPreferences,
-  ScheduledNotification
+  ScheduledNotification,
 } from './types/notification.types';
 import { 
   CreateNotificationDto, 
@@ -246,10 +245,6 @@ export class NotificationsService {
     userId: string,
     updateDto: UpdateNotificationPreferencesDto
   ) {
-    const existingPreferences = await this.prisma.notificationPreference.findUnique({
-      where: { userId },
-    });
-
     const updatedPreferences = await this.prisma.notificationPreference.upsert({
       where: { userId },
       create: {

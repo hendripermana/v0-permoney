@@ -29,10 +29,7 @@
     "noUncheckedIndexedAccess": false,
     "noImplicitThis": false,
     "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "@prisma/client": ["../node_modules/@prisma/client"]
-    }
+    "baseUrl": "."
   },
   "include": ["src/**/*"],
   "exclude": [

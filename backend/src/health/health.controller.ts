@@ -11,6 +11,8 @@ import { RedisHealthIndicator } from './redis-health.indicator';
 import { ExternalServiceHealthIndicator } from './external-service-health.indicator';
 import { MetricsService } from '../common/metrics/metrics.service';
 import { StructuredLoggerService } from '../common/logging/logger.service';
+import * as os from 'os';
+import * as fs from 'fs';
 
 @Controller('health')
 export class HealthController {
@@ -139,8 +141,8 @@ export class HealthController {
 
   private async getMemoryHealth() {
     const memUsage = process.memoryUsage();
-    const totalMemory = require('os').totalmem();
-    const freeMemory = require('os').freemem();
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
 
     return {
       status: 'ok',
@@ -160,9 +162,6 @@ export class HealthController {
   }
 
   private async getDiskHealth() {
-    const fs = require('fs');
-    const path = require('path');
-
     try {
       const stats = fs.statSync(process.cwd());
       return {
@@ -182,7 +181,6 @@ export class HealthController {
   }
 
   private async getSystemMetrics() {
-    const os = require('os');
     const cpus = os.cpus();
     
     return {

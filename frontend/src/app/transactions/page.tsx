@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { TransactionModal } from "@/components/modals/transaction-modal"
+import { formatCurrency, formatShortDate, fromCents } from "@/lib/utils"
 
 export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -28,6 +29,35 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
+
+  const normalizeTransaction = (transaction: any) => {
+    const amountFromCents = typeof transaction.amountCents === "number"
+      ? fromCents(transaction.amountCents)
+      : null
+
+    const rawAmount = amountFromCents ?? (typeof transaction.amount === "number" ? transaction.amount : 0)
+    const amountCents = typeof transaction.amountCents === "number"
+      ? transaction.amountCents
+      : Math.round(rawAmount * 100)
+
+    const isoDate = transaction.date ?? transaction.createdAt ?? new Date().toISOString()
+    const date = new Date(isoDate)
+
+    const type = rawAmount > 0 ? "income" : rawAmount < 0 ? "expense" : "transfer"
+
+    return {
+      id: String(transaction.id ?? `${isoDate}-${transaction.description ?? "tx"}`),
+      description: transaction.description || "Unknown Transaction",
+      amount: rawAmount,
+      amountCents,
+      type,
+      date,
+      formattedDate: formatShortDate(date),
+      category: transaction.category?.name || transaction.category || "Uncategorized",
+      account: transaction.account?.name || transaction.account || "Unknown Account",
+      currency: transaction.currency || "IDR",
+    }
+  }
 
   useEffect(() => {
     fetchTransactions()
@@ -45,16 +75,7 @@ export default function TransactionsPage() {
         orderDirection: "desc",
       })
 
-      // Transform API data to match component format
-      const transformedTransactions = apiTransactions.map((transaction: any) => ({
-        id: transaction.id,
-        description: transaction.description || "Unknown Transaction",
-        amount: transaction.amountCents / 100, // Convert from cents
-        type: transaction.amountCents > 0 ? "income" : "expense",
-        date: new Date(transaction.date || transaction.createdAt).toLocaleDateString("id-ID"),
-        category: transaction.category?.name || "Uncategorized",
-        account: transaction.account?.name || "Unknown Account",
-      }))
+      const transformedTransactions = apiTransactions.map(normalizeTransaction)
 
       setTransactions(transformedTransactions)
     } catch (err) {
@@ -62,7 +83,7 @@ export default function TransactionsPage() {
       setError(err instanceof Error ? err.message : "Failed to fetch transactions")
 
       // Fallback to mock data if API fails
-      setTransactions(getMockTransactions())
+      setTransactions(getMockTransactions().map(normalizeTransaction))
     } finally {
       setLoading(false)
     }
@@ -118,14 +139,6 @@ export default function TransactionsPage() {
 
   const categories = ["all", "Food", "Transportation", "Utilities", "Investment", "Salary", "Freelance", "Education"]
   const types = ["all", "income", "expense", "investment"]
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
 
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -338,7 +351,7 @@ export default function TransactionsPage() {
                         <p className="font-medium">{transaction.description}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3" />
-                          <span>{transaction.date}</span>
+                          <span>{transaction.formattedDate}</span>
                           <span>•</span>
                           <span>{transaction.account}</span>
                         </div>
@@ -349,7 +362,7 @@ export default function TransactionsPage() {
                         className={`font-semibold text-lg ${transaction.amount > 0 ? "text-green-600" : "text-red-600"}`}
                       >
                         {transaction.amount > 0 ? "+" : ""}
-                        {formatCurrency(transaction.amount)}
+                        {formatCurrency(transaction.amount, transaction.currency ?? "IDR")}
                       </p>
                       <Badge variant="secondary" className="text-xs">
                         {transaction.category}
@@ -365,8 +378,8 @@ export default function TransactionsPage() {
 
       {/* Transaction Modal */}
       <TransactionModal
-        isOpen={isTransactionModalOpen}
-        onClose={() => setIsTransactionModalOpen(false)}
+        open={isTransactionModalOpen}
+        onOpenChange={setIsTransactionModalOpen}
         onSuccess={handleTransactionCreated}
       />
     </div>

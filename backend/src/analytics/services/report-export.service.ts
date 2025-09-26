@@ -104,7 +104,7 @@ export class ReportExportService {
   async listReports(
     householdId: string,
     reportType?: ReportType,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     _limit = 20
   ): Promise<FinancialReport[]> {
     try {
@@ -156,7 +156,7 @@ export class ReportExportService {
     householdId: string,
     reportType: ReportType,
     filters: AnalyticsFilters,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     _exportOptions: ExportOptions
   ): Promise<Record<string, unknown>> {
     switch (reportType) {
@@ -384,8 +384,7 @@ export class ReportExportService {
   private async exportToPDF(
     report: FinancialReport,
     filePath: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _exportOptions: ExportOptions
+    exportOptions: ExportOptions
   ): Promise<void> {
     // This is a placeholder - in production, you'd use a library like puppeteer or pdfkit
     const htmlContent = this.generateHTMLReport(report, exportOptions);
@@ -403,7 +402,7 @@ export class ReportExportService {
    */
   private generateHTMLReport(
     report: FinancialReport, 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     _exportOptions: ExportOptions
   ): string {
     return `

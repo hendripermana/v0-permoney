@@ -37,6 +37,10 @@ export class CacheService {
     }
   }
 
+  async delete(key: string): Promise<void> {
+    await this.del(key);
+  }
+
   async reset(): Promise<void> {
     try {
       await this.cacheManager.reset();

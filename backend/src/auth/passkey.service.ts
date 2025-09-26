@@ -17,6 +17,8 @@ import type {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
+type AuthenticatorTransport = 'ble' | 'hybrid' | 'internal' | 'nfc' | 'usb';
+
 @Injectable()
 export class PasskeyService {
   private readonly rpName = 'Permoney';

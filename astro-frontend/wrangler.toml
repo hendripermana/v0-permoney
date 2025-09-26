@@ -1,0 +1,83 @@
+name = "permoney-astro"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Main application
+[build]
+command = "npm run build"
+cwd = "."
+watch_dir = "src"
+
+[build.upload]
+format = "service-worker"
+
+# Environment variables
+[vars]
+NODE_ENV = "production"
+PUBLIC_API_URL = "https://your-oracle-vm-ip:3001"
+
+# KV namespaces (for caching)
+[[kv_namespaces]]
+binding = "PERMONEY_CACHE"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+# Durable Objects (for real-time features)
+[[durable_objects.bindings]]
+name = "DURABLE_OBJECT"
+class_name = "PermoneyDurableObject"
+
+[[durable_objects.bindings]]
+name = "HOUSEHOLD_SESSION"
+class_name = "HouseholdSessionDurableObject"
+
+[[migrations]]
+tag = "v1" # Should be unique for each entry
+new_classes = ["PermoneyDurableObject", "HouseholdSessionDurableObject"]
+
+# Environment-specific configuration
+[env.production]
+name = "permoney-astro-prod"
+routes = [
+  "https://yourdomain.com/*"
+]
+
+[env.production.vars]
+NODE_ENV = "production"
+PUBLIC_API_URL = "https://your-oracle-vm-ip:3001"
+
+[env.staging]
+name = "permoney-astro-staging"
+routes = [
+  "https://staging.yourdomain.com/*"
+]
+
+[env.staging.vars]
+NODE_ENV = "staging"
+PUBLIC_API_URL = "https://your-oracle-vm-ip:3001"
+
+[env.preview]
+name = "permoney-astro-preview"
+
+[env.preview.vars]
+NODE_ENV = "development"
+PUBLIC_API_URL = "http://your-oracle-vm-ip:3001"
+
+# Cloudflare Pages Functions (for API proxy to Oracle VM)
+[pages]
+# Custom build configuration
+[pages.build]
+command = "npm run build"
+
+# API Functions
+[[pages.functions]]
+name = "api-proxy"
+runtime = "nodejs18"
+script_path = "api/index.js"
+
+# Proxy configuration for Oracle Cloud VM backend
+[pages.proxy]
+# Route API calls to Oracle VM
+/api/households/* = "https://your-oracle-vm-ip:3001/api/households/*"
+"/api/transactions/*" = "https://your-oracle-vm-ip:3001/api/transactions/*"
+"/api/accounts/*" = "https://your-oracle-vm-ip:3001/api/accounts/*"

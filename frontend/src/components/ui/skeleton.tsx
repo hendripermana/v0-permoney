@@ -37,14 +37,29 @@ function SkeletonText({ className, lines = 3, ...props }: React.HTMLAttributes<H
   )
 }
 
-function SkeletonAvatar({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+type SkeletonAvatarSize = "sm" | "md" | "lg"
+
+function SkeletonAvatar({
+  className,
+  size = "md",
+  showText = true,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { size?: SkeletonAvatarSize; showText?: boolean }) {
+  const avatarSizes: Record<SkeletonAvatarSize, string> = {
+    sm: "h-8 w-8",
+    md: "h-12 w-12",
+    lg: "h-16 w-16",
+  }
+
   return (
     <div className={cn("flex items-center space-x-4", className)} {...props}>
-      <Skeleton className="h-12 w-12 rounded-full" />
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-[250px]" />
-        <Skeleton className="h-4 w-[200px]" />
-      </div>
+      <Skeleton className={cn("rounded-full", avatarSizes[size])} />
+      {showText && (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      )}
     </div>
   )
 }
