@@ -1,27 +1,70 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
+# Dependencies
+node_modules/
+*/node_modules/
+**/.next/
+**/.astro/
+**/dist/
+**/build/
+**/out/
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
-/build
+# Astro
+/.astro/
+**/dist/
 
-# debug
+# Production builds
+/build
+**/build/
+
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
-# env files
+# Environment files
 .env*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# Cloudflare
+.wrangler/
+
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+**/*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+*.orig
+
+# Large files (GitHub warning)
+*.pack
+**/*.pack
