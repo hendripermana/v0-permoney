@@ -1,167 +1,240 @@
-# 🏗️ PerMoney System Architecture
+# 🏗️ Permoney Architecture
 
 ## Overview
 
-PerMoney is built as a modern, scalable personal finance management platform using a microservices architecture with clear separation of concerns and enterprise-grade security.
+Permoney is a modern full-stack personal finance management system built with a clean separation between frontend and backend.
 
-## System Architecture
+## Architecture Diagram
 
-### High-Level Architecture
-\`\`\`
+```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Client    │    │  Mobile Apps    │    │  Third-party    │
-│   (React/Vite)  │    │ (React Native)  │    │  Integrations   │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────┴─────────────┐
-                    │      API Gateway          │
-                    │   (Load Balancer/NGINX)   │
-                    └─────────────┬─────────────┘
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │     Backend Services      │
-                    │      (NestJS/Node.js)     │
-                    └─────────────┬─────────────┘
-                                  │
-          ┌───────────────────────┼───────────────────────┐
-          │                       │                       │
-┌─────────┴─────────┐   ┌─────────┴─────────┐   ┌─────────┴─────────┐
-│   PostgreSQL      │   │      Redis        │   │   External APIs   │
-│   (Primary DB)    │   │    (Cache/Queue)  │   │  (Banks/Services) │
-└───────────────────┘   └───────────────────┘   └───────────────────┘
-\`\`\`
+│   Frontend      │    │    Backend      │    │   Database      │
+│   (Next.js)     │◄──►│   (NestJS)      │◄──►│ (PostgreSQL)    │
+│                 │    │                 │    │                 │
+│ • React 19      │    │ • REST API      │    │ • Prisma ORM    │
+│ • TypeScript    │    │ • GraphQL       │    │ • Migrations    │
+│ • Tailwind CSS  │    │ • JWT Auth      │    │ • Seed Data     │
+│ • React Query   │    │ • Bull Queues   │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ## Technology Stack
 
-### Frontend Architecture
-- **Framework**: React 18 with Vite
-- **Language**: TypeScript 5.0+
-- **Styling**: Tailwind CSS with shadcn/ui
-- **State Management**: React Query + Zustand
-- **Routing**: React Router v6
-- **Charts**: Recharts for data visualization
-- **PWA**: Service Worker for offline support
+### Frontend
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS + shadcn/ui
+- **State Management**: React Query (TanStack Query)
+- **Forms**: React Hook Form + Zod validation
+- **Charts**: Recharts
+- **Authentication**: NextAuth.js
 
-### Backend Architecture
-- **Framework**: NestJS (Node.js)
-- **Language**: TypeScript 5.0+
-- **Database**: PostgreSQL 14+ with Drizzle ORM
-- **Caching**: Redis for sessions and data caching
-- **Authentication**: JWT with refresh tokens
-- **API**: RESTful with GraphQL for complex queries
-- **Queue**: Bull Queue for background jobs
+### Backend
+- **Framework**: NestJS
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT + Passport
+- **API**: REST + GraphQL
+- **Background Jobs**: Bull (Redis-based)
+- **Validation**: class-validator + class-transformer
 
 ### Infrastructure
-- **Deployment**: Vercel (Frontend) + Railway/Heroku (Backend)
-- **Database**: Neon PostgreSQL (managed)
-- **Cache**: Upstash Redis (managed)
-- **CDN**: Vercel Edge Network
-- **Monitoring**: Sentry for error tracking
-- **Analytics**: Custom analytics with privacy focus
+- **Deployment**: Vercel (Frontend + Serverless Backend)
+- **Database**: Vercel Postgres or any PostgreSQL
+- **File Storage**: Local/Cloud storage
+- **Monitoring**: Built-in health checks
 
-## Database Architecture
+## Project Structure
 
-### Core Entities
-\`\`\`sql
--- User Management
-users (id, email, password_hash, profile_data)
-households (id, name, settings, created_by)
-household_members (household_id, user_id, role, permissions)
+```
+permoney/
+├── frontend/                 # Next.js application
+│   ├── src/
+│   │   ├── app/             # App Router pages
+│   │   │   ├── (auth)/      # Auth pages (login, register)
+│   │   │   ├── dashboard/   # Main dashboard
+│   │   │   ├── accounts/    # Account management
+│   │   │   ├── transactions/# Transaction management
+│   │   │   ├── budgets/     # Budget planning
+│   │   │   ├── analytics/   # Financial analytics
+│   │   │   └── settings/    # User settings
+│   │   ├── components/      # Reusable UI components
+│   │   │   ├── ui/          # Base UI components (shadcn/ui)
+│   │   │   ├── forms/       # Form components
+│   │   │   ├── charts/      # Chart components
+│   │   │   ├── modals/      # Modal dialogs
+│   │   │   └── ...
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── lib/             # Utilities and configurations
+│   │   │   ├── api.ts       # API client
+│   │   │   ├── utils.ts     # Helper functions
+│   │   │   └── ...
+│   │   └── types/           # TypeScript definitions
+│   └── package.json
+├── backend/                  # NestJS application
+│   ├── src/
+│   │   ├── auth/            # Authentication module
+│   │   ├── users/           # User management
+│   │   ├── households/      # Household management
+│   │   ├── accounts/        # Account management
+│   │   ├── transactions/    # Transaction management
+│   │   ├── budgets/         # Budget management
+│   │   ├── categories/      # Category management
+│   │   ├── analytics/       # Analytics and insights
+│   │   ├── notifications/   # Notification system
+│   │   ├── common/          # Shared utilities
+│   │   └── main.ts          # Application entry point
+│   ├── prisma/              # Database schema and migrations
+│   │   ├── schema.prisma    # Database schema
+│   │   ├── migrations/      # Database migrations
+│   │   └── seed.ts          # Seed data
+│   └── package.json
+└── package.json              # Root workspace configuration
+```
 
--- Financial Core
-institutions (id, name, type, country, api_config)
-accounts (id, household_id, institution_id, type, balance)
-transactions (id, account_id, amount, category_id, date, description)
-categories (id, name, type, parent_id, household_id)
+## Data Flow
 
--- Advanced Features
-budgets (id, household_id, period, allocations)
-goals (id, household_id, target_amount, current_amount, deadline)
-debts (id, household_id, creditor, amount, interest_rate, type)
-investments (id, account_id, symbol, quantity, purchase_price)
+### 1. Authentication Flow
+```
+User → Frontend → Backend → JWT Token → Frontend (stored in localStorage)
+```
 
--- Islamic Finance
-zakat_calculations (id, user_id, year, assets, debts, amount_due)
-islamic_accounts (id, account_id, is_halal, compliance_notes)
+### 2. API Request Flow
+```
+Frontend Component → React Query → API Client → Backend Controller → Service → Prisma → Database
+```
 
--- Analytics & AI
-spending_patterns (id, user_id, category_id, predicted_amount, confidence)
-financial_insights (id, user_id, insight_type, data, generated_at)
-\`\`\`
+### 3. Real-time Updates
+```
+Backend Event → WebSocket/SSE → Frontend → React Query Cache Update → UI Re-render
+```
 
-### Data Relationships
-- **Hierarchical**: Users → Households → Accounts → Transactions
-- **Many-to-Many**: Users ↔ Households (with roles)
-- **Self-Referencing**: Categories (parent-child relationships)
-- **Time-Series**: Transactions, balances, exchange rates
+## Key Design Decisions
 
-## API Architecture
+### 1. **Monorepo Structure**
+- Single repository with separate frontend and backend
+- Shared TypeScript types and utilities
+- Simplified deployment and development
 
-### RESTful Endpoints
-\`\`\`
-Authentication:
-POST   /api/auth/login
-POST   /api/auth/register
-POST   /api/auth/refresh
-DELETE /api/auth/logout
+### 2. **Database Design**
+- Multi-tenant architecture with households
+- Comprehensive financial data modeling
+- Support for Islamic finance features
+- Optimized for analytics queries
 
-User Management:
-GET    /api/users/profile
-PUT    /api/users/profile
-GET    /api/users/households
+### 3. **API Design**
+- RESTful endpoints for CRUD operations
+- GraphQL for complex queries and real-time updates
+- Consistent error handling and validation
+- Proper HTTP status codes
 
-Financial Core:
-GET    /api/accounts
-POST   /api/accounts
-GET    /api/transactions
-POST   /api/transactions
-PUT    /api/transactions/:id
-DELETE /api/transactions/:id
+### 4. **State Management**
+- React Query for server state
+- React Context for global UI state
+- Local state for component-specific data
+- Optimistic updates for better UX
 
-Analytics:
-GET    /api/analytics/dashboard
-GET    /api/analytics/spending-patterns
-GET    /api/analytics/budget-analysis
-GET    /api/analytics/goal-progress
+### 5. **Security**
+- JWT-based authentication
+- Role-based access control (RBAC)
+- Input validation and sanitization
+- CORS and security headers
 
-Islamic Finance:
-GET    /api/islamic/zakat-calculation
-POST   /api/islamic/zakat-payment
-GET    /api/islamic/halal-investments
-\`\`\`
+## Development Workflow
 
-### GraphQL Schema
-```graphql
-type User {
-  id: ID!
-  email: String!
-  profile: UserProfile!
-  households: [Household!]!
-}
+### 1. **Local Development**
+```bash
+npm run dev  # Starts both frontend and backend
+```
 
-type Household {
-  id: ID!
-  name: String!
-  members: [HouseholdMember!]!
-  accounts: [Account!]!
-  budgets: [Budget!]!
-  goals: [Goal!]!
-}
+### 2. **Database Management**
+```bash
+npm run db:migrate  # Run migrations
+npm run db:seed     # Seed initial data
+npm run db:studio   # Open Prisma Studio
+```
 
-type Transaction {
-  id: ID!
-  account: Account!
-  amount: Float!
-  category: Category!
-  date: DateTime!
-  description: String
-  tags: [String!]!
-}
+### 3. **Testing**
+```bash
+npm run test        # Run all tests
+npm run lint        # Lint code
+```
 
-type Query {
-  dashboard: DashboardData!
-  transactions(filter: TransactionFilter): [Transaction!]!
-  budgetAnalysis(period: Period!): BudgetAnalysis!
-}
+### 4. **Deployment**
+```bash
+npm run build       # Build for production
+```
+
+## Performance Considerations
+
+### Frontend
+- **Code Splitting**: Automatic with Next.js App Router
+- **Image Optimization**: Next.js Image component
+- **Caching**: React Query with stale-while-revalidate
+- **Bundle Analysis**: Built-in Next.js analyzer
+
+### Backend
+- **Database Optimization**: Proper indexing and query optimization
+- **Caching**: Redis for session and query caching
+- **Background Jobs**: Bull queues for heavy operations
+- **Connection Pooling**: Prisma connection pooling
+
+### Database
+- **Indexing**: Strategic indexes on frequently queried columns
+- **Partitioning**: Time-based partitioning for large tables
+- **Archiving**: Automated archiving of old data
+- **Monitoring**: Query performance monitoring
+
+## Scalability
+
+### Horizontal Scaling
+- **Frontend**: CDN distribution via Vercel
+- **Backend**: Serverless functions auto-scale
+- **Database**: Read replicas for analytics queries
+
+### Vertical Scaling
+- **Database**: Upgrade instance size as needed
+- **Backend**: Increase memory/CPU for serverless functions
+- **Caching**: Redis cluster for high availability
+
+## Security
+
+### Authentication & Authorization
+- JWT tokens with refresh mechanism
+- Role-based permissions
+- Multi-factor authentication support
+- Session management
+
+### Data Protection
+- Input validation and sanitization
+- SQL injection prevention (Prisma)
+- XSS protection
+- CSRF protection
+- Rate limiting
+
+### Infrastructure Security
+- HTTPS everywhere
+- Security headers
+- Environment variable protection
+- Audit logging
+
+## Monitoring & Observability
+
+### Application Monitoring
+- Health check endpoints
+- Error tracking and logging
+- Performance metrics
+- User analytics
+
+### Database Monitoring
+- Query performance
+- Connection pool status
+- Storage usage
+- Backup status
+
+### Infrastructure Monitoring
+- Server response times
+- Memory and CPU usage
+- Network latency
+- Uptime monitoring

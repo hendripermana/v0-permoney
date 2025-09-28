@@ -110,9 +110,10 @@ export class MonitoringService {
 
   private async evaluateAlertRule(rule: AlertRule, metrics: any): Promise<boolean> {
     switch (rule.id) {
-      case "high-error-rate":
+      case "high-error-rate": {
         const errorRate = (metrics.errors / metrics.totalRequests) * 100
         return errorRate > rule.threshold
+      }
 
       case "high-response-time":
         return metrics.avgResponseTime > rule.threshold
@@ -120,10 +121,11 @@ export class MonitoringService {
       case "database-connection-issues":
         return metrics.dbConnectionFailures > rule.threshold
 
-      case "memory-usage-high":
+      case "memory-usage-high": {
         const memUsage = process.memoryUsage()
         const usagePercent = (memUsage.heapUsed / memUsage.heapTotal) * 100
         return usagePercent > rule.threshold
+      }
 
       default:
         return false

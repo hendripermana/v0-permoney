@@ -1,183 +1,137 @@
-const API_BASE_URL = process.env['NEXT_PUBLIC_API_URL'] || '/api';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-export interface ApiResponse<T = any> {
-  data?: T;
-  message?: string;
-  error?: string;
-}
+export type {
+  ViewType,
+  Household,
+  HouseholdMember,
+  HouseholdSettings,
+  CreateHouseholdData,
+  InviteMemberData,
+  UpdateMemberData,
+  FilteredViewData,
+} from '@/types/household';
 
-export interface Household {
-  id: string;
-  name: string;
-  baseCurrency: string;
-  settings: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
-  members: HouseholdMember[];
-}
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export interface HouseholdMember {
-  id: string;
-  userId: string;
-  householdId: string;
-  role: 'ADMIN' | 'PARTNER' | 'FINANCE_STAFF';
-  permissions: string[];
-  joinedAt: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl: string | null;
-  };
-}
+// Create axios instance
+const apiClient: AxiosInstance = axios.create({
+  baseURL: `${API_BASE_URL}/api`,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-export interface CreateHouseholdData {
-  name: string;
-  baseCurrency?: string;
-  settings?: Record<string, any>;
-}
-
-export interface InviteMemberData {
-  email: string;
-  role: 'ADMIN' | 'PARTNER' | 'FINANCE_STAFF';
-  permissions?: string[];
-}
-
-export interface UpdateMemberData {
-  role?: 'ADMIN' | 'PARTNER' | 'FINANCE_STAFF';
-  permissions?: string[];
-}
-
-export type ViewType = 'individual' | 'partner_only' | 'combined';
-
-class ApiClient {
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    };
-
-    // Add auth token if available
-    const token = localStorage.getItem('accessToken');
+// Request interceptor for auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
     if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-    const response = await fetch(url, config);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response: AxiosResponse) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
     }
-
-    return response.json();
+    return Promise.reject(error);
   }
+);
 
-  // Household API methods
-  async getHouseholds(): Promise<Household[]> {
-    return this.request<Household[]>('/households');
-  }
+// API Methods
+export const api = {
+  // Auth
+  auth: {
+    login: (credentials: { email: string; password: string }) =>
+      apiClient.post('/auth/login', credentials),
+    register: (userData: { email: string; password: string; name: string }) =>
+      apiClient.post('/auth/register', userData),
+    logout: () => apiClient.post('/auth/logout'),
+    me: () => apiClient.get('/auth/me'),
+  },
 
-  async getHousehold(id: string): Promise<Household> {
-    return this.request<Household>(`/households/${id}`);
-  }
+  // Households
+  households: {
+    list: () => apiClient.get('/households'),
+    get: (id: string) => apiClient.get(`/households/${id}`),
+    create: (data: any) => apiClient.post('/households', data),
+    update: (id: string, data: any) => apiClient.put(`/households/${id}`, data),
+    delete: (id: string) => apiClient.delete(`/households/${id}`),
+  },
 
-  async createHousehold(data: CreateHouseholdData): Promise<Household> {
-    return this.request<Household>('/households', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
+  // Accounts
+  accounts: {
+    list: (householdId: string) => apiClient.get(`/households/${householdId}/accounts`),
+    get: (id: string) => apiClient.get(`/accounts/${id}`),
+    create: (householdId: string, data: any) => 
+      apiClient.post(`/households/${householdId}/accounts`, data),
+    update: (id: string, data: any) => apiClient.put(`/accounts/${id}`, data),
+    delete: (id: string) => apiClient.delete(`/accounts/${id}`),
+  },
 
-  async updateHousehold(id: string, data: Partial<CreateHouseholdData>): Promise<Household> {
-    return this.request<Household>(`/households/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
+  // Transactions
+  transactions: {
+    list: (householdId: string, params?: any) => 
+      apiClient.get(`/households/${householdId}/transactions`, { params }),
+    get: (id: string) => apiClient.get(`/transactions/${id}`),
+    create: (householdId: string, data: any) => 
+      apiClient.post(`/households/${householdId}/transactions`, data),
+    update: (id: string, data: any) => apiClient.put(`/transactions/${id}`, data),
+    delete: (id: string) => apiClient.delete(`/transactions/${id}`),
+  },
 
-  async deleteHousehold(id: string): Promise<void> {
-    await this.request(`/households/${id}`, {
-      method: 'DELETE',
-    });
-  }
+  // Categories
+  categories: {
+    list: (householdId?: string) => 
+      apiClient.get('/categories', { params: { householdId } }),
+    get: (id: string) => apiClient.get(`/categories/${id}`),
+    create: (data: any) => apiClient.post('/categories', data),
+    update: (id: string, data: any) => apiClient.put(`/categories/${id}`, data),
+    delete: (id: string) => apiClient.delete(`/categories/${id}`),
+  },
 
-  async inviteMember(householdId: string, data: InviteMemberData): Promise<ApiResponse> {
-    return this.request<ApiResponse>(`/households/${householdId}/members`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
+  // Budgets
+  budgets: {
+    list: (householdId: string) => apiClient.get(`/households/${householdId}/budgets`),
+    get: (id: string) => apiClient.get(`/budgets/${id}`),
+    create: (householdId: string, data: any) => 
+      apiClient.post(`/households/${householdId}/budgets`, data),
+    update: (id: string, data: any) => apiClient.put(`/budgets/${id}`, data),
+    delete: (id: string) => apiClient.delete(`/budgets/${id}`),
+  },
 
-  async getMembers(householdId: string): Promise<HouseholdMember[]> {
-    return this.request<HouseholdMember[]>(`/households/${householdId}/members`);
-  }
+  // Analytics
+  analytics: {
+    dashboard: (householdId: string) => 
+      apiClient.get(`/households/${householdId}/analytics/dashboard`),
+    spending: (householdId: string, params?: any) => 
+      apiClient.get(`/households/${householdId}/analytics/spending`, { params }),
+    income: (householdId: string, params?: any) => 
+      apiClient.get(`/households/${householdId}/analytics/income`, { params }),
+    trends: (householdId: string, params?: any) => 
+      apiClient.get(`/households/${householdId}/analytics/trends`, { params }),
+  },
 
-  async updateMember(
-    householdId: string,
-    memberId: string,
-    data: UpdateMemberData
-  ): Promise<ApiResponse> {
-    return this.request<ApiResponse>(`/households/${householdId}/members/${memberId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
+  // Notifications
+  notifications: {
+    list: (params?: any) => apiClient.get('/notifications', { params }),
+    markAsRead: (id: string) => apiClient.put(`/notifications/${id}/read`),
+    markAllAsRead: () => apiClient.put('/notifications/read-all'),
+  },
+};
 
-  async removeMember(householdId: string, memberId: string): Promise<void> {
-    await this.request(`/households/${householdId}/members/${memberId}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async updateSettings(householdId: string, settings: Record<string, any>): Promise<Household> {
-    return this.request<Household>(`/households/${householdId}/settings`, {
-      method: 'PUT',
-      body: JSON.stringify(settings),
-    });
-  }
-
-  async getFilteredData(householdId: string, viewType: ViewType): Promise<{
-    allowedUserIds: string[];
-    allowedAccountIds: string[];
-  }> {
-    return this.request(`/households/${householdId}/filtered-data?viewType=${viewType}`);
-  }
-
-  async checkPermission(householdId: string, permission: string): Promise<{ hasPermission: boolean }> {
-    return this.request(`/households/${householdId}/permissions/${permission}`);
-  }
-
-  async getUserRole(householdId: string): Promise<{ role: string | null }> {
-    return this.request(`/households/${householdId}/role`);
-  }
-
-  async getAvailablePermissions(): Promise<{
-    permissions: string[];
-    permissionsByCategory: Record<string, string[]>;
-    roleDefaults: Record<string, string[]>;
-  }> {
-    return this.request('/households/permissions');
-  }
-
-  async getHouseholdPermissions(householdId: string): Promise<{
-    permissions: string[];
-    role: string | null;
-    permissionDescriptions: Record<string, string>;
-  }> {
-    return this.request(`/households/${householdId}/permissions`);
-  }
-}
-
-export const apiClient = new ApiClient();
+export default apiClient;

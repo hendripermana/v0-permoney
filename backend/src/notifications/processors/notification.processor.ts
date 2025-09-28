@@ -42,14 +42,13 @@ export class NotificationProcessor {
       }
 
       const results = await Promise.allSettled(
-        notification.channels.map(channel => 
+        notification.channels.map(channel =>
           this.sendNotificationByChannel(notification, channel)
         )
       );
 
       // Update notification status based on results
       const hasSuccess = results.some(result => result.status === 'fulfilled' && result.value);
-      const allFailed = results.every(result => result.status === 'rejected' || !result.value);
 
       await this.prisma.notification.update({
         where: { id: notificationId },
@@ -103,7 +102,7 @@ export class NotificationProcessor {
 
       // Send the notification
       const results = await Promise.allSettled(
-        notification.channels.map(channel => 
+        notification.channels.map(channel =>
           this.sendNotificationByChannel(notification, channel)
         )
       );
@@ -249,7 +248,7 @@ export class NotificationProcessor {
           );
           break;
 
-        case NotificationChannel.PUSH:
+        case NotificationChannel.PUSH: {
           const pushResult = await this.pushNotificationService.sendPushNotification(
             notification.userId,
             notification.type,
@@ -261,14 +260,19 @@ export class NotificationProcessor {
                 actionUrl: notification.actionUrl,
                 ...notification.metadata,
               },
-              actions: notification.actionUrl ? [{
-                action: 'view',
-                title: notification.actionText || 'View',
-              }] : undefined,
+              actions: notification.actionUrl
+                ? [
+                    {
+                      action: 'view',
+                      title: notification.actionText || 'View',
+                    },
+                  ]
+                : undefined,
             }
           );
           success = pushResult.success > 0;
           break;
+        }
 
         default:
           this.logger.warn(`Unknown notification channel: ${channel}`);

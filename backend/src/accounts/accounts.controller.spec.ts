@@ -3,7 +3,7 @@ import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdAccessGuard } from '../household/guards/household-access.guard';
-import { AccountType } from '@prisma/client';
+import { AccountType } from '../../../node_modules/.prisma/client';
 
 describe('AccountsController', () => {
   let controller: AccountsController;

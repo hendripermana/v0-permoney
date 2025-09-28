@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsArray } from 'class-validator';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../../node_modules/.prisma/client';
 
 export class InviteMemberDto {
   @IsEmail()

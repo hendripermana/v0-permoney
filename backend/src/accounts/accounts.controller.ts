@@ -12,10 +12,9 @@ import {
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto } from './dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdAccessGuard } from '../household/guards/household-access.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { AccountType } from '../types/database.types';
+import { AccountType } from '../../../node_modules/.prisma/client';
 
 interface UserPayload {
   sub: string;
@@ -24,7 +23,7 @@ interface UserPayload {
 }
 
 @Controller('accounts')
-@UseGuards(JwtAuthGuard, HouseholdAccessGuard)
+@UseGuards(HouseholdAccessGuard)
 export class AccountsController {
   constructor(private accountsService: AccountsService) {}
 
@@ -34,8 +33,9 @@ export class AccountsController {
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
     return this.accountsService.createAccount(
-      createAccountDto,
       user.householdId,
+      createAccountDto,
+      user.sub,
     );
   }
 
@@ -44,9 +44,10 @@ export class AccountsController {
     @Query() filters: AccountFiltersDto,
     @CurrentUser() user: UserPayload,
   ): Promise<any[]> {
-    return this.accountsService.getAccounts(
+    return this.accountsService.getAccountsByHousehold(
       user.householdId,
       filters,
+      user.sub,
     );
   }
 
@@ -58,6 +59,7 @@ export class AccountsController {
     return this.accountsService.getAccountsGrouped(
       user.householdId,
       filters,
+      user.sub,
     );
   }
 
@@ -74,7 +76,7 @@ export class AccountsController {
     @Query() filters: AccountFiltersDto,
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
-    return this.accountsService.getNetWorth(
+    return this.accountsService.getNetWorthSummary(
       user.householdId,
       currency,
       filters,
@@ -93,7 +95,7 @@ export class AccountsController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
-    return this.accountsService.getAccount(id, user.householdId);
+    return this.accountsService.getAccountById(id, user.householdId);
   }
 
   @Get(':id/balance')
@@ -125,7 +127,7 @@ export class AccountsController {
     @Body() updateAccountDto: UpdateAccountDto,
     @CurrentUser() user: UserPayload,
   ): Promise<any> {
-    return this.accountsService.updateAccount(id, updateAccountDto, user.householdId);
+    return this.accountsService.updateAccount(id, user.householdId, updateAccountDto);
   }
 
   @Delete(':id')

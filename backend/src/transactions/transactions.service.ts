@@ -280,7 +280,7 @@ export class TransactionsService {
     const totalAmount = totalIncome + totalExpenses;
     const averageTransactionAmount = transactions.length > 0 
       ? totalAmount / transactions.length 
-      : BigInt(0);
+      : 0;
 
     return {
       totalTransactions: transactions.length,

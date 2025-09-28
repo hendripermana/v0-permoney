@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../../node_modules/.prisma/client';
 import { CreateTransactionDto, UpdateTransactionDto, TransactionFiltersDto, TransactionSearchDto } from './dto';
 import {
   TransactionWithDetails,
@@ -36,8 +36,8 @@ export class TransactionsRepository {
     householdId: string,
     data: CreateTransactionDto,
     createdBy: string,
-  ): Promise<TransactionWithDetails> {
-    return this.prisma.$transaction(async (tx) => {
+  ): Promise<any> {
+      const transaction = await this.prisma.$transaction(async (tx) => {
       // Validate accounts exist and belong to household
       const account = await tx.account.findFirst({
         where: { id: data.accountId, householdId },
@@ -83,9 +83,6 @@ export class TransactionsRepository {
         include: this.getTransactionInclude(),
       });
 
-      // Create ledger entries
-      await this.createLedgerEntries(tx, transaction, account.type);
-
       // Create transaction splits if provided
       if (data.splits && data.splits.length > 0) {
         await tx.transactionSplit.createMany({
@@ -98,6 +95,9 @@ export class TransactionsRepository {
         });
       }
 
+      // Create ledger entries
+      await this.createLedgerEntries(tx, transaction, account.type);
+
       // Create transaction tags if provided
       if (data.tags && data.tags.length > 0) {
         await tx.transactionTag.createMany({
@@ -108,7 +108,7 @@ export class TransactionsRepository {
         });
       }
 
-      return transaction;
+      return transaction as unknown as TransactionWithDetails;
     });
   }
 
@@ -119,8 +119,8 @@ export class TransactionsRepository {
     id: string,
     householdId: string,
     data: UpdateTransactionDto,
-  ): Promise<TransactionWithDetails> {
-    return this.prisma.$transaction(async (tx) => {
+  ): Promise<any> {
+      const transaction = await this.prisma.$transaction(async (tx) => {
       // Verify transaction exists and belongs to household
       const existingTransaction = await tx.transaction.findFirst({
         where: { id, householdId },
@@ -142,8 +142,8 @@ export class TransactionsRepository {
         data: {
           ...(data.amountCents !== undefined && { amountCents: BigInt(data.amountCents) }),
           ...(data.currency && { currency: data.currency }),
-          ...(data.originalAmountCents !== undefined && { 
-            originalAmountCents: data.originalAmountCents ? BigInt(data.originalAmountCents) : null 
+          ...(data.originalAmountCents !== undefined && {
+            originalAmountCents: data.originalAmountCents ? BigInt(data.originalAmountCents) : null
           }),
           ...(data.originalCurrency !== undefined && { originalCurrency: data.originalCurrency }),
           ...(data.exchangeRate !== undefined && { exchangeRate: data.exchangeRate }),
@@ -152,7 +152,6 @@ export class TransactionsRepository {
           ...(data.merchant !== undefined && { merchant: data.merchant }),
           ...(data.merchantName !== undefined && { merchantName: data.merchantName }),
           ...(data.date && { date: new Date(data.date) }),
-          ...(data.accountId && { accountId: data.accountId }),
           ...(data.transferAccountId !== undefined && { transferAccountId: data.transferAccountId }),
           ...(data.receiptUrl !== undefined && { receiptUrl: data.receiptUrl }),
           ...(data.metadata && { metadata: data.metadata }),
@@ -173,7 +172,13 @@ export class TransactionsRepository {
       // Recreate ledger entries
       await this.createLedgerEntries(tx, updatedTransaction, account.type);
 
-      return updatedTransaction;
+      // Fetch the complete transaction with splits to ensure proper typing
+      const completeTransaction = await tx.transaction.findUnique({
+        where: { id: updatedTransaction.id },
+        include: this.getTransactionInclude(),
+      });
+
+      return transaction as unknown as TransactionWithDetails;
     });
   }
 
@@ -189,19 +194,18 @@ export class TransactionsRepository {
     const where = this.buildWhereClause(householdId, filters);
     const orderBy = this.buildOrderByClause(filters.sortBy, filters.sortOrder);
 
-    const [transactions, total] = await Promise.all([
-      this.prisma.transaction.findMany({
-        where,
-        include: this.getTransactionInclude(),
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.transaction.count({ where }),
-    ]);
+    const transactions = await this.prisma.transaction.findMany({
+      where,
+      include: this.getTransactionInclude(),
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const total = await this.prisma.transaction.count({ where });
 
     return {
-      transactions,
+      transactions: transactions as unknown as TransactionWithDetails[],
       total,
       page,
       limit,
@@ -213,10 +217,12 @@ export class TransactionsRepository {
    * Find a single transaction by ID
    */
   async findById(id: string, householdId: string): Promise<TransactionWithDetails | null> {
-    return this.prisma.transaction.findFirst({
+    const transaction = await this.prisma.transaction.findFirst({
       where: { id, householdId },
       include: this.getTransactionInclude(),
     });
+
+    return transaction as unknown as TransactionWithDetails;
   }
 
   /**
@@ -266,19 +272,18 @@ export class TransactionsRepository {
       ],
     };
 
-    const [transactions, total] = await Promise.all([
-      this.prisma.transaction.findMany({
-        where,
-        include: this.getTransactionInclude(),
-        orderBy: { date: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.transaction.count({ where }),
-    ]);
+    const transactions = await this.prisma.transaction.findMany({
+      where,
+      include: this.getTransactionInclude(),
+      orderBy: { date: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const total = await this.prisma.transaction.count({ where });
 
     return {
-      transactions,
+      transactions: transactions as unknown as TransactionWithDetails[],
       total,
       page,
       limit,

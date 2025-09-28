@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AccountsService } from './accounts.service';
 import { AccountsRepository } from './accounts.repository';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { AccountType } from '@prisma/client';
+import { AccountType } from '../../../node_modules/.prisma/client';
 
 describe('AccountsService', () => {
   let service: AccountsService;

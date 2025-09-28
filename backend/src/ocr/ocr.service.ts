@@ -6,6 +6,8 @@ import { ReceiptProcessingService } from './services/receipt-processing.service'
 import { BankStatementProcessingService } from './services/bank-statement-processing.service';
 import { TransactionSuggestionService } from './services/transaction-suggestion.service';
 import { OCRMetricsService } from './ocr.metrics';
+import type { Express } from 'express';
+import { Prisma } from '@prisma/client';
 import {
   DocumentUpload,
   DocumentType,
@@ -13,9 +15,43 @@ import {
   OCRResult,
   TransactionSuggestion,
   ValidationResult,
+  ExtractedData,
 } from './types/ocr.types';
 import { UploadDocumentDto, ProcessDocumentDto, ValidateOcrResultDto } from './dto/upload-document.dto';
 import { ApproveTransactionSuggestionDto } from './dto/create-transaction-suggestion.dto';
+
+const JSON_DATE_SERIALIZER = (_key: string, value: unknown) => {
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+  return value
+}
+
+const serializeToJson = (value: unknown): Prisma.InputJsonValue => {
+  if (value === undefined) {
+    return Prisma.JsonNull
+  }
+
+  const serialized = JSON.stringify(value, JSON_DATE_SERIALIZER)
+
+  if (serialized === undefined) {
+    return Prisma.JsonNull
+  }
+
+  return JSON.parse(serialized) as Prisma.InputJsonValue
+}
+
+const isJsonObject = (value: Prisma.JsonValue | null | undefined): value is Prisma.JsonObject => {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+const deserializeJson = <T>(value: Prisma.JsonValue | null | undefined, fallback: T): T => {
+  if (value === null || value === undefined) {
+    return fallback
+  }
+
+  return value as unknown as T
+}
 
 @Injectable()
 export class OcrService {
@@ -431,10 +467,14 @@ export class OcrService {
           id: ocrResult.id,
           documentType: ocrResult.documentType as DocumentType,
           confidence: parseFloat(ocrResult.confidence.toString()),
-          extractedData: ocrResult.extractedData as ExtractedData,
+          extractedData: deserializeJson<ExtractedData>(ocrResult.extractedData, {} as ExtractedData),
           rawText: ocrResult.rawText,
           processedAt: ocrResult.processedAt,
-          metadata: ocrResult.metadata as any,
+          metadata: deserializeJson<OCRMetadata>(ocrResult.metadata, {
+            processingTime: 0,
+            ocrEngine: "",
+            documentFormat: "UNKNOWN",
+          }),
         };
       }
 
@@ -451,11 +491,18 @@ export class OcrService {
           suggestedCategoryName: suggestion.suggestedCategory?.name || undefined,
           confidence: parseFloat(suggestion.confidence.toString()),
           source: suggestion.source as 'RECEIPT' | 'BANK_STATEMENT',
-          metadata: {
-            ocrResultId: suggestion.ocrResultId || '',
-            originalText: suggestion.metadata ? (suggestion.metadata as any).originalText : undefined,
-            lineItemIndex: suggestion.metadata ? (suggestion.metadata as any).lineItemIndex : undefined,
-          },
+          metadata: (() => {
+            const rawMetadata = deserializeJson<Record<string, unknown>>(suggestion.metadata, {} as Record<string, unknown>)
+            const originalText = typeof rawMetadata.originalText === "string" ? rawMetadata.originalText : undefined
+            const lineItemIndexValue = rawMetadata.lineItemIndex
+            const lineItemIndex = typeof lineItemIndexValue === "number" ? lineItemIndexValue : undefined
+
+            return {
+              ocrResultId: suggestion.ocrResultId || '',
+              originalText,
+              lineItemIndex,
+            }
+          })(),
         }));
       }
 
@@ -494,9 +541,9 @@ export class OcrService {
           documentId,
           documentType: ocrResult.documentType,
           confidence: ocrResult.confidence,
-          extractedData: ocrResult.extractedData,
+          extractedData: serializeToJson(ocrResult.extractedData),
           rawText: ocrResult.rawText,
-          metadata: ocrResult.metadata,
+          metadata: serializeToJson(ocrResult.metadata),
           processedAt: ocrResult.processedAt,
         },
       });
@@ -515,7 +562,7 @@ export class OcrService {
             suggestedCategoryId: suggestion.suggestedCategoryId,
             confidence: suggestion.confidence,
             source: suggestion.source,
-            metadata: suggestion.metadata,
+            metadata: serializeToJson(suggestion.metadata),
           })),
         });
       }
@@ -542,10 +589,14 @@ export class OcrService {
         id: ocrResult.id,
         documentType: ocrResult.documentType as DocumentType,
         confidence: parseFloat(ocrResult.confidence.toString()),
-        extractedData: ocrResult.extractedData as ExtractedData,
+        extractedData: deserializeJson<ExtractedData>(ocrResult.extractedData, {} as ExtractedData),
         rawText: ocrResult.rawText,
         processedAt: ocrResult.processedAt,
-        metadata: ocrResult.metadata as any,
+        metadata: deserializeJson<OCRMetadata>(ocrResult.metadata, {
+          processingTime: 0,
+          ocrEngine: "",
+          documentFormat: "UNKNOWN",
+        }),
       };
     } catch (error) {
       this.logger.error(`Failed to get OCR result by ID: ${error.message}`, error.stack);

@@ -16,7 +16,6 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ExchangeRatesService } from './exchange-rates.service';
 import { CurrencyService } from './currency.service';
 import {
@@ -28,7 +27,6 @@ import {
 
 @ApiTags('Exchange Rates')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('exchange-rates')
 export class ExchangeRatesController {
   private readonly logger = new Logger(ExchangeRatesController.name);

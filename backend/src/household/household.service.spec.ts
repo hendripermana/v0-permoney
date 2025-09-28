@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../node_modules/.prisma/client';
 import { HouseholdService } from './household.service';
 import { HouseholdRepository } from './household.repository';
 import { PermissionsService } from './services/permissions.service';

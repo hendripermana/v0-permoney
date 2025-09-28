@@ -1,0 +1,1140 @@
+// Permoney Enterprise Database Schema
+// Comprehensive personal finance management system with multi-user household support
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
+model User {
+  id                  String    @id @default(uuid()) @db.Uuid
+  clerkId             String?   @unique // Clerk user ID for authentication
+  email               String    @unique
+  passwordHash        String? // Optional for passkey-only users or Clerk users
+  name                String
+  avatarUrl           String?
+  isActive            Boolean   @default(true)
+  emailVerified       Boolean   @default(false)
+  lastLoginAt         DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  householdMembers             HouseholdMember[]
+  passkeys                     Passkey[]
+  sessions                     Session[]
+  emailVerifications           EmailVerification[]
+  passwordResets               PasswordReset[]
+  createdTransactions          Transaction[]            @relation("TransactionCreator")
+  createdGratitudeEntries      GratitudeEntry[]         @relation("GratitudeCreator")
+  createdRecurringTransactions RecurringTransaction[]   @relation("RecurringTransactionCreator")
+  uploadedDocuments            DocumentUpload[]         @relation("DocumentUploader")
+  userEvents                   UserEvent[]
+  shariaReviews                ShariaCompliantAccount[] @relation("ShariaReviewer")
+  generatedIslamicReports      IslamicFinanceReport[]   @relation("IslamicReportGenerator")
+  notifications                Notification[]
+  notificationPreferences      NotificationPreference?
+  pushSubscriptions            PushSubscription[]
+
+  @@map("users")
+}
+
+model Household {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  baseCurrency String   @default("IDR") @db.VarChar(3)
+  settings     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  members               HouseholdMember[]
+  accounts              Account[]
+  transactions          Transaction[]
+  debts                 Debt[]
+  budgets               Budget[]
+  gratitudeEntries      GratitudeEntry[]
+  categories            Category[]
+  recurringTransactions RecurringTransaction[]
+  documentUploads       DocumentUpload[]
+  userEvents            UserEvent[]
+  spendingPatterns      SpendingPattern[]
+  financialInsights     FinancialInsight[]
+  zakatCalculations     ZakatCalculation[]
+  zakatReminders        ZakatReminder[]
+  zakatPayments         ZakatPayment[]
+  islamicFinanceReports IslamicFinanceReport[]
+  notifications         Notification[]
+
+  @@map("households")
+}
+
+model HouseholdMember {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @db.Uuid
+  householdId String        @db.Uuid
+  role        HouseholdRole
+  permissions Json          @default("[]")
+  joinedAt    DateTime      @default(now())
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, householdId])
+  @@map("household_members")
+}
+
+model Institution {
+  id        String          @id @default(uuid()) @db.Uuid
+  name      String
+  code      String?         @unique
+  logoUrl   String?
+  country   String          @default("ID") @db.VarChar(2)
+  type      InstitutionType
+  createdAt DateTime        @default(now())
+
+  // Relations
+  accounts Account[]
+
+  @@map("institutions")
+}
+
+// ============================================================================
+// FINANCIAL ENTITIES
+// ============================================================================
+
+model Account {
+  id            String      @id @default(uuid()) @db.Uuid
+  householdId   String      @db.Uuid
+  name          String
+  type          AccountType
+  subtype       String
+  currency      String      @default("IDR") @db.VarChar(3)
+  institutionId String?     @db.Uuid
+  accountNumber String?
+  balanceCents  BigInt      @default(0)
+  isActive      Boolean     @default(true)
+  ownerId       String?     @db.Uuid // For individual accounts
+  metadata      Json        @default("{}")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  household                     Household               @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  institution                   Institution?            @relation(fields: [institutionId], references: [id])
+  transactions                  Transaction[]
+  transferTransactions          Transaction[]           @relation("TransferAccount")
+  recurringTransactions         RecurringTransaction[]
+  recurringTransferTransactions RecurringTransaction[]  @relation("RecurringTransferAccount")
+  ledgerEntries                 LedgerEntry[]
+  zakatAssetBreakdown           ZakatAssetBreakdown[]
+  shariaCompliance              ShariaCompliantAccount?
+
+  @@map("accounts")
+}
+
+model Merchant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique // URL-friendly identifier
+  logoUrl   String?
+  color     String? // Brand color for UI consistency
+  createdAt DateTime @default(now())
+
+  // Relations
+  transactions Transaction[]
+
+  @@map("merchants")
+}
+
+model Category {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String // URL-friendly ID for frontend routing or SEO
+  icon        String? // Optional emoji or string-based icon for UI purposes
+  color       String? // Optional color code (HEX or Tailwind-compatible) for visual styling
+  type        CategoryType // ENUM — one of income, expense, debt, asset, liability, investment, other
+  parentId    String?      @db.Uuid // allows nesting (e.g., parent and subcategories)
+  householdId String?      @db.Uuid // null means it's a global default category, otherwise belongs to a specific household
+  isActive    Boolean      @default(true)
+  isEditable  Boolean      @default(true) // Users can rename/edit this category
+  isArchived  Boolean      @default(false) // Archive unused categories without deleting historical data
+  sortOrder   Int? // Optional integer to allow manual ordering in the UI
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  household              Household?              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  parent                 Category?               @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children               Category[]              @relation("CategoryHierarchy")
+  transactions           Transaction[]
+  transactionSplits      TransactionSplit[]
+  budgetCategories       BudgetCategory[]
+  recurringTransactions  RecurringTransaction[]
+  gratitudeEntries       GratitudeEntry[]
+  transactionSuggestions TransactionSuggestion[]
+
+  @@unique([householdId, slug])
+  @@index([householdId, type])
+  @@index([parentId])
+  @@index([type, isActive])
+  @@map("categories")
+}
+
+model Transaction {
+  id                  String   @id @default(uuid()) @db.Uuid
+  householdId         String   @db.Uuid
+  amountCents         BigInt
+  currency            String   @default("IDR") @db.VarChar(3)
+  originalAmountCents BigInt?
+  originalCurrency    String?  @db.VarChar(3)
+  exchangeRate        Decimal? @db.Decimal(15, 8)
+  description         String
+  categoryId          String?  @db.Uuid
+  merchant            String? // Raw merchant name from transaction data
+  merchantId          String?  @db.Uuid // Reference to enriched merchant data
+  merchantName        String? // Enriched/cleaned merchant name
+  merchantLogoUrl     String? // Merchant logo for visual recognition
+  merchantColor       String? // Merchant brand color for UI consistency
+  date                DateTime @db.Date
+  accountId           String   @db.Uuid
+  transferAccountId   String?  @db.Uuid // For transfers
+  receiptUrl          String?
+  metadata            Json     @default("{}")
+  createdBy           String   @db.Uuid
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  household                      Household                       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account                        Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transferAccount                Account?                        @relation("TransferAccount", fields: [transferAccountId], references: [id])
+  category                       Category?                       @relation(fields: [categoryId], references: [id])
+  merchantData                   Merchant?                       @relation(fields: [merchantId], references: [id])
+  creator                        User                            @relation("TransactionCreator", fields: [createdBy], references: [id])
+  tags                           TransactionTag[]
+  splits                         TransactionSplit[]
+  ledgerEntries                  LedgerEntry[]
+  recurringTransactionExecutions RecurringTransactionExecution[]
+  gratitudeEntries               GratitudeEntry[]
+  createdFromSuggestion          TransactionSuggestion[]         @relation("TransactionFromSuggestion")
+  zakatPayments                  ZakatPayment[]
+
+  @@index([householdId, date])
+  @@index([accountId, date])
+  @@index([categoryId])
+  @@index([merchant])
+  @@index([merchantId])
+  @@index([merchantName])
+  @@index([amountCents, date])
+  @@map("transactions")
+}
+
+model TransactionTag {
+  transactionId String @db.Uuid
+  tag           String
+
+  // Relations
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tag])
+  @@map("transaction_tags")
+}
+
+model TransactionSplit {
+  id            String   @id @default(uuid()) @db.Uuid
+  transactionId String   @db.Uuid
+  categoryId    String   @db.Uuid
+  amountCents   BigInt
+  description   String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  category    Category    @relation(fields: [categoryId], references: [id])
+
+  @@map("transaction_splits")
+}
+
+model LedgerEntry {
+  id            String     @id @default(uuid()) @db.Uuid
+  transactionId String     @db.Uuid
+  accountId     String     @db.Uuid
+  type          LedgerType
+  amountCents   BigInt
+  currency      String     @default("IDR") @db.VarChar(3)
+  createdAt     DateTime   @default(now())
+
+  // Relations
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  account     Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([transactionId])
+  @@map("ledger_entries")
+}
+
+// ============================================================================
+// DEBT MANAGEMENT
+// ============================================================================
+
+model Debt {
+  id                   String    @id @default(uuid()) @db.Uuid
+  householdId          String    @db.Uuid
+  type                 DebtType
+  name                 String
+  creditor             String
+  principalAmountCents BigInt
+  currentBalanceCents  BigInt
+  currency             String    @default("IDR") @db.VarChar(3)
+  interestRate         Decimal?  @db.Decimal(5, 4)
+  marginRate           Decimal?  @db.Decimal(5, 4)
+  startDate            DateTime  @db.Date
+  maturityDate         DateTime? @db.Date
+  isActive             Boolean   @default(true)
+  metadata             Json      @default("{}")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relations
+  household Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  payments  DebtPayment[]
+
+  @@index([householdId])
+  @@map("debts")
+}
+
+model DebtPayment {
+  id                   String   @id @default(uuid()) @db.Uuid
+  debtId               String   @db.Uuid
+  amountCents          BigInt
+  currency             String   @default("IDR") @db.VarChar(3)
+  paymentDate          DateTime @db.Date
+  principalAmountCents BigInt
+  interestAmountCents  BigInt   @default(0)
+  transactionId        String?  @db.Uuid
+  createdAt            DateTime @default(now())
+
+  // Relations
+  debt Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("debt_payments")
+}
+
+// ============================================================================
+// BUDGETING & PLANNING
+// ============================================================================
+
+model Budget {
+  id                  String       @id @default(uuid()) @db.Uuid
+  householdId         String       @db.Uuid
+  name                String
+  period              BudgetPeriod
+  totalAllocatedCents BigInt
+  currency            String       @default("IDR") @db.VarChar(3)
+  startDate           DateTime     @db.Date
+  endDate             DateTime     @db.Date
+  isActive            Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  // Relations
+  household  Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  categories BudgetCategory[]
+
+  @@index([householdId, isActive])
+  @@map("budgets")
+}
+
+model BudgetCategory {
+  id                   String   @id @default(uuid()) @db.Uuid
+  budgetId             String   @db.Uuid
+  categoryId           String   @db.Uuid
+  allocatedAmountCents BigInt
+  spentAmountCents     BigInt   @default(0)
+  carryOverCents       BigInt   @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  // Composite unique constraint for budget-category relationship
+  @@unique([budgetId, categoryId])
+  @@map("budget_categories")
+}
+
+// GRATITUDE & SOCIAL FEATURES
+// ============================================================================
+
+model GratitudeEntry {
+  id                  String        @id @default(uuid()) @db.Uuid
+  householdId         String        @db.Uuid
+  giver               String
+  type                GratitudeType
+  categoryId          String?       @db.Uuid
+  transactionId       String?       @db.Uuid // Link to the original transaction this gratitude is associated with
+  estimatedValueCents BigInt?
+  currency            String?       @default("IDR") @db.VarChar(3)
+  description         String
+  date                DateTime      @db.Date
+  createdBy           String        @db.Uuid
+  createdAt           DateTime      @default(now())
+
+  // Relations
+  household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category    Category?    @relation(fields: [categoryId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+  creator     User         @relation("GratitudeCreator", fields: [createdBy], references: [id])
+
+  @@index([householdId, date])
+  @@index([transactionId])
+  @@index([giver, householdId])
+  @@map("gratitude_entries")
+}
+
+// ============================================================================
+// EXCHANGE RATES & MULTI-CURRENCY
+// ============================================================================
+
+model ExchangeRate {
+  id           String   @id @default(uuid()) @db.Uuid
+  fromCurrency String   @db.VarChar(3)
+  toCurrency   String   @db.VarChar(3)
+  rate         Decimal  @db.Decimal(15, 8)
+  date         DateTime @db.Date
+  source       String?
+  createdAt    DateTime @default(now())
+
+  @@unique([fromCurrency, toCurrency, date])
+  @@index([fromCurrency, toCurrency, date])
+  @@map("exchange_rates")
+}
+
+// ============================================================================
+// AUTHENTICATION & SECURITY
+// ============================================================================
+
+model Passkey {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  name         String // User-friendly name for the passkey
+  credentialId String    @unique // Base64 encoded credential ID
+  publicKey    String // Base64 encoded public key
+  counter      Int       @default(0)
+  transports   String[] // Array of transport types (usb, nfc, ble, internal)
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("passkeys")
+}
+
+model Session {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
+  token            String    @unique
+  refreshToken     String?   @unique
+  expiresAt        DateTime
+  refreshExpiresAt DateTime?
+  userAgent        String?
+  ipAddress        String?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  lastUsedAt       DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+// ANALYTICS & EVENT SOURCING
+// ============================================================================
+
+model UserEvent {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  householdId  String   @db.Uuid
+  eventType    String
+  eventData    Json     @default("{}")
+  resourceType String?
+  resourceId   String?  @db.Uuid
+  sessionId    String?
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, eventType, timestamp])
+  @@index([userId, timestamp])
+  @@map("user_events")
+}
+
+model SpendingPattern {
+  id                 String   @id @default(uuid()) @db.Uuid
+  householdId        String   @db.Uuid
+  userId             String?  @db.Uuid
+  patternType        String // 'DAILY', 'WEEKLY', 'MONTHLY', 'SEASONAL'
+  categoryId         String?  @db.Uuid
+  merchant           String?
+  dayOfWeek          Int? // 0-6 for weekly patterns
+  hourOfDay          Int? // 0-23 for daily patterns
+  month              Int? // 1-12 for seasonal patterns
+  averageAmountCents BigInt
+  frequency          Int
+  confidenceScore    Decimal  @default(0.0) @db.Decimal(3, 2)
+  lastUpdated        DateTime @default(now())
+
+  // Relations
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, patternType])
+  @@map("spending_patterns")
+}
+
+model FinancialInsight {
+  id           String          @id @default(uuid()) @db.Uuid
+  householdId  String          @db.Uuid
+  insightType  String
+  title        String
+  description  String
+  data         Json            @default("{}")
+  priority     InsightPriority
+  isActionable Boolean         @default(false)
+  isDismissed  Boolean         @default(false)
+  validUntil   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, priority, createdAt])
+  @@index([insightType, validUntil])
+  @@map("financial_insights")
+}
+
+// ============================================================================
+// RECURRING TRANSACTIONS
+// ============================================================================
+
+model RecurringTransaction {
+  id                String                     @id @default(uuid()) @db.Uuid
+  householdId       String                     @db.Uuid
+  name              String
+  description       String
+  amountCents       BigInt
+  currency          String                     @default("IDR") @db.VarChar(3)
+  accountId         String                     @db.Uuid
+  transferAccountId String?                    @db.Uuid
+  categoryId        String?                    @db.Uuid
+  merchant          String?
+  frequency         RecurrenceFrequency
+  intervalValue     Int                        @default(1)
+  startDate         DateTime                   @db.Date
+  endDate           DateTime?                  @db.Date
+  nextExecutionDate DateTime                   @db.Date
+  lastExecutionDate DateTime?                  @db.Date
+  executionCount    Int                        @default(0)
+  maxExecutions     Int?
+  status            RecurringTransactionStatus @default(ACTIVE)
+  metadata          Json                       @default("{}")
+  createdBy         String                     @db.Uuid
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  // Relations
+  household       Household                       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account         Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transferAccount Account?                        @relation("RecurringTransferAccount", fields: [transferAccountId], references: [id])
+  category        Category?                       @relation(fields: [categoryId], references: [id])
+  creator         User                            @relation("RecurringTransactionCreator", fields: [createdBy], references: [id])
+  executions      RecurringTransactionExecution[]
+
+  @@index([householdId])
+  @@index([accountId])
+  @@index([nextExecutionDate])
+  @@index([status])
+  @@map("recurring_transactions")
+}
+
+model RecurringTransactionExecution {
+  id                     String    @id @default(uuid()) @db.Uuid
+  recurringTransactionId String    @db.Uuid
+  transactionId          String?   @db.Uuid
+  scheduledDate          DateTime  @db.Date
+  executedDate           DateTime?
+  status                 String    @default("PENDING")
+  errorMessage           String?
+  retryCount             Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  // Relations
+  recurringTransaction RecurringTransaction @relation(fields: [recurringTransactionId], references: [id], onDelete: Cascade)
+  transaction          Transaction?         @relation(fields: [transactionId], references: [id])
+
+  @@index([recurringTransactionId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("recurring_transaction_executions")
+}
+
+// ============================================================================
+// OCR & DOCUMENT PROCESSING
+// ============================================================================
+
+model DocumentUpload {
+  id           String           @id @default(uuid()) @db.Uuid
+  householdId  String           @db.Uuid
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  documentType DocumentType
+  status       ProcessingStatus @default(PENDING)
+  uploadedBy   String           @db.Uuid
+  uploadedAt   DateTime         @default(now())
+  processedAt  DateTime?
+  storageUrl   String
+  description  String?
+  metadata     Json             @default("{}")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  household              Household               @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  uploader               User                    @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+  ocrResults             OcrResult[]
+  transactionSuggestions TransactionSuggestion[]
+
+  @@index([householdId])
+  @@index([uploadedBy])
+  @@index([status])
+  @@index([documentType])
+  @@map("document_uploads")
+}
+
+model OcrResult {
+  id            String       @id @default(uuid()) @db.Uuid
+  documentId    String       @db.Uuid
+  documentType  DocumentType
+  confidence    Decimal      @db.Decimal(3, 2)
+  extractedData Json         @default("{}")
+  rawText       String
+  processedAt   DateTime     @default(now())
+  metadata      Json         @default("{}")
+  createdAt     DateTime     @default(now())
+
+  // Relations
+  document               DocumentUpload          @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  transactionSuggestions TransactionSuggestion[]
+
+  @@index([documentId])
+  @@index([documentType])
+  @@index([confidence])
+  @@map("ocr_results")
+}
+
+model TransactionSuggestion {
+  id                    String    @id @default(uuid()) @db.Uuid
+  documentId            String    @db.Uuid
+  ocrResultId           String?   @db.Uuid
+  description           String
+  amountCents           BigInt
+  currency              String    @default("IDR") @db.VarChar(3)
+  date                  DateTime  @db.Date
+  merchant              String?
+  suggestedCategoryId   String?   @db.Uuid
+  suggestedCategoryName String?
+  confidence            Decimal   @db.Decimal(3, 2)
+  source                String // 'RECEIPT' or 'BANK_STATEMENT'
+  status                String    @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED'
+  isApproved            Boolean   @default(false)
+  approvedAt            DateTime?
+  metadata              Json      @default("{}")
+  createdTransactionId  String?   @db.Uuid
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  document           DocumentUpload @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  ocrResult          OcrResult?     @relation(fields: [ocrResultId], references: [id], onDelete: Cascade)
+  suggestedCategory  Category?      @relation(fields: [suggestedCategoryId], references: [id])
+  createdTransaction Transaction?   @relation("TransactionFromSuggestion", fields: [createdTransactionId], references: [id])
+
+  @@index([documentId])
+  @@index([ocrResultId])
+  @@index([status])
+  @@index([source])
+  @@index([suggestedCategoryId])
+  @@index([isApproved])
+  @@map("transaction_suggestions")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum HouseholdRole {
+  ADMIN
+  PARTNER
+  FINANCE_STAFF
+}
+
+enum InstitutionType {
+  BANK
+  FINTECH
+  INVESTMENT
+  CRYPTO
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+  DEBT
+  ASSET
+  LIABILITY
+  INVESTMENT
+  OTHER
+}
+
+enum LedgerType {
+  DEBIT
+  CREDIT
+}
+
+enum DebtType {
+  PERSONAL
+  CONVENTIONAL
+  ISLAMIC
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum GratitudeType {
+  TREAT
+  HELP
+  GIFT
+}
+
+enum InsightPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  CUSTOM
+}
+
+enum RecurringTransactionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum DocumentType {
+  RECEIPT
+  BANK_STATEMENT
+  INVOICE
+  OTHER
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REQUIRES_REVIEW
+}
+
+// ============================================================================
+// ISLAMIC FINANCE & ZAKAT MANAGEMENT
+// ============================================================================
+
+model ZakatCalculation {
+  id                        String   @id @default(uuid()) @db.Uuid
+  householdId               String   @db.Uuid
+  calculationDate           DateTime @db.Date
+  hijriYear                 Int
+  nisabThresholdCents       BigInt
+  totalZakatableAssetsCents BigInt
+  zakatAmountCents          BigInt
+  currency                  String   @default("IDR") @db.VarChar(3)
+  isZakatDue                Boolean  @default(false)
+  nextCalculationDate       DateTime @db.Date
+  metadata                  Json     @default("{}")
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  // Relations
+  household      Household             @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  assetBreakdown ZakatAssetBreakdown[]
+  zakatPayments  ZakatPayment[]
+
+  @@index([householdId])
+  @@index([calculationDate])
+  @@index([hijriYear])
+  @@map("zakat_calculations")
+}
+
+model ZakatAssetBreakdown {
+  id                 String         @id @default(uuid()) @db.Uuid
+  zakatCalculationId String         @db.Uuid
+  assetType          ZakatAssetType
+  accountId          String?        @db.Uuid
+  accountName        String?
+  amountCents        BigInt
+  currency           String         @default("IDR") @db.VarChar(3)
+  zakatRate          Decimal        @db.Decimal(5, 4)
+  zakatAmountCents   BigInt
+  haulCompleted      Boolean        @default(false)
+  haulStartDate      DateTime?      @db.Date
+  metadata           Json           @default("{}")
+  createdAt          DateTime       @default(now())
+
+  // Relations
+  zakatCalculation ZakatCalculation @relation(fields: [zakatCalculationId], references: [id], onDelete: Cascade)
+  account          Account?         @relation(fields: [accountId], references: [id])
+
+  @@index([zakatCalculationId])
+  @@index([assetType])
+  @@index([accountId])
+  @@map("zakat_asset_breakdown")
+}
+
+model ZakatReminder {
+  id               String            @id @default(uuid()) @db.Uuid
+  householdId      String            @db.Uuid
+  reminderType     ZakatReminderType
+  scheduledDate    DateTime          @db.Date
+  hijriDate        String
+  zakatAmountCents BigInt?
+  currency         String?           @default("IDR") @db.VarChar(3)
+  message          String
+  isActive         Boolean           @default(true)
+  isSent           Boolean           @default(false)
+  sentAt           DateTime?
+  metadata         Json              @default("{}")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Relations
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@index([scheduledDate])
+  @@index([reminderType])
+  @@index([isActive, isSent])
+  @@map("zakat_reminders")
+}
+
+model ZakatPayment {
+  id                 String   @id @default(uuid()) @db.Uuid
+  zakatCalculationId String?  @db.Uuid
+  householdId        String   @db.Uuid
+  amountCents        BigInt
+  currency           String   @default("IDR") @db.VarChar(3)
+  paymentDate        DateTime @db.Date
+  hijriDate          String
+  transactionId      String?  @db.Uuid
+  notes              String?
+  metadata           Json     @default("{}")
+  createdAt          DateTime @default(now())
+
+  // Relations
+  zakatCalculation ZakatCalculation? @relation(fields: [zakatCalculationId], references: [id])
+  household        Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  transaction      Transaction?      @relation(fields: [transactionId], references: [id])
+
+  @@index([householdId])
+  @@index([paymentDate])
+  @@index([zakatCalculationId])
+  @@index([transactionId])
+  @@map("zakat_payments")
+}
+
+model ShariaCompliantAccount {
+  id               String                 @id @default(uuid()) @db.Uuid
+  accountId        String                 @db.Uuid
+  complianceStatus ShariaComplianceStatus
+  complianceNotes  String?
+  lastReviewDate   DateTime               @db.Date
+  nextReviewDate   DateTime               @db.Date
+  reviewedBy       String?                @db.Uuid
+  metadata         Json                   @default("{}")
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  // Relations
+  account  Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  reviewer User?   @relation("ShariaReviewer", fields: [reviewedBy], references: [id])
+
+  @@unique([accountId])
+  @@index([complianceStatus])
+  @@index([nextReviewDate])
+  @@map("sharia_compliant_accounts")
+}
+
+model IslamicFinanceReport {
+  id              String            @id @default(uuid()) @db.Uuid
+  householdId     String            @db.Uuid
+  reportType      IslamicReportType
+  periodStartDate DateTime          @db.Date
+  periodEndDate   DateTime          @db.Date
+  periodType      String            @default("MONTHLY")
+  reportData      Json              @default("{}")
+  generatedAt     DateTime          @default(now())
+  generatedBy     String?           @db.Uuid
+  metadata        Json              @default("{}")
+  createdAt       DateTime          @default(now())
+
+  // Relations
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  generator User?     @relation("IslamicReportGenerator", fields: [generatedBy], references: [id])
+
+  @@index([householdId])
+  @@index([reportType])
+  @@index([periodStartDate, periodEndDate])
+  @@index([generatedAt])
+  @@map("islamic_finance_reports")
+}
+
+// ============================================================================
+// ISLAMIC FINANCE ENUMS
+// ============================================================================
+
+enum ZakatAssetType {
+  CASH
+  GOLD
+  SILVER
+  BUSINESS_ASSETS
+  INVESTMENT
+  SAVINGS
+  CRYPTOCURRENCY
+}
+
+enum ZakatReminderType {
+  ANNUAL_CALCULATION
+  PAYMENT_DUE
+  HAUL_COMPLETION
+  NISAB_THRESHOLD_MET
+}
+
+enum ShariaComplianceStatus {
+  COMPLIANT
+  NON_COMPLIANT
+  UNDER_REVIEW
+  QUESTIONABLE
+}
+
+enum IslamicReportType {
+  ZAKAT_CALCULATION
+  SHARIA_COMPLIANCE
+  ISLAMIC_DEBT_SUMMARY
+  HALAAL_INCOME_ANALYSIS
+  COMPREHENSIVE
+}
+
+// ============================================================================
+// NOTIFICATION SYSTEM
+// ============================================================================
+
+model Notification {
+  id          String                @id @default(uuid()) @db.Uuid
+  userId      String                @db.Uuid
+  householdId String                @db.Uuid
+  type        NotificationType
+  title       String
+  message     String
+  actionUrl   String?
+  actionText  String?
+  metadata    Json                  @default("{}")
+  priority    NotificationPriority  @default(MEDIUM)
+  status      NotificationStatus    @default(PENDING)
+  channels    NotificationChannel[]
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  readAt      DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  // Relations
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household  Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+
+  @@index([userId, status])
+  @@index([householdId, type])
+  @@index([scheduledAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationDelivery {
+  id             String              @id @default(uuid()) @db.Uuid
+  notificationId String              @db.Uuid
+  channel        NotificationChannel
+  status         NotificationStatus  @default(PENDING)
+  deliveredAt    DateTime?
+  failureReason  String?
+  retryCount     Int                 @default(0)
+  metadata       Json                @default("{}")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  // Relations
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([channel, status])
+  @@map("notification_deliveries")
+}
+
+model NotificationPreference {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @unique @db.Uuid
+  budgetAlerts      Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"threshold\": 80}")
+  debtReminders     Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"daysBefore\": 3}")
+  zakatReminders    Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"daysBefore\": 30}")
+  transactionAlerts Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\"], \"largeAmountThreshold\": 1000000}")
+  monthlyReports    Json     @default("{\"enabled\": true, \"channels\": [\"EMAIL\"], \"dayOfMonth\": 1}")
+  securityAlerts    Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\", \"PUSH\"]}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  endpoint  String
+  p256dh    String
+  auth      String
+  userAgent String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId, isActive])
+  @@map("push_subscriptions")
+}
+
+model EmailTemplate {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String           @unique
+  type        NotificationType
+  subject     String
+  htmlContent String
+  textContent String
+  variables   Json             @default("[]")
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([type])
+  @@map("email_templates")
+}
+
+enum NotificationType {
+  BUDGET_EXCEEDED
+  BUDGET_WARNING
+  DEBT_PAYMENT_DUE
+  ZAKAT_REMINDER
+  TRANSACTION_CREATED
+  ACCOUNT_BALANCE_LOW
+  RECURRING_TRANSACTION_FAILED
+  MONTHLY_REPORT_READY
+  SECURITY_ALERT
+  HOUSEHOLD_INVITATION
+  SYSTEM_MAINTENANCE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}

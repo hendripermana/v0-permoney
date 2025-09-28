@@ -3,7 +3,6 @@ export enum NotificationType {
   BUDGET_WARNING = 'BUDGET_WARNING',
   DEBT_PAYMENT_DUE = 'DEBT_PAYMENT_DUE',
   ZAKAT_REMINDER = 'ZAKAT_REMINDER',
-  PRICE_ALERT = 'PRICE_ALERT',
   TRANSACTION_CREATED = 'TRANSACTION_CREATED',
   ACCOUNT_BALANCE_LOW = 'ACCOUNT_BALANCE_LOW',
   RECURRING_TRANSACTION_FAILED = 'RECURRING_TRANSACTION_FAILED',
@@ -57,11 +56,6 @@ export interface NotificationPreferences {
     enabled: boolean;
     channels: NotificationChannel[];
     daysBefore: number;
-  };
-  priceAlerts: {
-    enabled: boolean;
-    channels: NotificationChannel[];
-    priceDropPercentage: number;
   };
   transactionAlerts: {
     enabled: boolean;

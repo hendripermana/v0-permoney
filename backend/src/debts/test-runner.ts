@@ -483,4 +483,4 @@ if (require.main === module) {
     });
 }
 
-export { DebtTestRunner, QAReport, TestResult };
+export type { DebtTestRunner, QAReport, TestResult };

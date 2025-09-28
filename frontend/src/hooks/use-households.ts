@@ -1,13 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  apiClient, 
-  Household, 
-  HouseholdMember, 
-  CreateHouseholdData, 
-  InviteMemberData, 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import apiClient from '@/lib/api-client';
+import type {
+  AvailablePermissionsResponse,
+  CreateHouseholdData,
+  FilteredViewData,
+  Household,
+  HouseholdMember,
+  HouseholdRoleResponse,
+  HouseholdSettings,
+  InviteMemberData,
+  PermissionCheckResponse,
   UpdateMemberData,
-  ViewType 
-} from '../lib/api';
+  ViewType,
+} from '@/types/household';
 
 // Query keys
 export const householdKeys = {
@@ -26,14 +31,14 @@ export const householdKeys = {
 
 // Households queries
 export function useHouseholds() {
-  return useQuery({
+  return useQuery<Household[]>({
     queryKey: householdKeys.lists(),
     queryFn: () => apiClient.getHouseholds(),
   });
 }
 
 export function useHousehold(id: string) {
-  return useQuery({
+  return useQuery<Household>({
     queryKey: householdKeys.detail(id),
     queryFn: () => apiClient.getHousehold(id),
     enabled: !!id,
@@ -41,7 +46,7 @@ export function useHousehold(id: string) {
 }
 
 export function useHouseholdMembers(householdId: string) {
-  return useQuery({
+  return useQuery<HouseholdMember[]>({
     queryKey: householdKeys.members(householdId),
     queryFn: () => apiClient.getMembers(householdId),
     enabled: !!householdId,
@@ -49,7 +54,7 @@ export function useHouseholdMembers(householdId: string) {
 }
 
 export function useFilteredData(householdId: string, viewType: ViewType) {
-  return useQuery({
+  return useQuery<FilteredViewData>({
     queryKey: householdKeys.filteredData(householdId, viewType),
     queryFn: () => apiClient.getFilteredData(householdId, viewType),
     enabled: !!householdId,
@@ -57,7 +62,7 @@ export function useFilteredData(householdId: string, viewType: ViewType) {
 }
 
 export function useHouseholdPermission(householdId: string, permission: string) {
-  return useQuery({
+  return useQuery<PermissionCheckResponse>({
     queryKey: householdKeys.permissions(householdId, permission),
     queryFn: () => apiClient.checkPermission(householdId, permission),
     enabled: !!householdId && !!permission,
@@ -65,7 +70,7 @@ export function useHouseholdPermission(householdId: string, permission: string) 
 }
 
 export function useUserRole(householdId: string) {
-  return useQuery({
+  return useQuery<HouseholdRoleResponse>({
     queryKey: householdKeys.role(householdId),
     queryFn: () => apiClient.getUserRole(householdId),
     enabled: !!householdId,
@@ -73,14 +78,14 @@ export function useUserRole(householdId: string) {
 }
 
 export function useAvailablePermissions() {
-  return useQuery({
+  return useQuery<AvailablePermissionsResponse>({
     queryKey: ['permissions', 'available'],
     queryFn: () => apiClient.getAvailablePermissions(),
   });
 }
 
 export function useHouseholdPermissions(householdId: string) {
-  return useQuery({
+  return useQuery<string[]>({
     queryKey: [...householdKeys.detail(householdId), 'user-permissions'],
     queryFn: () => apiClient.getHouseholdPermissions(householdId),
     enabled: !!householdId,
@@ -91,7 +96,7 @@ export function useHouseholdPermissions(householdId: string) {
 export function useCreateHousehold() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Household, Error, CreateHouseholdData>({
     mutationFn: (data: CreateHouseholdData) => apiClient.createHousehold(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: householdKeys.lists() });
@@ -102,8 +107,12 @@ export function useCreateHousehold() {
 export function useUpdateHousehold() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateHouseholdData> }) =>
+  return useMutation<
+    Household,
+    Error,
+    { id: string; data: Partial<CreateHouseholdData> & { settings?: HouseholdSettings } }
+  >({
+    mutationFn: ({ id, data }) =>
       apiClient.updateHousehold(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: householdKeys.detail(id) });
@@ -115,7 +124,7 @@ export function useUpdateHousehold() {
 export function useDeleteHousehold() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<void, Error, string>({
     mutationFn: (id: string) => apiClient.deleteHousehold(id),
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: householdKeys.detail(id) });
@@ -128,7 +137,11 @@ export function useDeleteHousehold() {
 export function useInviteMember() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    { message: string },
+    Error,
+    { householdId: string; data: InviteMemberData }
+  >({
     mutationFn: ({ householdId, data }: { householdId: string; data: InviteMemberData }) =>
       apiClient.inviteMember(householdId, data),
     onSuccess: (_, { householdId }) => {
@@ -141,7 +154,11 @@ export function useInviteMember() {
 export function useUpdateMember() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    { message: string },
+    Error,
+    { householdId: string; memberId: string; data: UpdateMemberData }
+  >({
     mutationFn: ({ 
       householdId, 
       memberId, 
@@ -162,7 +179,7 @@ export function useUpdateMember() {
 export function useRemoveMember() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<void, Error, { householdId: string; memberId: string }>({
     mutationFn: ({ householdId, memberId }: { householdId: string; memberId: string }) =>
       apiClient.removeMember(householdId, memberId),
     onSuccess: (_, { householdId }) => {
@@ -175,8 +192,12 @@ export function useRemoveMember() {
 export function useUpdateSettings() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ householdId, settings }: { householdId: string; settings: Record<string, any> }) =>
+  return useMutation<
+    HouseholdSettings,
+    Error,
+    { householdId: string; settings: Record<string, unknown> }
+  >({
+    mutationFn: ({ householdId, settings }) =>
       apiClient.updateSettings(householdId, settings),
     onSuccess: (_, { householdId }) => {
       queryClient.invalidateQueries({ queryKey: householdKeys.detail(householdId) });

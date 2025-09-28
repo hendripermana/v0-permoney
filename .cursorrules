@@ -1,0 +1,400 @@
+# Cursor AI Rules for Permoney Project
+
+## Project Overview
+Permoney is a personal finance management application built with Next.js (frontend) and NestJS (backend). The project focuses on core financial management features: authentication, household management, accounts, transactions, budgets, debts, and exchange rates.
+
+## Tech Stack
+- **Frontend**: Next.js 15.2.4, React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: NestJS, TypeScript, Prisma ORM, PostgreSQL
+- **Authentication**: JWT-based
+- **Database**: PostgreSQL with Prisma
+
+## Core Principles
+
+### 1. Keep It Simple
+- Focus on core financial management features only
+- Avoid over-engineering or adding unnecessary complexity
+- Maintain clean, readable, and maintainable code
+
+### 2. Type Safety First
+- Use TypeScript strictly, avoid `any` types
+- Define proper interfaces and types for all data structures
+- Use proper type annotations for functions and components
+
+### 3. Follow Established Patterns
+- Use existing code patterns and conventions
+- Maintain consistency with current architecture
+- Don't introduce new patterns without justification
+
+## What NOT to Do
+
+### ❌ Forbidden Features
+DO NOT add or suggest these features (they were removed for good reasons):
+- AI/ML integrations or insights
+- OCR document processing
+- Islamic finance modules
+- Wishlist management
+- Gratitude journaling
+- Advanced analytics and reporting
+- Security audit systems
+- Real-time notifications
+- GraphQL APIs
+- Caching systems
+- Health monitoring
+- Performance monitoring
+- Event processing systems
+
+### ❌ Forbidden Actions
+- DO NOT create multiple versions of the same module
+- DO NOT add workarounds or temporary solutions
+- DO NOT hardcode values or configurations
+- DO NOT create documentation for non-existent features
+- DO NOT add dependencies without clear justification
+- DO NOT suggest using other frontend frameworks (Astro, Vue, etc.)
+- DO NOT create `.env` files in subdirectories (backend/, frontend/, etc.)
+- DO NOT duplicate environment variables across multiple files
+- DO NOT modify `.env.local` or other variant files
+- DO NOT use environment variables from anywhere except the root `.env` file
+
+## What TO Do
+
+### 🏠 Environment Configuration
+
+#### Single Source of Truth
+- **ALWAYS use** the root `.env` file as the single source of truth for all environment variables
+- **ALWAYS read** environment variables from the root `.env` file only
+- **NEVER create** `.env` files in `backend/`, `frontend/`, or any subdirectories
+- **NEVER duplicate** environment variables across multiple files
+
+#### Configuration Structure
+```
+📁 v0-permoney/
+├── .env                    # 🟢 Single source of truth
+├── .env.backup            # 🟢 Backup file
+├── backend/               # ❌ No .env files here
+├── frontend/              # ❌ No .env files here
+└── [other directories]    # ❌ No .env files here
+```
+
+#### Required Environment Variables
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/permoney"
+
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_your-key"
+CLERK_SECRET_KEY="sk_test_your-key"
+
+# Application Settings
+PORT="3001"
+NODE_ENV="development"
+```
+
+### ✅ Core Development Guidelines
+
+#### Frontend Development
+- Use Next.js App Router patterns
+- Implement proper TypeScript types
+- Use Tailwind CSS for styling
+- Follow shadcn/ui component patterns
+- Implement proper error handling and loading states
+- Use React hooks appropriately
+- Maintain responsive design
+
+#### Backend Development
+- Use NestJS decorators and dependency injection
+- Implement proper validation with class-validator
+- Use Prisma ORM for database operations
+- Follow service-controller-repository patterns
+- Implement proper error handling
+- Use proper logging
+- Maintain type safety
+
+#### Database Operations
+- Use Prisma ORM exclusively
+- Implement proper migrations
+- Use transactions for complex operations
+- Implement proper indexing
+- Handle database errors gracefully
+
+### ✅ Code Quality Standards
+
+#### TypeScript
+```typescript
+// Good: Proper type definitions
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+// Bad: Using any
+function processUser(user: any) { ... }
+```
+
+#### React Components
+```typescript
+// Good: Proper component structure
+interface ComponentProps {
+  title: string;
+  onAction: () => void;
+}
+
+export function Component({ title, onAction }: ComponentProps) {
+  const [loading, setLoading] = useState(false);
+  
+  return (
+    <div className="p-4">
+      <h1>{title}</h1>
+      <button onClick={onAction} disabled={loading}>
+        {loading ? 'Loading...' : 'Action'}
+      </button>
+    </div>
+  );
+}
+```
+
+#### NestJS Services
+```typescript
+// Good: Proper service structure
+@Injectable()
+export class EntityService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly logger: Logger,
+  ) {}
+
+  async create(data: CreateEntityDto): Promise<Entity> {
+    try {
+      return await this.prisma.entity.create({ data });
+    } catch (error) {
+      this.logger.error('Failed to create entity', error);
+      throw new BadRequestException('Failed to create entity');
+    }
+  }
+}
+```
+
+### ✅ File Organization
+
+#### Frontend Structure
+```
+frontend/src/
+├── app/                 # Next.js App Router
+│   ├── (auth)/         # Auth route group
+│   ├── dashboard/      # Dashboard pages
+│   ├── transactions/   # Transaction pages
+│   └── layout.tsx      # Root layout
+├── components/         # Reusable components
+│   ├── ui/            # Base UI components (shadcn/ui)
+│   ├── forms/         # Form components
+│   └── layout/        # Layout components
+├── hooks/             # Custom React hooks
+├── lib/               # Utilities and configurations
+└── types/             # TypeScript type definitions
+```
+
+#### Backend Structure
+```
+backend/src/
+├── app/               # Main application module
+├── auth/              # Authentication module
+├── accounts/          # Account management
+├── transactions/      # Transaction management
+├── budgets/           # Budget management
+├── debts/             # Debt management
+├── household/         # Household management
+├── exchange-rates/    # Exchange rate management
+└── prisma/            # Database service
+```
+
+### ✅ Naming Conventions
+
+#### Files and Directories
+- **Files**: kebab-case (e.g., `user-profile.tsx`, `transaction-form.tsx`)
+- **Directories**: kebab-case (e.g., `user-management/`, `transaction-history/`)
+- **Components**: PascalCase (e.g., `UserProfile`, `TransactionForm`)
+- **Functions**: camelCase (e.g., `getUserData`, `createTransaction`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `API_BASE_URL`, `MAX_RETRY_ATTEMPTS`)
+- **Types/Interfaces**: PascalCase (e.g., `UserProfile`, `TransactionData`)
+
+### ✅ Error Handling
+
+#### Frontend Error Handling
+```typescript
+// Good: Proper error handling
+const { data, error, loading } = useQuery({
+  queryKey: ['transactions'],
+  queryFn: fetchTransactions,
+  onError: (error) => {
+    toast.error('Failed to load transactions');
+    console.error('Transaction fetch error:', error);
+  },
+});
+
+if (error) {
+  return <ErrorDisplay message="Failed to load transactions" />;
+}
+```
+
+#### Backend Error Handling
+```typescript
+// Good: Proper error handling
+@Post()
+async create(@Body() createDto: CreateEntityDto): Promise<Entity> {
+  try {
+    return await this.entityService.create(createDto);
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      throw new BadRequestException('Invalid data provided');
+    }
+    throw new InternalServerErrorException('Failed to create entity');
+  }
+}
+```
+
+### ✅ Testing Guidelines
+
+#### Frontend Testing
+```typescript
+// Good: Component testing
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Component } from './component';
+
+describe('Component', () => {
+  it('renders correctly', () => {
+    render(<Component title="Test" onAction={jest.fn()} />);
+    expect(screen.getByText('Test')).toBeInTheDocument();
+  });
+
+  it('calls onAction when button is clicked', () => {
+    const mockAction = jest.fn();
+    render(<Component title="Test" onAction={mockAction} />);
+    fireEvent.click(screen.getByRole('button'));
+    expect(mockAction).toHaveBeenCalled();
+  });
+});
+```
+
+#### Backend Testing
+```typescript
+// Good: Service testing
+describe('EntityService', () => {
+  let service: EntityService;
+  let prisma: PrismaService;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [EntityService, PrismaService],
+    }).compile();
+
+    service = module.get<EntityService>(EntityService);
+    prisma = module.get<PrismaService>(PrismaService);
+  });
+
+  it('should create entity', async () => {
+    const createDto = { name: 'Test Entity' };
+    const result = await service.create(createDto);
+    expect(result.name).toBe('Test Entity');
+  });
+});
+```
+
+### ✅ Performance Guidelines
+
+#### Frontend Performance
+- Use React.memo for expensive components
+- Implement proper loading states
+- Use dynamic imports for code splitting
+- Optimize images with Next.js Image component
+- Implement proper caching strategies
+
+#### Backend Performance
+- Use database indexes appropriately
+- Implement proper pagination
+- Use connection pooling
+- Optimize database queries
+- Implement proper caching where needed
+
+### ✅ Security Guidelines
+
+#### Authentication
+- Use JWT tokens for session management
+- Implement proper route guards
+- Validate all user inputs
+- Use Prisma ORM to prevent SQL injection
+- Sanitize user inputs to prevent XSS
+
+#### Data Protection
+- Never log sensitive information
+- Use environment variables for configuration
+- Implement proper error handling without exposing internals
+- Use HTTPS in production
+- Implement proper CORS policies
+
+## Current Project Status
+
+### ✅ Implemented Features
+- User authentication and authorization
+- Household management
+- Account management
+- Transaction management
+- Budget management
+- Debt management
+- Exchange rate management
+- Database schema and migrations
+- API endpoints for all core features
+- Frontend pages and components
+- Responsive design
+- Error handling and validation
+
+### 🚧 Areas for Improvement
+- Enhanced error messages and user feedback
+- Better loading states and skeletons
+- Improved form validation and UX
+- Performance optimizations
+- Additional test coverage
+- Better mobile responsiveness
+- Enhanced accessibility features
+
+## Key Commands
+
+```bash
+# Development
+npm run dev                    # Start development servers
+npm run build                  # Build for production
+npm run test                   # Run tests
+npm run lint                   # Run linter
+npm run db:setup              # Setup database
+npm run db:seed               # Seed database
+npm run db:studio             # Open Prisma Studio
+
+# Backend specific
+cd backend && npm run start:dev    # Start backend dev server
+cd backend && npm run db:generate  # Generate Prisma client
+cd backend && npm run db:migrate   # Run database migrations
+
+# Frontend specific
+cd frontend && npm run dev         # Start frontend dev server
+cd frontend && npm run build       # Build frontend
+cd frontend && npm run start       # Start production server
+```
+
+## Important Files to Reference
+- `AGENTS.md` - Comprehensive AI agent documentation
+- `README.md` - Project overview and setup
+- `QUICK_START.md` - Quick setup guide
+- `DEVELOPMENT_SETUP_MAC_M1.md` - Development environment setup
+- `backend/README-DATABASE-SETUP.md` - Database setup guide
+- `docs/ARCHITECTURE.md` - System architecture
+
+## Remember
+- Focus on core financial management features
+- Maintain code quality and consistency
+- Follow established patterns and conventions
+- Avoid adding unnecessary complexity
+- Keep implementations simple and maintainable
+- Always consider type safety and error handling
+- Write tests for new functionality
+- Update documentation when making changes

@@ -6,6 +6,7 @@ import { PerformanceMonitoringService, AlertRule } from '../common/monitoring/pe
 import { MetricsService } from '../common/metrics/metrics.service';
 import { StructuredLoggerService } from '../common/logging/logger.service';
 import { PrismaService } from '../prisma/prisma.service';
+import * as os from 'os';
 
 @Controller('monitoring')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -203,7 +204,6 @@ export class MonitoringController {
 
   private async getSystemMetrics() {
     const memUsage = process.memoryUsage();
-    const os = require('os');
     
     return {
       memory: {

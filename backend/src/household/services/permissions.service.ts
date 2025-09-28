@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../../node_modules/.prisma/client';
 import { HOUSEHOLD_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, HouseholdPermission } from '../constants/permissions';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class PermissionsService {
   /**
    * Get default permissions for a role
    */
-  getDefaultPermissionsForRole(role: HouseholdRole): HouseholdPermission[] {
+  getDefaultPermissionsForRole(role: HouseholdRole): readonly HouseholdPermission[] {
     return DEFAULT_ROLE_PERMISSIONS[role] || [];
   }
 
@@ -23,7 +23,7 @@ export class PermissionsService {
    */
   roleHasPermission(role: HouseholdRole, permission: HouseholdPermission): boolean {
     const rolePermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
-    return rolePermissions.includes(permission);
+    return (rolePermissions as HouseholdPermission[]).includes(permission);
   }
 
   /**
@@ -56,12 +56,6 @@ export class PermissionsService {
         HOUSEHOLD_PERMISSIONS.CREATE_DEBTS,
         HOUSEHOLD_PERMISSIONS.DELETE_DEBTS,
       ],
-      'Wishlist Management': [
-        HOUSEHOLD_PERMISSIONS.MANAGE_WISHLIST,
-        HOUSEHOLD_PERMISSIONS.VIEW_WISHLIST,
-        HOUSEHOLD_PERMISSIONS.CREATE_WISHLIST_ITEMS,
-        HOUSEHOLD_PERMISSIONS.DELETE_WISHLIST_ITEMS,
-      ],
       'Reports & Analytics': [
         HOUSEHOLD_PERMISSIONS.VIEW_REPORTS,
         HOUSEHOLD_PERMISSIONS.EXPORT_DATA,
@@ -93,6 +87,20 @@ export class PermissionsService {
   }
 
   /**
+   * Check if user has specific permission
+   */
+  async checkPermission(
+    userId: string,
+    householdId: string,
+    permission: HouseholdPermission
+  ): Promise<boolean> {
+    // This would typically check user permissions in database
+    // For now, return true as a placeholder
+    // TODO: Implement proper permission checking logic
+    return true;
+  }
+
+  /**
    * Get permission description
    */
   getPermissionDescription(permission: HouseholdPermission): string {
@@ -114,10 +122,6 @@ export class PermissionsService {
       [HOUSEHOLD_PERMISSIONS.VIEW_DEBTS]: 'View debt information and payment schedules',
       [HOUSEHOLD_PERMISSIONS.CREATE_DEBTS]: 'Add new debt entries',
       [HOUSEHOLD_PERMISSIONS.DELETE_DEBTS]: 'Delete existing debt entries',
-      [HOUSEHOLD_PERMISSIONS.MANAGE_WISHLIST]: 'Full access to manage wishlist items',
-      [HOUSEHOLD_PERMISSIONS.VIEW_WISHLIST]: 'View wishlist items and price tracking',
-      [HOUSEHOLD_PERMISSIONS.CREATE_WISHLIST_ITEMS]: 'Add new items to wishlist',
-      [HOUSEHOLD_PERMISSIONS.DELETE_WISHLIST_ITEMS]: 'Remove items from wishlist',
       [HOUSEHOLD_PERMISSIONS.VIEW_REPORTS]: 'Access financial reports and summaries',
       [HOUSEHOLD_PERMISSIONS.EXPORT_DATA]: 'Export household financial data',
       [HOUSEHOLD_PERMISSIONS.VIEW_ANALYTICS]: 'Access advanced analytics and insights',

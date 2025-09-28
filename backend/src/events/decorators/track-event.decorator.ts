@@ -1,18 +1,14 @@
 import { SetMetadata } from '@nestjs/common';
-import { EventType } from '../types/event.types';
-
-export const TRACK_EVENT_KEY = 'track_event';
 
 export interface TrackEventOptions {
-  eventType: EventType | string;
-  resourceType?: string;
-  extractResourceId?: (args: any[], result?: any) => string | undefined;
-  extractEventData?: (args: any[], result?: any) => Record<string, any>;
-  trackOnError?: boolean;
+  eventType: string;
+  resourceType: string;
+  extractResourceId?: (...args: any[]) => string | undefined;
+  extractEventData?: (...args: any[]) => Record<string, any>;
 }
 
-/**
- * Decorator to automatically track events for controller methods
- */
-export const TrackEvent = (options: TrackEventOptions) => 
-  SetMetadata(TRACK_EVENT_KEY, options);
+export const TRACK_EVENT_METADATA = 'track_event';
+
+export const TrackEvent = (options: TrackEventOptions) => {
+  return SetMetadata(TRACK_EVENT_METADATA, options);
+};

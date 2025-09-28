@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/test-utils/testing-library';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TransactionForm } from '../transaction-form';
 import { Account, Category } from '@/types/transaction';

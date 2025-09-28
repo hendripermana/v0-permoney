@@ -6,7 +6,7 @@ import { HouseholdRepository } from './household.repository';
 import { PermissionsService } from './services/permissions.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestContextService } from '../common/services/request-context.service';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../node_modules/.prisma/client';
 import { HOUSEHOLD_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from './constants/permissions';
 
 describe('Household Integration Tests', () => {

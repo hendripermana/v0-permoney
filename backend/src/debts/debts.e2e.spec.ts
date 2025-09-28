@@ -5,7 +5,7 @@ import { DebtsModule } from './debts.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { HouseholdModule } from '../household/household.module';
-import { DebtType } from '@prisma/client';
+import { DebtType } from '../../../node_modules/.prisma/client';
 import { DebtsService } from './debts.service';
 import { CreateDebtDto, CreateDebtPaymentDto } from './dto';
 import * as request from 'supertest';
@@ -17,6 +17,7 @@ describe('Debts E2E Testing', () => {
   let householdId: string;
   let userId: string;
   let authToken: string;
+  let islamicDebtId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -102,7 +103,6 @@ describe('Debts E2E Testing', () => {
   describe('Complete Debt Lifecycle Testing', () => {
     let personalDebtId: string;
     let conventionalDebtId: string;
-    let islamicDebtId: string;
 
     describe('Debt Creation Workflow', () => {
       it('should create personal debt with complete validation', async () => {

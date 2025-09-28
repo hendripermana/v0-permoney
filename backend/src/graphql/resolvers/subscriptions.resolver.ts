@@ -10,7 +10,6 @@ const pubSub = new PubSub();
 // Subscription event types
 export const TRANSACTION_ADDED = 'transactionAdded';
 export const BUDGET_EXCEEDED = 'budgetExceeded';
-export const PRICE_ALERT = 'priceAlert';
 export const NEW_INSIGHT = 'newInsight';
 
 @Resolver()
@@ -32,15 +31,6 @@ export class SubscriptionsResolver {
   })
   budgetExceeded(@Args('householdId', { type: () => ID }) householdId: string) {
     return pubSub.asyncIterator(BUDGET_EXCEEDED);
-  }
-
-  @Subscription(() => String, {
-    filter: (payload, variables) => {
-      return payload.priceAlert.householdId === variables.householdId;
-    },
-  })
-  priceAlert(@Args('householdId', { type: () => ID }) householdId: string) {
-    return pubSub.asyncIterator(PRICE_ALERT);
   }
 
   @Subscription(() => Insight, {

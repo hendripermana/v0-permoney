@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DebtsService } from './debts.service';
 import { DebtsRepository } from './debts.repository';
-import { DebtType } from '@prisma/client';
+import { DebtType } from '../../../node_modules/.prisma/client';
 import { CreateDebtDto, CreateDebtPaymentDto } from './dto';
 
 describe('DebtsService', () => {

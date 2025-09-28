@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 export interface RequestWithContext extends Request {
   requestId: string;
   startTime: number;
+  user?: { id?: string; householdId?: string };
 }
 
 @Injectable()
@@ -38,15 +39,15 @@ export class LoggingMiddleware implements NestMiddleware {
       const duration = Date.now() - startTime;
       
       // Log completed request
-      this.logger.logApiRequest(
+      (this as any).logger.logApiRequest(
         req.method,
         req.originalUrl,
         res.statusCode,
         duration,
         {
           requestId,
-          userId: req.user?.id,
-          householdId: req.user?.householdId,
+          userId: (req as any).user?.id,
+          householdId: (req as any).user?.householdId,
           userAgent: req.get('User-Agent'),
           ipAddress: req.ip,
           responseSize: res.get('Content-Length'),
@@ -55,7 +56,7 @@ export class LoggingMiddleware implements NestMiddleware {
 
       // Log slow requests
       if (duration > 1000) {
-        this.logger.warn('Slow request detected', {
+        (this as any).logger.warn('Slow request detected', {
           requestId,
           operation: 'slow_request',
           resource: req.originalUrl,
@@ -67,7 +68,7 @@ export class LoggingMiddleware implements NestMiddleware {
 
       // Log error responses
       if (res.statusCode >= 400) {
-        this.logger.error('Request failed', undefined, {
+        (this as any).logger.error('Request failed', undefined, {
           requestId,
           operation: 'http_request_error',
           resource: req.originalUrl,
@@ -77,8 +78,8 @@ export class LoggingMiddleware implements NestMiddleware {
         });
       }
 
-      originalEnd.call(this, chunk, encoding);
-    }.bind(this);
+      originalEnd.call(res, chunk as any, encoding as any);
+    }.bind({ logger: this.logger });
 
     next();
   }

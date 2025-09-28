@@ -1,53 +1,42 @@
-//@ts-check
+const path = require('path')
+const fs = require('fs')
+const dotenv = require('dotenv')
 
-const { composePlugins, withNx } = require('@nx/next');
+// Load root-level .env so Next (running inside frontend/) picks up shared env
+const rootEnvPath = path.resolve(__dirname, '..', '.env')
+if (fs.existsSync(rootEnvPath)) {
+  dotenv.config({ path: rootEnvPath })
+}
 
-/**
- * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
- **/
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  nx: {},
-  experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-slot'],
+  eslint: {
+    ignoreDuringBuilds: false,
   },
-  // PWA Configuration
-  async headers() {
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  images: {
+    unoptimized: false,
+    domains: ['localhost', 'vercel.app', 'flagcdn.com'],
+  },
+  compress: true,
+  experimental: {
+    // keep placeholder for other experimental toggles if needed
+  },
+  serverExternalPackages: ['@prisma/client'],
+  async rewrites() {
+    const backendBase = process.env.NEXT_PUBLIC_API_URL
+      ? process.env.NEXT_PUBLIC_API_URL.replace(/\/?$/,'')
+      : 'http://localhost:3001/api';
     return [
       {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-        ],
+        source: '/api/:path*',
+        destination: `${backendBase}/:path*`,
       },
     ];
   },
-  // Enable static optimization
   output: 'standalone',
-  // Image optimization
-  images: {
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-  },
-  // Compression
-  compress: true,
-  // Enable React strict mode
-  reactStrictMode: true,
-};
+}
 
-const plugins = [
-  withNx,
-];
-
-module.exports = composePlugins(...plugins)(nextConfig);
+module.exports = nextConfig

@@ -1,6 +1,6 @@
 import { ObjectType, Field, ID, Float, Int, InputType } from '@nestjs/graphql';
 import { Money, GraphQLDateTime, DateRange, GroupBy, TimeInterval, TransactionType, InsightType, InsightPriority } from './common.types';
-import { Account } from './account.types';
+import { Account, NetWorthPoint } from './account.types';
 import { Category, Transaction } from './transaction.types';
 
 // Spending analytics

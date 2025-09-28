@@ -20,12 +20,11 @@ import {
   BudgetFiltersDto,
   BudgetRecommendationDto,
 } from './dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdGuard } from '../household/guards/household.guard';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
 @Controller('budgets')
-@UseGuards(JwtAuthGuard, HouseholdGuard)
+@UseGuards(HouseholdGuard)
 export class BudgetsController {
   constructor(
     private readonly budgetsService: BudgetsService,

@@ -53,7 +53,19 @@ export class BudgetDomainService implements IBudgetDomainService {
         })),
       });
 
-      const domainEntity = BudgetDomainEntity.fromPersistence(persistedBudget);
+      // Convert BigInt to number for domain entity
+      const convertedBudget = {
+        ...persistedBudget,
+        totalAllocatedCents: Number(persistedBudget.totalAllocatedCents),
+        categories: persistedBudget.categories.map(cat => ({
+          ...cat,
+          allocatedAmountCents: Number(cat.allocatedAmountCents),
+          spentAmountCents: Number(cat.spentAmountCents),
+          carryOverCents: Number(cat.carryOverCents),
+        })),
+      };
+
+      const domainEntity = BudgetDomainEntity.fromPersistence(convertedBudget);
 
       // Emit domain event
       this.eventEmitter.emit(
@@ -118,7 +130,19 @@ export class BudgetDomainService implements IBudgetDomainService {
         })),
       });
 
-      const domainEntity = BudgetDomainEntity.fromPersistence(persistedBudget);
+      // Convert BigInt to number for domain entity
+      const convertedBudget = {
+        ...persistedBudget,
+        totalAllocatedCents: Number(persistedBudget.totalAllocatedCents),
+        categories: persistedBudget.categories.map(cat => ({
+          ...cat,
+          allocatedAmountCents: Number(cat.allocatedAmountCents),
+          spentAmountCents: Number(cat.spentAmountCents),
+          carryOverCents: Number(cat.carryOverCents),
+        })),
+      };
+
+      const domainEntity = BudgetDomainEntity.fromPersistence(convertedBudget);
 
       // Emit domain event
       this.eventEmitter.emit(
@@ -163,7 +187,19 @@ export class BudgetDomainService implements IBudgetDomainService {
       if (!budget) {
         throw new Error(`Budget ${budgetId} not found`);
       }
-      return BudgetDomainEntity.fromPersistence(budget);
+      // Convert BigInt to number for domain entity
+      const convertedBudget = {
+        ...budget,
+        totalAllocatedCents: Number(budget.totalAllocatedCents),
+        categories: budget.categories.map(cat => ({
+          ...cat,
+          allocatedAmountCents: Number(cat.allocatedAmountCents),
+          spentAmountCents: Number(cat.spentAmountCents),
+          carryOverCents: Number(cat.carryOverCents),
+        })),
+      };
+
+      return BudgetDomainEntity.fromPersistence(convertedBudget);
     } catch (error) {
       this.logger.error(`Failed to get budget: ${error.message}`, error.stack);
       throw error;
@@ -173,7 +209,21 @@ export class BudgetDomainService implements IBudgetDomainService {
   async getBudgets(householdId: string, filters: any = {}): Promise<BudgetDomainEntity[]> {
     try {
       const budgets = await this.budgetsRepository.findByHousehold(householdId, filters);
-      return budgets.map(budget => BudgetDomainEntity.fromPersistence(budget));
+      return budgets.map(budget => {
+        // Convert BigInt to number for domain entity
+        const convertedBudget = {
+          ...budget,
+          totalAllocatedCents: Number(budget.totalAllocatedCents),
+          categories: budget.categories.map(cat => ({
+            ...cat,
+            allocatedAmountCents: Number(cat.allocatedAmountCents),
+            spentAmountCents: Number(cat.spentAmountCents),
+            carryOverCents: Number(cat.carryOverCents),
+          })),
+        };
+
+        return BudgetDomainEntity.fromPersistence(convertedBudget);
+      });
     } catch (error) {
       this.logger.error(`Failed to get budgets: ${error.message}`, error.stack);
       throw error;

@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { ExchangeRatesRepository, CreateExchangeRateData } from './exchange-rates.repository';
 import { CurrencyService } from './currency.service';
 import { CacheService } from '../cache/cache.service';
-import { ExchangeRate } from '@prisma/client';
+import { ExchangeRate } from '../../../node_modules/.prisma/client';
 import { 
   CurrencyConversionDto, 
   ConversionResultDto,

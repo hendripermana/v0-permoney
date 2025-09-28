@@ -1,7 +1,5 @@
-import { Injectable, LoggerService } from '@nestjs/common';
+import { Injectable, Logger, LoggerService } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as winston from 'winston';
-import { ElasticsearchTransport } from 'winston-elasticsearch';
 
 export interface LogContext {
   userId?: string;
@@ -19,117 +17,31 @@ export interface LogContext {
 
 @Injectable()
 export class StructuredLoggerService implements LoggerService {
-  private readonly logger: winston.Logger;
+  private readonly logger = new Logger('StructuredLogger');
 
   constructor(private configService: ConfigService) {
-    const logLevel = this.configService.get('LOG_LEVEL', 'info');
-    const environment = this.configService.get('NODE_ENV', 'development');
-    
-    const transports: winston.transport[] = [
-      new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.timestamp(),
-          winston.format.errors({ stack: true }),
-          winston.format.json(),
-          winston.format.colorize({ all: environment === 'development' })
-        ),
-      }),
-    ];
-
-    // Add file transport for production
-    if (environment === 'production') {
-      transports.push(
-        new winston.transports.File({
-          filename: 'logs/error.log',
-          level: 'error',
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.errors({ stack: true }),
-            winston.format.json()
-          ),
-        }),
-        new winston.transports.File({
-          filename: 'logs/combined.log',
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.errors({ stack: true }),
-            winston.format.json()
-          ),
-        })
-      );
-
-      // Add Elasticsearch transport if configured
-      const elasticsearchUrl = this.configService.get('ELASTICSEARCH_URL');
-      if (elasticsearchUrl) {
-        transports.push(
-          new ElasticsearchTransport({
-            level: 'info',
-            clientOpts: { node: elasticsearchUrl },
-            index: 'permoney-logs',
-            indexTemplate: {
-              name: 'permoney-logs-template',
-              body: {
-                index_patterns: ['permoney-logs-*'],
-                settings: {
-                  number_of_shards: 1,
-                  number_of_replicas: 0,
-                },
-                mappings: {
-                  properties: {
-                    '@timestamp': { type: 'date' },
-                    level: { type: 'keyword' },
-                    message: { type: 'text' },
-                    userId: { type: 'keyword' },
-                    householdId: { type: 'keyword' },
-                    requestId: { type: 'keyword' },
-                    operation: { type: 'keyword' },
-                    resource: { type: 'keyword' },
-                    duration: { type: 'integer' },
-                    statusCode: { type: 'integer' },
-                    stack: { type: 'text' },
-                  },
-                },
-              },
-            },
-          })
-        );
-      }
-    }
-
-    this.logger = winston.createLogger({
-      level: logLevel,
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-      ),
-      defaultMeta: {
-        service: 'permoney-backend',
-        environment,
-        version: process.env.npm_package_version || '1.0.0',
-      },
-      transports,
-    });
+    // Keep reference for potential future enrichment
   }
 
   log(message: string, context?: LogContext) {
-    this.logger.info(message, context);
+    this.logger.log(message + (context ? ` ${JSON.stringify(context)}` : ''));
   }
 
   error(message: string, trace?: string, context?: LogContext) {
-    this.logger.error(message, { ...context, stack: trace });
+    const payload = context ? `${message} ${JSON.stringify(context)}` : message;
+    this.logger.error(payload + (trace ? `\n${trace}` : ''));
   }
 
   warn(message: string, context?: LogContext) {
-    this.logger.warn(message, context);
+    this.logger.warn(message + (context ? ` ${JSON.stringify(context)}` : ''));
   }
 
   debug(message: string, context?: LogContext) {
-    this.logger.debug(message, context);
+    this.logger.debug(message + (context ? ` ${JSON.stringify(context)}` : ''));
   }
 
   verbose(message: string, context?: LogContext) {
-    this.logger.verbose(message, context);
+    this.logger.verbose(message + (context ? ` ${JSON.stringify(context)}` : ''));
   }
 
   // Structured logging methods for specific use cases

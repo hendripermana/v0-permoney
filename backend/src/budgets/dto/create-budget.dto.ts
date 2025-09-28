@@ -15,8 +15,8 @@ import {
   ArrayMaxSize
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { BudgetPeriod } from '@prisma/client';
-import { IsValidBudgetPeriod, IsValidBudgetAllocation, IsFutureOrCurrentDate } from '../validators';
+import { BudgetPeriod } from '../../../../node_modules/.prisma/client';
+import { IsValidBudgetPeriod, IsValidBudgetAllocation, IsFutureOrCurrentDate } from '../validators/budget.validators';
 
 export class BudgetCategoryAllocationDto {
   @IsUUID(4, { message: 'Category ID must be a valid UUID' })

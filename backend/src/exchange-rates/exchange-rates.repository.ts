@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ExchangeRate, Prisma } from '@prisma/client';
+import { ExchangeRate, Prisma } from '../../../node_modules/.prisma/client';
 
 export interface CreateExchangeRateData {
   fromCurrency: string;

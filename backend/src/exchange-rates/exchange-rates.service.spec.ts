@@ -8,7 +8,7 @@ import { ExchangeRatesRepository } from './exchange-rates.repository';
 import { CurrencyService } from './currency.service';
 import { CacheService } from '../cache/cache.service';
 import { CurrencyConversionDto, HistoricalRatesQueryDto, HistoricalRangePeriod } from './dto';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../../node_modules/.prisma/client';
 
 describe('ExchangeRatesService', () => {
   let service: ExchangeRatesService;

@@ -32,11 +32,6 @@ interface NotificationPreferences {
     channels: string[];
     daysBefore: number;
   };
-  priceAlerts: {
-    enabled: boolean;
-    channels: string[];
-    priceDropPercentage: number;
-  };
   transactionAlerts: {
     enabled: boolean;
     channels: string[];

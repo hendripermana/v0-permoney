@@ -4,7 +4,7 @@ import { BudgetsService } from './budgets.service';
 import { BudgetsRepository } from './budgets.repository';
 import { CacheService } from '../cache/cache.service';
 import { CreateBudgetDto, RecommendationType } from './dto';
-import { BudgetPeriod } from '@prisma/client';
+import { BudgetPeriod } from '../../../node_modules/.prisma/client';
 
 describe('BudgetsService', () => {
   let service: BudgetsService;

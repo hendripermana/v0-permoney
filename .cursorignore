@@ -1,0 +1,10 @@
+# Abaikan file & folder default
+node_modules/
+dist/
+build/
+
+# Abaikan file .env secara default (kecuali yang diperlukan)
+.env.local
+.env.*.local
+!.env
+!.env.example

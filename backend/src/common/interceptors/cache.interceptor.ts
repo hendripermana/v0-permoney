@@ -1,4 +1,4 @@
-import { Injectable, type NestInterceptor, type ExecutionContext, type CallHandler } from "@nestjs/common"
+import { Injectable, type NestInterceptor, type ExecutionContext, type CallHandler, SetMetadata } from "@nestjs/common"
 import { type Observable, of } from "rxjs"
 import { tap } from "rxjs/operators"
 import { Reflector } from "@nestjs/core"
@@ -8,8 +8,8 @@ import type { StructuredLoggerService } from "../logging/logger.service"
 export const CACHE_KEY_METADATA = "cache_key"
 export const CACHE_TTL_METADATA = "cache_ttl"
 
-export const CacheKey = (key: string) => Reflector.createDecorator<string>({ key })
-export const CacheTTL = (ttl: number) => Reflector.createDecorator<number>({ ttl })
+export const CacheKey = (key: string) => SetMetadata(CACHE_KEY_METADATA, key)
+export const CacheTTL = (ttl: number) => SetMetadata(CACHE_TTL_METADATA, ttl)
 
 @Injectable()
 export class CacheInterceptor implements NestInterceptor {

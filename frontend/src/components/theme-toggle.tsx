@@ -2,19 +2,14 @@
 
 import * as React from 'react';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/theme-provider';
 
 import { Button } from '@/components/ui/button';
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
+  const { theme, resolvedTheme, setTheme, isMounted } = useTheme();
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
+  if (!isMounted) {
     return (
       <Button variant="ghost" size="icon" className="h-9 w-9">
         <div className="h-4 w-4" />
@@ -30,7 +25,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
       className="h-9 w-9 hover:bg-accent hover:text-accent-foreground"
     >
-      {theme === 'light' ? (
+      {(resolvedTheme ?? theme) === 'light' ? (
         <Moon className="h-4 w-4" />
       ) : (
         <Sun className="h-4 w-4" />

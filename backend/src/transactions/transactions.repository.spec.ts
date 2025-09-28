@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionsRepository } from './transactions.repository';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto, TransactionFiltersDto } from './dto';
-import { AccountType } from '@prisma/client';
+import { AccountType } from '../../../node_modules/.prisma/client';
 
 describe('TransactionsRepository', () => {
   let repository: TransactionsRepository;

@@ -8,7 +8,7 @@ import { HouseholdModule } from '../household/household.module';
 import { CacheModule } from '../cache/cache.module';
 import { CommonModule } from '../common/common.module';
 import { ConfigModule } from '@nestjs/config';
-import { BudgetPeriod } from '@prisma/client';
+import { BudgetPeriod } from '../../../node_modules/.prisma/client';
 
 describe('BudgetsController (Integration)', () => {
   let app: INestApplication;

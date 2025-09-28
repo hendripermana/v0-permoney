@@ -1,34 +1,84 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsNotEmpty } from 'class-validator';
-
-export class LoginDto {
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-}
+import { IsEmail, IsString, MinLength, IsOptional, IsBoolean } from 'class-validator';
 
 export class RegisterDto {
-  @IsEmail()
-  @IsNotEmpty()
+  @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
-  @IsString()
-  @MinLength(8)
-  @MaxLength(128)
+  @IsString({ message: 'Password is required' })
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(2)
-  @MaxLength(100)
+  @IsString({ message: 'Name is required' })
+  @MinLength(2, { message: 'Name must be at least 2 characters long' })
   name: string;
 }
 
+export class LoginDto {
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  email: string;
+
+  @IsString({ message: 'Password is required' })
+  password: string;
+}
+
 export class RefreshTokenDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'Refresh token is required' })
   refreshToken: string;
+}
+
+export class ForgotPasswordDto {
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @IsString({ message: 'Reset token is required' })
+  token: string;
+
+  @IsString({ message: 'Password is required' })
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  password: string;
+}
+
+export class VerifyEmailDto {
+  @IsString({ message: 'Verification token is required' })
+  token: string;
+}
+
+export class ChangePasswordDto {
+  @IsString({ message: 'Current password is required' })
+  currentPassword: string;
+
+  @IsString({ message: 'New password is required' })
+  @MinLength(8, { message: 'New password must be at least 8 characters long' })
+  newPassword: string;
+}
+
+export class AuthResponseDto {
+  success: boolean;
+  message: string;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    emailVerified: boolean;
+    isActive: boolean;
+  };
+  tokens?: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  };
+}
+
+export class UserProfileDto {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+  emailVerified: boolean;
+  isActive: boolean;
+  lastLoginAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }

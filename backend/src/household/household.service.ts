@@ -1,11 +1,12 @@
-import { 
-  Injectable, 
-  NotFoundException, 
-  BadRequestException, 
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
   ForbiddenException,
-  ConflictException 
+  ConflictException,
+  Logger
 } from '@nestjs/common';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../node_modules/.prisma/client';
 import { AbstractBaseService } from '../common/base/base.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestContextService } from '../common/services/request-context.service';
@@ -21,19 +22,15 @@ import {
 import { HOUSEHOLD_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from './constants/permissions';
 
 @Injectable()
-export class HouseholdService extends AbstractBaseService<
-  HouseholdWithMembers,
-  CreateHouseholdDto,
-  UpdateHouseholdDto
-> {
+export class HouseholdService {
+  private readonly logger = new Logger(HouseholdService.name);
+
   constructor(
     private readonly householdRepository: HouseholdRepository,
     private readonly prisma: PrismaService,
     private readonly requestContext: RequestContextService,
     private readonly permissionsService: PermissionsService,
-  ) {
-    super(householdRepository);
-  }
+  ) {}
 
   async create(data: CreateHouseholdDto): Promise<HouseholdWithMembers> {
     const userId = this.requestContext.getUserId();
@@ -61,6 +58,19 @@ export class HouseholdService extends AbstractBaseService<
 
     // Return household with members
     return this.householdRepository.findById(household.id) as Promise<HouseholdWithMembers>;
+  }
+
+  async getHouseholdById(id: string): Promise<HouseholdWithMembers | null> {
+    return this.householdRepository.findById(id);
+  }
+
+  async updateHousehold(id: string, data: UpdateHouseholdDto): Promise<HouseholdWithMembers> {
+    const updated = await this.householdRepository.update(id, data);
+    return this.householdRepository.findById(id) as Promise<HouseholdWithMembers>;
+  }
+
+  async deleteHousehold(id: string): Promise<void> {
+    return this.householdRepository.delete(id);
   }
 
   async findUserHouseholds(userId?: string): Promise<HouseholdWithMembers[]> {
@@ -110,7 +120,7 @@ export class HouseholdService extends AbstractBaseService<
       householdId,
       invitedUser.id,
       inviteData.role,
-      permissions
+      permissions as string[]
     );
 
     this.logger.log(`User ${invitedUser.email} invited to household ${householdId} with role ${inviteData.role}`);

@@ -8,13 +8,10 @@ import {
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Request, Response } from 'express';
-import { RequestContextService } from '../services/request-context.service';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
-
-  constructor(private readonly requestContext: RequestContextService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -31,9 +28,6 @@ export class LoggingInterceptor implements NestInterceptor {
         this.logger.log(
           `${method} ${url} ${statusCode} ${contentLength} - ${elapsedTime}ms`,
           {
-            requestId: this.requestContext.getRequestId(),
-            userId: this.requestContext.getUserId(),
-            householdId: this.requestContext.getHouseholdId(),
             method,
             url,
             statusCode,
@@ -49,19 +43,16 @@ export class LoggingInterceptor implements NestInterceptor {
         const statusCode = error.status || 500;
 
         this.logger.error(
-          `${method} ${url} ${statusCode} - ${elapsedTime}ms - ${error.message}`,
-          error.stack,
+          `${method} ${url} ${statusCode} - ${elapsedTime}ms - ${error?.message || 'Unknown error'}`,
           {
-            requestId: this.requestContext.getRequestId(),
-            userId: this.requestContext.getUserId(),
-            householdId: this.requestContext.getHouseholdId(),
             method,
             url,
             statusCode,
             elapsedTime,
             userAgent: request.headers['user-agent'],
             ip: request.ip,
-            error: error.message,
+            error: error?.message || String(error),
+            stack: error?.stack,
           }
         );
 

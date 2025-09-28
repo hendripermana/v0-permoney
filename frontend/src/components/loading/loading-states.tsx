@@ -40,7 +40,7 @@ export function DashboardSkeleton({ className }: { className?: string }) {
             <Skeleton className="h-4 w-48" />
           </CardHeader>
           <CardContent>
-            <SkeletonChart type="line" className="h-64" />
+            <SkeletonChart className="h-64" />
           </CardContent>
         </Card>
 

@@ -11,7 +11,6 @@ import { TransactionsResolver } from './resolvers/transactions.resolver';
 import { HouseholdResolver } from './resolvers/household.resolver';
 import { DebtsResolver } from './resolvers/debts.resolver';
 import { BudgetsResolver } from './resolvers/budgets.resolver';
-import { WishlistResolver } from './resolvers/wishlist.resolver';
 import { AnalyticsResolver } from './resolvers/analytics.resolver';
 import { AIInsightsResolver } from './resolvers/ai-insights.resolver';
 import { DashboardResolver } from './resolvers/dashboard.resolver';
@@ -29,7 +28,6 @@ import { TransactionsModule } from '../transactions/transactions.module';
 import { HouseholdModule } from '../household/household.module';
 import { DebtsModule } from '../debts/debts.module';
 import { BudgetsModule } from '../budgets/budgets.module';
-import { WishlistModule } from '../wishlist/wishlist.module';
 import { AIInsightsModule } from '../ai-insights/ai-insights.module';
 import { PrismaModule } from '../prisma/prisma.module';
 
@@ -64,7 +62,6 @@ import { PrismaModule } from '../prisma/prisma.module';
     HouseholdModule,
     DebtsModule,
     BudgetsModule,
-    WishlistModule,
     AIInsightsModule,
     PrismaModule,
   ],
@@ -75,7 +72,6 @@ import { PrismaModule } from '../prisma/prisma.module';
     HouseholdResolver,
     DebtsResolver,
     BudgetsResolver,
-    WishlistResolver,
     AnalyticsResolver,
     AIInsightsResolver,
     DashboardResolver,

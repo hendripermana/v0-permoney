@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DebtsRepository } from './debts.repository';
 import { PrismaService } from '../prisma/prisma.service';
-import { DebtType } from '@prisma/client';
+import { DebtType } from '../../../node_modules/.prisma/client';
 import { CreateDebtDto, CreateDebtPaymentDto } from './dto';
 import { Decimal } from '@prisma/client/runtime/library';
 

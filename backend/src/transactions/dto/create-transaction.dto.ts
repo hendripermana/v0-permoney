@@ -51,6 +51,10 @@ export class CreateTransactionDto {
   merchant?: string;
 
   @IsOptional()
+  @IsString()
+  merchantName?: string;
+
+  @IsOptional()
   @IsUUID()
   merchantId?: string;
 
