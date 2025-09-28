@@ -15,37 +15,36 @@ datasource db {
 // ============================================================================
 
 model User {
-  id           String    @id @default(uuid()) @db.Uuid
-  clerkId      String?   @unique // Clerk user ID for authentication
-  email        String    @unique
-  passwordHash String?   // Optional for passkey-only users or Clerk users
-  name         String
-  avatarUrl    String?
-  isActive     Boolean   @default(true)
-  emailVerified Boolean  @default(false)
-  lastLoginAt  DateTime?
-  failedLoginAttempts Int @default(0)
-  lockedUntil  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                  String    @id @default(uuid()) @db.Uuid
+  clerkId             String?   @unique // Clerk user ID for authentication
+  email               String    @unique
+  passwordHash        String? // Optional for passkey-only users or Clerk users
+  name                String
+  avatarUrl           String?
+  isActive            Boolean   @default(true)
+  emailVerified       Boolean   @default(false)
+  lastLoginAt         DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   // Relations
-  householdMembers HouseholdMember[]
-  passkeys         Passkey[]
-  sessions         Session[]
-  emailVerifications EmailVerification[]
-  passwordResets   PasswordReset[]
-  createdTransactions Transaction[] @relation("TransactionCreator")
-  createdWishlistItems WishlistItem[] @relation("WishlistCreator")
-  createdGratitudeEntries GratitudeEntry[] @relation("GratitudeCreator")
-  createdRecurringTransactions RecurringTransaction[] @relation("RecurringTransactionCreator")
-  uploadedDocuments DocumentUpload[] @relation("DocumentUploader")
-  userEvents       UserEvent[]
-  shariaReviews    ShariaCompliantAccount[] @relation("ShariaReviewer")
-  generatedIslamicReports IslamicFinanceReport[] @relation("IslamicReportGenerator")
-  notifications    Notification[]
-  notificationPreferences NotificationPreference?
-  pushSubscriptions PushSubscription[]
+  householdMembers             HouseholdMember[]
+  passkeys                     Passkey[]
+  sessions                     Session[]
+  emailVerifications           EmailVerification[]
+  passwordResets               PasswordReset[]
+  createdTransactions          Transaction[]            @relation("TransactionCreator")
+  createdGratitudeEntries      GratitudeEntry[]         @relation("GratitudeCreator")
+  createdRecurringTransactions RecurringTransaction[]   @relation("RecurringTransactionCreator")
+  uploadedDocuments            DocumentUpload[]         @relation("DocumentUploader")
+  userEvents                   UserEvent[]
+  shariaReviews                ShariaCompliantAccount[] @relation("ShariaReviewer")
+  generatedIslamicReports      IslamicFinanceReport[]   @relation("IslamicReportGenerator")
+  notifications                Notification[]
+  notificationPreferences      NotificationPreference?
+  pushSubscriptions            PushSubscription[]
 
   @@map("users")
 }
@@ -59,35 +58,34 @@ model Household {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  members      HouseholdMember[]
-  accounts     Account[]
-  transactions Transaction[]
-  debts        Debt[]
-  budgets      Budget[]
-  wishlistItems WishlistItem[]
-  gratitudeEntries GratitudeEntry[]
-  categories   Category[]
+  members               HouseholdMember[]
+  accounts              Account[]
+  transactions          Transaction[]
+  debts                 Debt[]
+  budgets               Budget[]
+  gratitudeEntries      GratitudeEntry[]
+  categories            Category[]
   recurringTransactions RecurringTransaction[]
-  documentUploads DocumentUpload[]
-  userEvents   UserEvent[]
-  spendingPatterns SpendingPattern[]
-  financialInsights FinancialInsight[]
-  zakatCalculations ZakatCalculation[]
-  zakatReminders   ZakatReminder[]
-  zakatPayments    ZakatPayment[]
+  documentUploads       DocumentUpload[]
+  userEvents            UserEvent[]
+  spendingPatterns      SpendingPattern[]
+  financialInsights     FinancialInsight[]
+  zakatCalculations     ZakatCalculation[]
+  zakatReminders        ZakatReminder[]
+  zakatPayments         ZakatPayment[]
   islamicFinanceReports IslamicFinanceReport[]
-  notifications Notification[]
+  notifications         Notification[]
 
   @@map("households")
 }
 
 model HouseholdMember {
-  id          String          @id @default(uuid()) @db.Uuid
-  userId      String          @db.Uuid
-  householdId String          @db.Uuid
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @db.Uuid
+  householdId String        @db.Uuid
   role        HouseholdRole
-  permissions Json            @default("[]")
-  joinedAt    DateTime        @default(now())
+  permissions Json          @default("[]")
+  joinedAt    DateTime      @default(now())
 
   // Relations
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -133,15 +131,15 @@ model Account {
   updatedAt     DateTime    @updatedAt
 
   // Relations
-  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  institution  Institution?  @relation(fields: [institutionId], references: [id])
-  transactions Transaction[]
-  transferTransactions Transaction[] @relation("TransferAccount")
-  recurringTransactions RecurringTransaction[]
-  recurringTransferTransactions RecurringTransaction[] @relation("RecurringTransferAccount")
-  ledgerEntries LedgerEntry[]
-  zakatAssetBreakdown ZakatAssetBreakdown[]
-  shariaCompliance ShariaCompliantAccount?
+  household                     Household               @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  institution                   Institution?            @relation(fields: [institutionId], references: [id])
+  transactions                  Transaction[]
+  transferTransactions          Transaction[]           @relation("TransferAccount")
+  recurringTransactions         RecurringTransaction[]
+  recurringTransferTransactions RecurringTransaction[]  @relation("RecurringTransferAccount")
+  ledgerEntries                 LedgerEntry[]
+  zakatAssetBreakdown           ZakatAssetBreakdown[]
+  shariaCompliance              ShariaCompliantAccount?
 
   @@map("accounts")
 }
@@ -151,7 +149,7 @@ model Merchant {
   name      String
   slug      String   @unique // URL-friendly identifier
   logoUrl   String?
-  color     String?  // Brand color for UI consistency
+  color     String? // Brand color for UI consistency
   createdAt DateTime @default(now())
 
   // Relations
@@ -163,27 +161,27 @@ model Merchant {
 model Category {
   id          String       @id @default(uuid()) @db.Uuid
   name        String
-  slug        String       // URL-friendly ID for frontend routing or SEO
-  icon        String?      // Optional emoji or string-based icon for UI purposes
-  color       String?      // Optional color code (HEX or Tailwind-compatible) for visual styling
+  slug        String // URL-friendly ID for frontend routing or SEO
+  icon        String? // Optional emoji or string-based icon for UI purposes
+  color       String? // Optional color code (HEX or Tailwind-compatible) for visual styling
   type        CategoryType // ENUM — one of income, expense, debt, asset, liability, investment, other
   parentId    String?      @db.Uuid // allows nesting (e.g., parent and subcategories)
   householdId String?      @db.Uuid // null means it's a global default category, otherwise belongs to a specific household
   isActive    Boolean      @default(true)
-  isEditable  Boolean      @default(true)  // Users can rename/edit this category
+  isEditable  Boolean      @default(true) // Users can rename/edit this category
   isArchived  Boolean      @default(false) // Archive unused categories without deleting historical data
-  sortOrder   Int?         // Optional integer to allow manual ordering in the UI
+  sortOrder   Int? // Optional integer to allow manual ordering in the UI
   createdAt   DateTime     @default(now())
 
   // Relations
-  household    Household?           @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  parent       Category?            @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children     Category[]           @relation("CategoryHierarchy")
-  transactions Transaction[]
-  transactionSplits TransactionSplit[]
-  budgetCategories BudgetCategory[]
-  recurringTransactions RecurringTransaction[]
-  gratitudeEntries GratitudeEntry[]
+  household              Household?              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  parent                 Category?               @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children               Category[]              @relation("CategoryHierarchy")
+  transactions           Transaction[]
+  transactionSplits      TransactionSplit[]
+  budgetCategories       BudgetCategory[]
+  recurringTransactions  RecurringTransaction[]
+  gratitudeEntries       GratitudeEntry[]
   transactionSuggestions TransactionSuggestion[]
 
   @@unique([householdId, slug])
@@ -194,43 +192,43 @@ model Category {
 }
 
 model Transaction {
-  id                   String    @id @default(uuid()) @db.Uuid
-  householdId          String    @db.Uuid
-  amountCents          BigInt
-  currency             String    @default("IDR") @db.VarChar(3)
-  originalAmountCents  BigInt?
-  originalCurrency     String?   @db.VarChar(3)
-  exchangeRate         Decimal?  @db.Decimal(15, 8)
-  description          String
-  categoryId           String?   @db.Uuid
-  merchant             String?   // Raw merchant name from transaction data
-  merchantId           String?   @db.Uuid // Reference to enriched merchant data
-  merchantName         String?   // Enriched/cleaned merchant name
-  merchantLogoUrl      String?   // Merchant logo for visual recognition
-  merchantColor        String?   // Merchant brand color for UI consistency
-  date                 DateTime  @db.Date
-  accountId            String    @db.Uuid
-  transferAccountId    String?   @db.Uuid // For transfers
-  receiptUrl           String?
-  metadata             Json      @default("{}")
-  createdBy            String    @db.Uuid
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                  String   @id @default(uuid()) @db.Uuid
+  householdId         String   @db.Uuid
+  amountCents         BigInt
+  currency            String   @default("IDR") @db.VarChar(3)
+  originalAmountCents BigInt?
+  originalCurrency    String?  @db.VarChar(3)
+  exchangeRate        Decimal? @db.Decimal(15, 8)
+  description         String
+  categoryId          String?  @db.Uuid
+  merchant            String? // Raw merchant name from transaction data
+  merchantId          String?  @db.Uuid // Reference to enriched merchant data
+  merchantName        String? // Enriched/cleaned merchant name
+  merchantLogoUrl     String? // Merchant logo for visual recognition
+  merchantColor       String? // Merchant brand color for UI consistency
+  date                DateTime @db.Date
+  accountId           String   @db.Uuid
+  transferAccountId   String?  @db.Uuid // For transfers
+  receiptUrl          String?
+  metadata            Json     @default("{}")
+  createdBy           String   @db.Uuid
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // Relations
-  household        Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  account          Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  transferAccount  Account?           @relation("TransferAccount", fields: [transferAccountId], references: [id])
-  category         Category?          @relation(fields: [categoryId], references: [id])
-  merchantData     Merchant?          @relation(fields: [merchantId], references: [id])
-  creator          User               @relation("TransactionCreator", fields: [createdBy], references: [id])
-  tags             TransactionTag[]
-  splits           TransactionSplit[]
-  ledgerEntries    LedgerEntry[]
+  household                      Household                       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account                        Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transferAccount                Account?                        @relation("TransferAccount", fields: [transferAccountId], references: [id])
+  category                       Category?                       @relation(fields: [categoryId], references: [id])
+  merchantData                   Merchant?                       @relation(fields: [merchantId], references: [id])
+  creator                        User                            @relation("TransactionCreator", fields: [createdBy], references: [id])
+  tags                           TransactionTag[]
+  splits                         TransactionSplit[]
+  ledgerEntries                  LedgerEntry[]
   recurringTransactionExecutions RecurringTransactionExecution[]
-  gratitudeEntries GratitudeEntry[]
-  createdFromSuggestion TransactionSuggestion[] @relation("TransactionFromSuggestion")
-  zakatPayments    ZakatPayment[]
+  gratitudeEntries               GratitudeEntry[]
+  createdFromSuggestion          TransactionSuggestion[]         @relation("TransactionFromSuggestion")
+  zakatPayments                  ZakatPayment[]
 
   @@index([householdId, date])
   @@index([accountId, date])
@@ -254,9 +252,9 @@ model TransactionTag {
 }
 
 model TransactionSplit {
-  id            String  @id @default(uuid()) @db.Uuid
-  transactionId String  @db.Uuid
-  categoryId    String  @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
+  transactionId String   @db.Uuid
+  categoryId    String   @db.Uuid
   amountCents   BigInt
   description   String?
   createdAt     DateTime @default(now())
@@ -317,15 +315,15 @@ model Debt {
 }
 
 model DebtPayment {
-  id                    String   @id @default(uuid()) @db.Uuid
-  debtId                String   @db.Uuid
-  amountCents           BigInt
-  currency              String   @default("IDR") @db.VarChar(3)
-  paymentDate           DateTime @db.Date
-  principalAmountCents  BigInt
-  interestAmountCents   BigInt   @default(0)
-  transactionId         String?  @db.Uuid
-  createdAt             DateTime @default(now())
+  id                   String   @id @default(uuid()) @db.Uuid
+  debtId               String   @db.Uuid
+  amountCents          BigInt
+  currency             String   @default("IDR") @db.VarChar(3)
+  paymentDate          DateTime @db.Date
+  principalAmountCents BigInt
+  interestAmountCents  BigInt   @default(0)
+  transactionId        String?  @db.Uuid
+  createdAt            DateTime @default(now())
 
   // Relations
   debt Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
@@ -338,17 +336,17 @@ model DebtPayment {
 // ============================================================================
 
 model Budget {
-  id                  String         @id @default(uuid()) @db.Uuid
-  householdId         String         @db.Uuid
+  id                  String       @id @default(uuid()) @db.Uuid
+  householdId         String       @db.Uuid
   name                String
   period              BudgetPeriod
   totalAllocatedCents BigInt
-  currency            String         @default("IDR") @db.VarChar(3)
-  startDate           DateTime       @db.Date
-  endDate             DateTime       @db.Date
-  isActive            Boolean        @default(true)
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  currency            String       @default("IDR") @db.VarChar(3)
+  startDate           DateTime     @db.Date
+  endDate             DateTime     @db.Date
+  isActive            Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
   // Relations
   household  Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -359,14 +357,14 @@ model Budget {
 }
 
 model BudgetCategory {
-  id                  String   @id @default(uuid()) @db.Uuid
-  budgetId            String   @db.Uuid
-  categoryId          String   @db.Uuid
+  id                   String   @id @default(uuid()) @db.Uuid
+  budgetId             String   @db.Uuid
+  categoryId           String   @db.Uuid
   allocatedAmountCents BigInt
-  spentAmountCents    BigInt   @default(0)
-  carryOverCents      BigInt   @default(0)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  spentAmountCents     BigInt   @default(0)
+  carryOverCents       BigInt   @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Relations
   budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
@@ -377,65 +375,22 @@ model BudgetCategory {
   @@map("budget_categories")
 }
 
-// ============================================================================
-// WISHLIST & PRICE TRACKING
-// ============================================================================
-
-model WishlistItem {
-  id                String         @id @default(uuid()) @db.Uuid
-  householdId       String         @db.Uuid
-  name              String
-  url               String
-  currentPriceCents BigInt
-  targetPriceCents  BigInt?
-  currency          String         @default("IDR") @db.VarChar(3)
-  imageUrl          String?
-  merchant          String
-  linkedGoalId      String?        @db.Uuid
-  isPurchased       Boolean        @default(false)
-  createdBy         String         @db.Uuid
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-
-  // Relations
-  household    Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  creator      User           @relation("WishlistCreator", fields: [createdBy], references: [id])
-  priceHistory PriceHistory[]
-
-  @@index([householdId])
-  @@map("wishlist_items")
-}
-
-model PriceHistory {
-  id             String       @id @default(uuid()) @db.Uuid
-  wishlistItemId String       @db.Uuid
-  priceCents     BigInt
-  currency       String       @default("IDR") @db.VarChar(3)
-  recordedAt     DateTime     @default(now())
-
-  // Relations
-  wishlistItem WishlistItem @relation(fields: [wishlistItemId], references: [id], onDelete: Cascade)
-
-  @@map("price_history")
-}
-
-// ============================================================================
 // GRATITUDE & SOCIAL FEATURES
 // ============================================================================
 
 model GratitudeEntry {
-  id                   String        @id @default(uuid()) @db.Uuid
-  householdId          String        @db.Uuid
-  giver                String
-  type                 GratitudeType
-  categoryId           String?       @db.Uuid
-  transactionId        String?       @db.Uuid // Link to the original transaction this gratitude is associated with
-  estimatedValueCents  BigInt?
-  currency             String?       @default("IDR") @db.VarChar(3)
-  description          String
-  date                 DateTime      @db.Date
-  createdBy            String        @db.Uuid
-  createdAt            DateTime      @default(now())
+  id                  String        @id @default(uuid()) @db.Uuid
+  householdId         String        @db.Uuid
+  giver               String
+  type                GratitudeType
+  categoryId          String?       @db.Uuid
+  transactionId       String?       @db.Uuid // Link to the original transaction this gratitude is associated with
+  estimatedValueCents BigInt?
+  currency            String?       @default("IDR") @db.VarChar(3)
+  description         String
+  date                DateTime      @db.Date
+  createdBy           String        @db.Uuid
+  createdAt           DateTime      @default(now())
 
   // Relations
   household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -474,11 +429,11 @@ model ExchangeRate {
 model Passkey {
   id           String    @id @default(uuid()) @db.Uuid
   userId       String    @db.Uuid
-  name         String    // User-friendly name for the passkey
+  name         String // User-friendly name for the passkey
   credentialId String    @unique // Base64 encoded credential ID
-  publicKey    String    // Base64 encoded public key
+  publicKey    String // Base64 encoded public key
   counter      Int       @default(0)
-  transports   String[]  // Array of transport types (usb, nfc, ble, internal)
+  transports   String[] // Array of transport types (usb, nfc, ble, internal)
   createdAt    DateTime  @default(now())
   lastUsedAt   DateTime?
 
@@ -489,17 +444,17 @@ model Passkey {
 }
 
 model Session {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
-  token     String    @unique
-  refreshToken String? @unique
-  expiresAt DateTime
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
+  token            String    @unique
+  refreshToken     String?   @unique
+  expiresAt        DateTime
   refreshExpiresAt DateTime?
-  userAgent String?
-  ipAddress String?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  lastUsedAt DateTime @default(now())
+  userAgent        String?
+  ipAddress        String?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  lastUsedAt       DateTime  @default(now())
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -508,12 +463,12 @@ model Session {
 }
 
 model EmailVerification {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
-  token     String    @unique
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
   expiresAt DateTime
-  isUsed    Boolean   @default(false)
-  createdAt DateTime  @default(now())
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -522,12 +477,12 @@ model EmailVerification {
 }
 
 model PasswordReset {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
-  token     String    @unique
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
   expiresAt DateTime
-  isUsed    Boolean   @default(false)
-  createdAt DateTime  @default(now())
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -535,22 +490,21 @@ model PasswordReset {
   @@map("password_resets")
 }
 
-// ============================================================================
 // ANALYTICS & EVENT SOURCING
 // ============================================================================
 
 model UserEvent {
-  id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @db.Uuid
-  householdId  String    @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  householdId  String   @db.Uuid
   eventType    String
-  eventData    Json      @default("{}")
+  eventData    Json     @default("{}")
   resourceType String?
-  resourceId   String?   @db.Uuid
+  resourceId   String?  @db.Uuid
   sessionId    String?
   ipAddress    String?
   userAgent    String?
-  timestamp    DateTime  @default(now())
+  timestamp    DateTime @default(now())
 
   // Relations
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -562,19 +516,19 @@ model UserEvent {
 }
 
 model SpendingPattern {
-  id                   String    @id @default(uuid()) @db.Uuid
-  householdId          String    @db.Uuid
-  userId               String?   @db.Uuid
-  patternType          String    // 'DAILY', 'WEEKLY', 'MONTHLY', 'SEASONAL'
-  categoryId           String?   @db.Uuid
-  merchant             String?
-  dayOfWeek            Int?      // 0-6 for weekly patterns
-  hourOfDay            Int?      // 0-23 for daily patterns
-  month                Int?      // 1-12 for seasonal patterns
-  averageAmountCents   BigInt
-  frequency            Int
-  confidenceScore      Decimal   @default(0.0) @db.Decimal(3, 2)
-  lastUpdated          DateTime  @default(now())
+  id                 String   @id @default(uuid()) @db.Uuid
+  householdId        String   @db.Uuid
+  userId             String?  @db.Uuid
+  patternType        String // 'DAILY', 'WEEKLY', 'MONTHLY', 'SEASONAL'
+  categoryId         String?  @db.Uuid
+  merchant           String?
+  dayOfWeek          Int? // 0-6 for weekly patterns
+  hourOfDay          Int? // 0-23 for daily patterns
+  month              Int? // 1-12 for seasonal patterns
+  averageAmountCents BigInt
+  frequency          Int
+  confidenceScore    Decimal  @default(0.0) @db.Decimal(3, 2)
+  lastUpdated        DateTime @default(now())
 
   // Relations
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -610,37 +564,37 @@ model FinancialInsight {
 // ============================================================================
 
 model RecurringTransaction {
-  id                  String                    @id @default(uuid()) @db.Uuid
-  householdId         String                    @db.Uuid
-  name                String
-  description         String
-  amountCents         BigInt
-  currency            String                    @default("IDR") @db.VarChar(3)
-  accountId           String                    @db.Uuid
-  transferAccountId   String?                   @db.Uuid
-  categoryId          String?                   @db.Uuid
-  merchant            String?
-  frequency           RecurrenceFrequency
-  intervalValue       Int                       @default(1)
-  startDate           DateTime                  @db.Date
-  endDate             DateTime?                 @db.Date
-  nextExecutionDate   DateTime                  @db.Date
-  lastExecutionDate   DateTime?                 @db.Date
-  executionCount      Int                       @default(0)
-  maxExecutions       Int?
-  status              RecurringTransactionStatus @default(ACTIVE)
-  metadata            Json                      @default("{}")
-  createdBy           String                    @db.Uuid
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  id                String                     @id @default(uuid()) @db.Uuid
+  householdId       String                     @db.Uuid
+  name              String
+  description       String
+  amountCents       BigInt
+  currency          String                     @default("IDR") @db.VarChar(3)
+  accountId         String                     @db.Uuid
+  transferAccountId String?                    @db.Uuid
+  categoryId        String?                    @db.Uuid
+  merchant          String?
+  frequency         RecurrenceFrequency
+  intervalValue     Int                        @default(1)
+  startDate         DateTime                   @db.Date
+  endDate           DateTime?                  @db.Date
+  nextExecutionDate DateTime                   @db.Date
+  lastExecutionDate DateTime?                  @db.Date
+  executionCount    Int                        @default(0)
+  maxExecutions     Int?
+  status            RecurringTransactionStatus @default(ACTIVE)
+  metadata          Json                       @default("{}")
+  createdBy         String                     @db.Uuid
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
 
   // Relations
-  household        Household                        @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  account          Account                          @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  transferAccount  Account?                         @relation("RecurringTransferAccount", fields: [transferAccountId], references: [id])
-  category         Category?                        @relation(fields: [categoryId], references: [id])
-  creator          User                             @relation("RecurringTransactionCreator", fields: [createdBy], references: [id])
-  executions       RecurringTransactionExecution[]
+  household       Household                       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account         Account                         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transferAccount Account?                        @relation("RecurringTransferAccount", fields: [transferAccountId], references: [id])
+  category        Category?                       @relation(fields: [categoryId], references: [id])
+  creator         User                            @relation("RecurringTransactionCreator", fields: [createdBy], references: [id])
+  executions      RecurringTransactionExecution[]
 
   @@index([householdId])
   @@index([accountId])
@@ -650,16 +604,16 @@ model RecurringTransaction {
 }
 
 model RecurringTransactionExecution {
-  id                     String               @id @default(uuid()) @db.Uuid
-  recurringTransactionId String               @db.Uuid
-  transactionId          String?              @db.Uuid
-  scheduledDate          DateTime             @db.Date
+  id                     String    @id @default(uuid()) @db.Uuid
+  recurringTransactionId String    @db.Uuid
+  transactionId          String?   @db.Uuid
+  scheduledDate          DateTime  @db.Date
   executedDate           DateTime?
-  status                 String               @default("PENDING")
+  status                 String    @default("PENDING")
   errorMessage           String?
-  retryCount             Int                  @default(0)
-  createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
+  retryCount             Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   // Relations
   recurringTransaction RecurringTransaction @relation(fields: [recurringTransactionId], references: [id], onDelete: Cascade)
@@ -676,26 +630,26 @@ model RecurringTransactionExecution {
 // ============================================================================
 
 model DocumentUpload {
-  id           String            @id @default(uuid()) @db.Uuid
-  householdId  String            @db.Uuid
+  id           String           @id @default(uuid()) @db.Uuid
+  householdId  String           @db.Uuid
   fileName     String
   fileSize     Int
   mimeType     String
   documentType DocumentType
-  status       ProcessingStatus  @default(PENDING)
-  uploadedBy   String            @db.Uuid
-  uploadedAt   DateTime          @default(now())
+  status       ProcessingStatus @default(PENDING)
+  uploadedBy   String           @db.Uuid
+  uploadedAt   DateTime         @default(now())
   processedAt  DateTime?
   storageUrl   String
   description  String?
-  metadata     Json              @default("{}")
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  metadata     Json             @default("{}")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   // Relations
-  household            Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  uploader             User                   @relation("DocumentUploader", fields: [uploadedBy], references: [id])
-  ocrResults           OcrResult[]
+  household              Household               @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  uploader               User                    @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+  ocrResults             OcrResult[]
   transactionSuggestions TransactionSuggestion[]
 
   @@index([householdId])
@@ -706,18 +660,18 @@ model DocumentUpload {
 }
 
 model OcrResult {
-  id             String       @id @default(uuid()) @db.Uuid
-  documentId     String       @db.Uuid
-  documentType   DocumentType
-  confidence     Decimal      @db.Decimal(3, 2)
-  extractedData  Json         @default("{}")
-  rawText        String
-  processedAt    DateTime     @default(now())
-  metadata       Json         @default("{}")
-  createdAt      DateTime     @default(now())
+  id            String       @id @default(uuid()) @db.Uuid
+  documentId    String       @db.Uuid
+  documentType  DocumentType
+  confidence    Decimal      @db.Decimal(3, 2)
+  extractedData Json         @default("{}")
+  rawText       String
+  processedAt   DateTime     @default(now())
+  metadata      Json         @default("{}")
+  createdAt     DateTime     @default(now())
 
   // Relations
-  document             DocumentUpload         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document               DocumentUpload          @relation(fields: [documentId], references: [id], onDelete: Cascade)
   transactionSuggestions TransactionSuggestion[]
 
   @@index([documentId])
@@ -727,31 +681,31 @@ model OcrResult {
 }
 
 model TransactionSuggestion {
-  id                    String   @id @default(uuid()) @db.Uuid
-  documentId            String   @db.Uuid
-  ocrResultId           String?  @db.Uuid
+  id                    String    @id @default(uuid()) @db.Uuid
+  documentId            String    @db.Uuid
+  ocrResultId           String?   @db.Uuid
   description           String
   amountCents           BigInt
-  currency              String   @default("IDR") @db.VarChar(3)
-  date                  DateTime @db.Date
+  currency              String    @default("IDR") @db.VarChar(3)
+  date                  DateTime  @db.Date
   merchant              String?
-  suggestedCategoryId   String?  @db.Uuid
+  suggestedCategoryId   String?   @db.Uuid
   suggestedCategoryName String?
-  confidence            Decimal  @db.Decimal(3, 2)
-  source                String   // 'RECEIPT' or 'BANK_STATEMENT'
-  status                String   @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED'
-  isApproved            Boolean  @default(false)
+  confidence            Decimal   @db.Decimal(3, 2)
+  source                String // 'RECEIPT' or 'BANK_STATEMENT'
+  status                String    @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED'
+  isApproved            Boolean   @default(false)
   approvedAt            DateTime?
-  metadata              Json     @default("{}")
-  createdTransactionId  String?  @db.Uuid
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  metadata              Json      @default("{}")
+  createdTransactionId  String?   @db.Uuid
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // Relations
-  document          DocumentUpload @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  ocrResult         OcrResult?     @relation(fields: [ocrResultId], references: [id], onDelete: Cascade)
-  suggestedCategory Category?      @relation(fields: [suggestedCategoryId], references: [id])
-  createdTransaction Transaction?  @relation("TransactionFromSuggestion", fields: [createdTransactionId], references: [id])
+  document           DocumentUpload @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  ocrResult          OcrResult?     @relation(fields: [ocrResultId], references: [id], onDelete: Cascade)
+  suggestedCategory  Category?      @relation(fields: [suggestedCategoryId], references: [id])
+  createdTransaction Transaction?   @relation("TransactionFromSuggestion", fields: [createdTransactionId], references: [id])
 
   @@index([documentId])
   @@index([ocrResultId])
@@ -859,24 +813,24 @@ enum ProcessingStatus {
 // ============================================================================
 
 model ZakatCalculation {
-  id                    String                @id @default(uuid()) @db.Uuid
-  householdId           String                @db.Uuid
-  calculationDate       DateTime              @db.Date
-  hijriYear             Int
-  nisabThresholdCents   BigInt
+  id                        String   @id @default(uuid()) @db.Uuid
+  householdId               String   @db.Uuid
+  calculationDate           DateTime @db.Date
+  hijriYear                 Int
+  nisabThresholdCents       BigInt
   totalZakatableAssetsCents BigInt
-  zakatAmountCents      BigInt
-  currency              String                @default("IDR") @db.VarChar(3)
-  isZakatDue            Boolean               @default(false)
-  nextCalculationDate   DateTime              @db.Date
-  metadata              Json                  @default("{}")
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
+  zakatAmountCents          BigInt
+  currency                  String   @default("IDR") @db.VarChar(3)
+  isZakatDue                Boolean  @default(false)
+  nextCalculationDate       DateTime @db.Date
+  metadata                  Json     @default("{}")
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   // Relations
-  household             Household             @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  assetBreakdown        ZakatAssetBreakdown[]
-  zakatPayments         ZakatPayment[]
+  household      Household             @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  assetBreakdown ZakatAssetBreakdown[]
+  zakatPayments  ZakatPayment[]
 
   @@index([householdId])
   @@index([calculationDate])
@@ -885,23 +839,23 @@ model ZakatCalculation {
 }
 
 model ZakatAssetBreakdown {
-  id                    String            @id @default(uuid()) @db.Uuid
-  zakatCalculationId    String            @db.Uuid
-  assetType             ZakatAssetType
-  accountId             String?           @db.Uuid
-  accountName           String?
-  amountCents           BigInt
-  currency              String            @default("IDR") @db.VarChar(3)
-  zakatRate             Decimal           @db.Decimal(5, 4)
-  zakatAmountCents      BigInt
-  haulCompleted         Boolean           @default(false)
-  haulStartDate         DateTime?         @db.Date
-  metadata              Json              @default("{}")
-  createdAt             DateTime          @default(now())
+  id                 String         @id @default(uuid()) @db.Uuid
+  zakatCalculationId String         @db.Uuid
+  assetType          ZakatAssetType
+  accountId          String?        @db.Uuid
+  accountName        String?
+  amountCents        BigInt
+  currency           String         @default("IDR") @db.VarChar(3)
+  zakatRate          Decimal        @db.Decimal(5, 4)
+  zakatAmountCents   BigInt
+  haulCompleted      Boolean        @default(false)
+  haulStartDate      DateTime?      @db.Date
+  metadata           Json           @default("{}")
+  createdAt          DateTime       @default(now())
 
   // Relations
-  zakatCalculation      ZakatCalculation  @relation(fields: [zakatCalculationId], references: [id], onDelete: Cascade)
-  account               Account?          @relation(fields: [accountId], references: [id])
+  zakatCalculation ZakatCalculation @relation(fields: [zakatCalculationId], references: [id], onDelete: Cascade)
+  account          Account?         @relation(fields: [accountId], references: [id])
 
   @@index([zakatCalculationId])
   @@index([assetType])
@@ -910,23 +864,23 @@ model ZakatAssetBreakdown {
 }
 
 model ZakatReminder {
-  id                    String              @id @default(uuid()) @db.Uuid
-  householdId           String              @db.Uuid
-  reminderType          ZakatReminderType
-  scheduledDate         DateTime            @db.Date
-  hijriDate             String
-  zakatAmountCents      BigInt?
-  currency              String?             @default("IDR") @db.VarChar(3)
-  message               String
-  isActive              Boolean             @default(true)
-  isSent                Boolean             @default(false)
-  sentAt                DateTime?
-  metadata              Json                @default("{}")
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
+  id               String            @id @default(uuid()) @db.Uuid
+  householdId      String            @db.Uuid
+  reminderType     ZakatReminderType
+  scheduledDate    DateTime          @db.Date
+  hijriDate        String
+  zakatAmountCents BigInt?
+  currency         String?           @default("IDR") @db.VarChar(3)
+  message          String
+  isActive         Boolean           @default(true)
+  isSent           Boolean           @default(false)
+  sentAt           DateTime?
+  metadata         Json              @default("{}")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   // Relations
-  household             Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   @@index([householdId])
   @@index([scheduledDate])
@@ -936,22 +890,22 @@ model ZakatReminder {
 }
 
 model ZakatPayment {
-  id                    String            @id @default(uuid()) @db.Uuid
-  zakatCalculationId    String?           @db.Uuid
-  householdId           String            @db.Uuid
-  amountCents           BigInt
-  currency              String            @default("IDR") @db.VarChar(3)
-  paymentDate           DateTime          @db.Date
-  hijriDate             String
-  transactionId         String?           @db.Uuid
-  notes                 String?
-  metadata              Json              @default("{}")
-  createdAt             DateTime          @default(now())
+  id                 String   @id @default(uuid()) @db.Uuid
+  zakatCalculationId String?  @db.Uuid
+  householdId        String   @db.Uuid
+  amountCents        BigInt
+  currency           String   @default("IDR") @db.VarChar(3)
+  paymentDate        DateTime @db.Date
+  hijriDate          String
+  transactionId      String?  @db.Uuid
+  notes              String?
+  metadata           Json     @default("{}")
+  createdAt          DateTime @default(now())
 
   // Relations
-  zakatCalculation      ZakatCalculation? @relation(fields: [zakatCalculationId], references: [id])
-  household             Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  transaction           Transaction?      @relation(fields: [transactionId], references: [id])
+  zakatCalculation ZakatCalculation? @relation(fields: [zakatCalculationId], references: [id])
+  household        Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  transaction      Transaction?      @relation(fields: [transactionId], references: [id])
 
   @@index([householdId])
   @@index([paymentDate])
@@ -961,20 +915,20 @@ model ZakatPayment {
 }
 
 model ShariaCompliantAccount {
-  id                    String                  @id @default(uuid()) @db.Uuid
-  accountId             String                  @db.Uuid
-  complianceStatus      ShariaComplianceStatus
-  complianceNotes       String?
-  lastReviewDate        DateTime                @db.Date
-  nextReviewDate        DateTime                @db.Date
-  reviewedBy            String?                 @db.Uuid
-  metadata              Json                    @default("{}")
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
+  id               String                 @id @default(uuid()) @db.Uuid
+  accountId        String                 @db.Uuid
+  complianceStatus ShariaComplianceStatus
+  complianceNotes  String?
+  lastReviewDate   DateTime               @db.Date
+  nextReviewDate   DateTime               @db.Date
+  reviewedBy       String?                @db.Uuid
+  metadata         Json                   @default("{}")
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 
   // Relations
-  account               Account                 @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  reviewer              User?                   @relation("ShariaReviewer", fields: [reviewedBy], references: [id])
+  account  Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  reviewer User?   @relation("ShariaReviewer", fields: [reviewedBy], references: [id])
 
   @@unique([accountId])
   @@index([complianceStatus])
@@ -983,21 +937,21 @@ model ShariaCompliantAccount {
 }
 
 model IslamicFinanceReport {
-  id                    String              @id @default(uuid()) @db.Uuid
-  householdId           String              @db.Uuid
-  reportType            IslamicReportType
-  periodStartDate       DateTime            @db.Date
-  periodEndDate         DateTime            @db.Date
-  periodType            String              @default("MONTHLY")
-  reportData            Json                @default("{}")
-  generatedAt           DateTime            @default(now())
-  generatedBy           String?             @db.Uuid
-  metadata              Json                @default("{}")
-  createdAt             DateTime            @default(now())
+  id              String            @id @default(uuid()) @db.Uuid
+  householdId     String            @db.Uuid
+  reportType      IslamicReportType
+  periodStartDate DateTime          @db.Date
+  periodEndDate   DateTime          @db.Date
+  periodType      String            @default("MONTHLY")
+  reportData      Json              @default("{}")
+  generatedAt     DateTime          @default(now())
+  generatedBy     String?           @db.Uuid
+  metadata        Json              @default("{}")
+  createdAt       DateTime          @default(now())
 
   // Relations
-  household             Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  generator             User?               @relation("IslamicReportGenerator", fields: [generatedBy], references: [id])
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  generator User?     @relation("IslamicReportGenerator", fields: [generatedBy], references: [id])
 
   @@index([householdId])
   @@index([reportType])
@@ -1047,28 +1001,28 @@ enum IslamicReportType {
 // ============================================================================
 
 model Notification {
-  id           String             @id @default(uuid()) @db.Uuid
-  userId       String             @db.Uuid
-  householdId  String             @db.Uuid
-  type         NotificationType
-  title        String
-  message      String
-  actionUrl    String?
-  actionText   String?
-  metadata     Json               @default("{}")
-  priority     NotificationPriority @default(MEDIUM)
-  status       NotificationStatus @default(PENDING)
-  channels     NotificationChannel[]
-  scheduledAt  DateTime?
-  sentAt       DateTime?
-  readAt       DateTime?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  id          String                @id @default(uuid()) @db.Uuid
+  userId      String                @db.Uuid
+  householdId String                @db.Uuid
+  type        NotificationType
+  title       String
+  message     String
+  actionUrl   String?
+  actionText  String?
+  metadata    Json                  @default("{}")
+  priority    NotificationPriority  @default(MEDIUM)
+  status      NotificationStatus    @default(PENDING)
+  channels    NotificationChannel[]
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  readAt      DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
 
   // Relations
-  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  household    Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  deliveries   NotificationDelivery[]
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household  Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
 
   @@index([userId, status])
   @@index([householdId, type])
@@ -1078,19 +1032,19 @@ model Notification {
 }
 
 model NotificationDelivery {
-  id             String             @id @default(uuid()) @db.Uuid
-  notificationId String             @db.Uuid
+  id             String              @id @default(uuid()) @db.Uuid
+  notificationId String              @db.Uuid
   channel        NotificationChannel
-  status         NotificationStatus @default(PENDING)
+  status         NotificationStatus  @default(PENDING)
   deliveredAt    DateTime?
   failureReason  String?
-  retryCount     Int                @default(0)
-  metadata       Json               @default("{}")
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  retryCount     Int                 @default(0)
+  metadata       Json                @default("{}")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   // Relations
-  notification   Notification       @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@index([notificationId])
   @@index([channel, status])
@@ -1098,37 +1052,36 @@ model NotificationDelivery {
 }
 
 model NotificationPreference {
-  id                    String   @id @default(uuid()) @db.Uuid
-  userId                String   @unique @db.Uuid
-  budgetAlerts          Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"threshold\": 80}")
-  debtReminders         Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"daysBefore\": 3}")
-  zakatReminders        Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"daysBefore\": 30}")
-  priceAlerts           Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\"], \"priceDropPercentage\": 10}")
-  transactionAlerts     Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\"], \"largeAmountThreshold\": 1000000}")
-  monthlyReports        Json     @default("{\"enabled\": true, \"channels\": [\"EMAIL\"], \"dayOfMonth\": 1}")
-  securityAlerts        Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\", \"PUSH\"]}")
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @unique @db.Uuid
+  budgetAlerts      Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"threshold\": 80}")
+  debtReminders     Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"daysBefore\": 3}")
+  zakatReminders    Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\"], \"daysBefore\": 30}")
+  transactionAlerts Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\"], \"largeAmountThreshold\": 1000000}")
+  monthlyReports    Json     @default("{\"enabled\": true, \"channels\": [\"EMAIL\"], \"dayOfMonth\": 1}")
+  securityAlerts    Json     @default("{\"enabled\": true, \"channels\": [\"IN_APP\", \"EMAIL\", \"PUSH\"]}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
 }
 
 model PushSubscription {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @db.Uuid
-  endpoint   String
-  p256dh     String
-  auth       String
-  userAgent  String?
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  endpoint  String
+  p256dh    String
+  auth      String
+  userAgent String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, endpoint])
   @@index([userId, isActive])
@@ -1136,16 +1089,16 @@ model PushSubscription {
 }
 
 model EmailTemplate {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String           @unique
   type        NotificationType
   subject     String
   htmlContent String
   textContent String
-  variables   Json     @default("[]")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  variables   Json             @default("[]")
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@index([type])
   @@map("email_templates")
@@ -1156,7 +1109,6 @@ enum NotificationType {
   BUDGET_WARNING
   DEBT_PAYMENT_DUE
   ZAKAT_REMINDER
-  PRICE_ALERT
   TRANSACTION_CREATED
   ACCOUNT_BALANCE_LOW
   RECURRING_TRANSACTION_FAILED

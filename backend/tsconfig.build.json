@@ -1,6 +1,18 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"],
+  "include": [
+    "src/app/**/*.ts",
+    "src/auth/**/*.ts",
+    "src/common/**/*.ts",
+    "src/household/**/*.ts",
+    "src/accounts/**/*.ts",
+    "src/transactions/**/*.ts",
+    "src/prisma/**/*.ts",
+    "src/exchange-rates/**/*.ts",
+    "src/debts/**/*.ts",
+    "src/budgets/**/*.ts"
+  ],
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "**/*test.ts"],
   "compilerOptions": {
     "skipLibCheck": true,
     "skipDefaultLibCheck": true

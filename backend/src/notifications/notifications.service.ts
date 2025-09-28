@@ -252,7 +252,6 @@ export class NotificationsService {
         budgetAlerts: updateDto.budgetAlerts || {},
         debtReminders: updateDto.debtReminders || {},
         zakatReminders: updateDto.zakatReminders || {},
-        priceAlerts: updateDto.priceAlerts || {},
         transactionAlerts: updateDto.transactionAlerts || {},
         monthlyReports: updateDto.monthlyReports || {},
         securityAlerts: updateDto.securityAlerts || {},
@@ -261,7 +260,6 @@ export class NotificationsService {
         ...(updateDto.budgetAlerts && { budgetAlerts: updateDto.budgetAlerts }),
         ...(updateDto.debtReminders && { debtReminders: updateDto.debtReminders }),
         ...(updateDto.zakatReminders && { zakatReminders: updateDto.zakatReminders }),
-        ...(updateDto.priceAlerts && { priceAlerts: updateDto.priceAlerts }),
         ...(updateDto.transactionAlerts && { transactionAlerts: updateDto.transactionAlerts }),
         ...(updateDto.monthlyReports && { monthlyReports: updateDto.monthlyReports }),
         ...(updateDto.securityAlerts && { securityAlerts: updateDto.securityAlerts }),
@@ -358,11 +356,6 @@ export class NotificationsService {
           channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
           daysBefore: 30,
         },
-        priceAlerts: {
-          enabled: true,
-          channels: [NotificationChannel.IN_APP],
-          priceDropPercentage: 10,
-        },
         transactionAlerts: {
           enabled: true,
           channels: [NotificationChannel.IN_APP],
@@ -392,9 +385,6 @@ export class NotificationsService {
       zakatReminders: typeof preferences.zakatReminders === 'string' 
         ? JSON.parse(preferences.zakatReminders) 
         : preferences.zakatReminders,
-      priceAlerts: typeof preferences.priceAlerts === 'string' 
-        ? JSON.parse(preferences.priceAlerts) 
-        : preferences.priceAlerts,
       transactionAlerts: typeof preferences.transactionAlerts === 'string' 
         ? JSON.parse(preferences.transactionAlerts) 
         : preferences.transactionAlerts,
@@ -429,11 +419,6 @@ export class NotificationsService {
       case NotificationType.ZAKAT_REMINDER:
         if (preferences.zakatReminders.enabled) {
           allowedChannels = preferences.zakatReminders.channels;
-        }
-        break;
-      case NotificationType.PRICE_ALERT:
-        if (preferences.priceAlerts.enabled) {
-          allowedChannels = preferences.priceAlerts.channels;
         }
         break;
       case NotificationType.TRANSACTION_CREATED:

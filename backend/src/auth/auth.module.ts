@@ -12,6 +12,7 @@ import { EmailVerificationService } from './services/email-verification.service'
 import { PasswordResetService } from './services/password-reset.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserContextService } from './services/user-context.service';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { PrismaService } from '../prisma/prisma.service';
     PasswordResetService,
     JwtAuthGuard,
     PrismaService,
+    UserContextService,
   ],
-  exports: [AuthService, JwtAuthGuard, JwtService],
+  exports: [AuthService, JwtAuthGuard, JwtService, UserContextService],
 })
 export class AuthModule {}

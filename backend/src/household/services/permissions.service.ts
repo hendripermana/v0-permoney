@@ -56,12 +56,6 @@ export class PermissionsService {
         HOUSEHOLD_PERMISSIONS.CREATE_DEBTS,
         HOUSEHOLD_PERMISSIONS.DELETE_DEBTS,
       ],
-      'Wishlist Management': [
-        HOUSEHOLD_PERMISSIONS.MANAGE_WISHLIST,
-        HOUSEHOLD_PERMISSIONS.VIEW_WISHLIST,
-        HOUSEHOLD_PERMISSIONS.CREATE_WISHLIST_ITEMS,
-        HOUSEHOLD_PERMISSIONS.DELETE_WISHLIST_ITEMS,
-      ],
       'Reports & Analytics': [
         HOUSEHOLD_PERMISSIONS.VIEW_REPORTS,
         HOUSEHOLD_PERMISSIONS.EXPORT_DATA,
@@ -128,10 +122,6 @@ export class PermissionsService {
       [HOUSEHOLD_PERMISSIONS.VIEW_DEBTS]: 'View debt information and payment schedules',
       [HOUSEHOLD_PERMISSIONS.CREATE_DEBTS]: 'Add new debt entries',
       [HOUSEHOLD_PERMISSIONS.DELETE_DEBTS]: 'Delete existing debt entries',
-      [HOUSEHOLD_PERMISSIONS.MANAGE_WISHLIST]: 'Full access to manage wishlist items',
-      [HOUSEHOLD_PERMISSIONS.VIEW_WISHLIST]: 'View wishlist items and price tracking',
-      [HOUSEHOLD_PERMISSIONS.CREATE_WISHLIST_ITEMS]: 'Add new items to wishlist',
-      [HOUSEHOLD_PERMISSIONS.DELETE_WISHLIST_ITEMS]: 'Remove items from wishlist',
       [HOUSEHOLD_PERMISSIONS.VIEW_REPORTS]: 'Access financial reports and summaries',
       [HOUSEHOLD_PERMISSIONS.EXPORT_DATA]: 'Export household financial data',
       [HOUSEHOLD_PERMISSIONS.VIEW_ANALYTICS]: 'Access advanced analytics and insights',

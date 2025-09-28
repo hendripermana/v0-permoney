@@ -268,7 +268,6 @@ export class PushNotificationService {
       [NotificationType.BUDGET_WARNING]: '/icons/budget-warning.png',
       [NotificationType.DEBT_PAYMENT_DUE]: '/icons/debt-reminder.png',
       [NotificationType.ZAKAT_REMINDER]: '/icons/zakat.png',
-      [NotificationType.PRICE_ALERT]: '/icons/price-drop.png',
       [NotificationType.TRANSACTION_CREATED]: '/icons/transaction.png',
       [NotificationType.ACCOUNT_BALANCE_LOW]: '/icons/balance-low.png',
       [NotificationType.RECURRING_TRANSACTION_FAILED]: '/icons/error.png',

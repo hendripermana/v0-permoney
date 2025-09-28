@@ -12,12 +12,14 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { UploadCloud, User, CheckCircle, ArrowRight, ArrowLeft, Globe } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { CountrySelect, CurrencySelect } from "@/components/country/country-select"
 import { findCountry, listCountries } from "@/data/countries"
 import { OnboardingSummary } from "@/components/onboarding/onboarding-summary"
+import { apiClient } from "@/lib/api-client"
+import type { Household } from "@/types/household"
 
 const onboardingSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -32,6 +34,12 @@ type OnboardingFormValues = z.infer<typeof onboardingSchema>
 
 const DEFAULT_COUNTRY_CODE = "ID"
 const DEFAULT_CURRENCY_CODE = "IDR"
+const SUPPORTED_BASE_CURRENCIES = new Set(["IDR", "USD", "EUR", "SGD", "MYR"])
+
+const normalizeCurrencyCode = (code: string) => {
+  const normalized = code.trim().toUpperCase()
+  return SUPPORTED_BASE_CURRENCIES.has(normalized) ? normalized : DEFAULT_CURRENCY_CODE
+}
 
 const FIELDS_BY_STEP: Record<number, Array<keyof OnboardingFormValues>> = {
   0: ["firstName", "lastName", "householdName"],
@@ -151,32 +159,120 @@ export default function OnboardingPage() {
 
     try {
       const values = form.getValues()
-      setCompletedSteps(prev => new Set([...prev, ONBOARDING_STEPS[currentStep]?.id ?? "preferences"]))
-      await user.update({
-        unsafeMetadata: {
-          ...user.unsafeMetadata,
-          onboardingComplete: true,
-          onboardingData: {
-            completedAt: new Date().toISOString(),
-            profile: {
-              firstName: values.firstName,
-              lastName: values.lastName,
-              countryCode: values.countryCode,
-              currencyCode: values.currencyCode,
-            },
-            household: {
-              name: values.householdName,
-            },
+      const trimmedFirstName = values.firstName.trim()
+      const trimmedLastName = values.lastName.trim()
+      const trimmedHouseholdName = values.householdName.trim()
+
+      if (!trimmedFirstName || !trimmedLastName || !trimmedHouseholdName) {
+        toast({
+          title: "Missing Information",
+          description: "Please provide a valid first name, last name, and household name.",
+          variant: "destructive",
+        })
+        return
+      }
+      const normalizedCountryCode = values.countryCode.trim().toUpperCase() || DEFAULT_COUNTRY_CODE
+      const normalizedCurrencyCode = normalizeCurrencyCode(values.currencyCode)
+
+      if (normalizedCurrencyCode !== values.currencyCode) {
+        form.setValue("currencyCode", normalizedCurrencyCode, { shouldDirty: true, shouldTouch: true })
+        toast({
+          title: "Currency adjusted",
+          description: "We currently support IDR, USD, EUR, SGD, and MYR as household base currencies.",
+        })
+      }
+
+      let primaryHouseholdId: string | undefined
+      let resolvedHousehold: Household | undefined
+
+      const ensureHousehold = async () => {
+        try {
+          const households = await apiClient.getHouseholds()
+          if (households && households.length > 0) {
+            const [existing] = households
+            primaryHouseholdId = existing.id
+            const requiresUpdate =
+              existing.name.trim() !== trimmedHouseholdName ||
+              existing.baseCurrency.trim().toUpperCase() !== normalizedCurrencyCode
+
+            if (requiresUpdate) {
+              resolvedHousehold = await apiClient.updateHousehold(existing.id, {
+                name: trimmedHouseholdName,
+                baseCurrency: normalizedCurrencyCode,
+              })
+            } else {
+              resolvedHousehold = existing
+            }
+            return
+          }
+        } catch (householdError) {
+          console.error("Failed to load households:", householdError)
+          throw householdError
+        }
+
+        const created = await apiClient.createHousehold({
+          name: trimmedHouseholdName,
+          baseCurrency: normalizedCurrencyCode,
+        })
+
+        primaryHouseholdId = created.id
+        resolvedHousehold = created
+      }
+
+      await ensureHousehold()
+
+      if (!primaryHouseholdId) {
+        throw new Error("Unable to resolve household for onboarding")
+      }
+
+      if (values.avatarFile) {
+        try {
+          await user.setProfileImage({ file: values.avatarFile })
+        } catch (avatarError) {
+          console.error("Failed to upload profile image:", avatarError)
+          toast({
+            title: "Avatar upload failed",
+            description: "We couldn't update your avatar right now. You can try again from profile settings.",
+            variant: "destructive",
+          })
+        }
+      }
+
+      const metadata = {
+        ...user.unsafeMetadata,
+        onboardingComplete: true,
+        primaryHouseholdId,
+        onboardingData: {
+          completedAt: new Date().toISOString(),
+          profile: {
+            firstName: trimmedFirstName,
+            lastName: trimmedLastName,
+            countryCode: normalizedCountryCode,
+            currencyCode: normalizedCurrencyCode,
+          },
+          household: {
+            id: primaryHouseholdId,
+            name: resolvedHousehold?.name ?? trimmedHouseholdName,
+            baseCurrency: normalizedCurrencyCode,
           },
         },
+      }
+
+      await user.update({
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        unsafeMetadata: metadata,
       })
+
+      await user.reload()
+      setCompletedSteps(prev => new Set([...prev, ONBOARDING_STEPS[currentStep]?.id ?? "preferences"]))
 
       toast({
         title: "Setup Complete!",
         description: "Your Permoney account is ready to use.",
       })
 
-      router.push("/dashboard")
+      router.replace("/dashboard")
     } catch (error) {
       console.error("Error completing onboarding:", error)
       toast({
@@ -287,19 +383,6 @@ export default function OnboardingPage() {
               </Button>
             )}
           </div>
-
-          {currentStep === ONBOARDING_STEPS.length - 1 && (
-            <div className="text-center pt-4">
-              <Button
-                variant="ghost"
-                onClick={completeOnboarding}
-                disabled={isSubmitting}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Skip setup for now
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

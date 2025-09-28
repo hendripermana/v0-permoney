@@ -35,7 +35,7 @@ async function validateDatabaseSetup(): Promise<ValidationResult[]> {
     const coreModels = [
       'user', 'household', 'householdMember', 'institution', 'account',
       'category', 'transaction', 'ledgerEntry', 'debt', 'budget',
-      'wishlistItem', 'gratitudeEntry', 'exchangeRate', 'passkey', 'session'
+      'gratitudeEntry', 'exchangeRate', 'passkey', 'session'
     ];
 
     for (const model of coreModels) {

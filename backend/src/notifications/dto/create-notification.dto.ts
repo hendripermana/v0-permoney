@@ -60,11 +60,6 @@ export class UpdateNotificationPreferencesDto {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => PriceAlertsPreferenceDto)
-  priceAlerts?: PriceAlertsPreferenceDto;
-
-  @IsOptional()
-  @ValidateNested()
   @Type(() => TransactionAlertsPreferenceDto)
   transactionAlerts?: TransactionAlertsPreferenceDto;
 
@@ -113,18 +108,6 @@ export class ZakatRemindersPreferenceDto {
 
   @IsNumber()
   daysBefore: number;
-}
-
-export class PriceAlertsPreferenceDto {
-  @IsBoolean()
-  enabled: boolean;
-
-  @IsArray()
-  @IsEnum(NotificationChannel, { each: true })
-  channels: NotificationChannel[];
-
-  @IsNumber()
-  priceDropPercentage: number;
 }
 
 export class TransactionAlertsPreferenceDto {

@@ -11,6 +11,14 @@
     "dist",
     "test",
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "src/ai-insights/**/*",
+    "src/analytics/**/*",
+    "src/notifications/**/*",
+    "src/ocr/**/*",
+    "src/architecture/**/*",
+    "src/events/**/*",
+    "src/monitoring/**/*",
+    "src/ocr.metrics.ts"
   ]
 }

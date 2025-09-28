@@ -8,7 +8,21 @@ const nextConfig = {
   },
   images: {
     unoptimized: false,
-    domains: ['localhost', 'vercel.app', 'flagcdn.com'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.vercel.app',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.flagcdn.com',
+      },
+    ],
   },
   compress: true,
   experimental: {

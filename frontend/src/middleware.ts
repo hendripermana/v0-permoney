@@ -24,6 +24,11 @@ const isOnboardingRoute = createRouteMatcher([
 
 // Always use Clerk middleware with custom logic
 export default clerkMiddleware(async (auth, req) => {
+  const { pathname } = req.nextUrl
+  if (pathname.startsWith('/_next') || pathname.startsWith('/static') || pathname === '/favicon.ico') {
+    return
+  }
+
   const { userId, redirectToSignIn } = await auth()
 
   // Allow public routes to pass through
@@ -65,9 +70,7 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless searched
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
+    '/((?!.+\.[\w]+$|_next).*)',
     '/(api|trpc)(.*)',
   ],
 }

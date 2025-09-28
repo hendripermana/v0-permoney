@@ -299,9 +299,23 @@ export class EmailService {
   ) {
     const processString = (str: string) => {
       return str.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-        return data[key] || match;
-      });
-    };
+        const value = data[key]
+
+        if (value === null || value === undefined) {
+          return match
+        }
+
+        if (typeof value === "string") {
+          return value
+        }
+
+        if (typeof value === "number" || typeof value === "boolean") {
+          return String(value)
+        }
+
+        return JSON.stringify(value)
+      })
+    }
 
     return {
       subject: processString(template.subject),

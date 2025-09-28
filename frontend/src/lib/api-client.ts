@@ -45,13 +45,39 @@ export interface AnalyticsFilters {
 }
 
 const JSON_CONTENT_TYPE = "application/json"
+const API_PATH_PREFIX = "/api"
 
-const normalizeBaseUrl = (baseUrl: string) => {
-  if (!baseUrl) {
-    return "/api"
+const stripTrailingSlash = (value: string) => value.replace(/\/+$/, "")
+const ensureLeadingSlash = (value: string) => (value.startsWith("/") ? value : `/${value}`)
+
+const normalizeBaseUrl = (rawBaseUrl?: string) => {
+  if (!rawBaseUrl) {
+    return API_PATH_PREFIX
   }
 
-  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
+  const trimmed = stripTrailingSlash(rawBaseUrl.trim())
+  if (!trimmed) {
+    return API_PATH_PREFIX
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed)
+      if (!url.pathname || url.pathname === "/") {
+        url.pathname = API_PATH_PREFIX
+      }
+      return stripTrailingSlash(url.toString())
+    } catch {
+      return API_PATH_PREFIX
+    }
+  }
+
+  const normalizedPath = stripTrailingSlash(ensureLeadingSlash(trimmed))
+  if (normalizedPath === "/") {
+    return API_PATH_PREFIX
+  }
+
+  return normalizedPath
 }
 
 const buildQueryString = (params?: Record<string, unknown>) => {
@@ -115,7 +141,12 @@ class ApiClient {
     try {
       // Prefer ClerkJS if available in browser
       if (isBrowser && (window as any)?.Clerk?.session?.getToken) {
-        authToken = await (window as any).Clerk.session.getToken()
+        const session = (window as any).Clerk.session
+        try {
+          authToken = await session.getToken({ template: "integration_fallback" })
+        } catch (templateError) {
+          authToken = await session.getToken()
+        }
       }
     } catch (_) {
       // Swallow token resolution errors; request will proceed without Authorization

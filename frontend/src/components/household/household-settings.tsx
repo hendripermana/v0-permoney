@@ -38,7 +38,6 @@ const settingsSchema = z.object({
   defaultViewType: z.enum(['individual', 'partner_only', 'combined']),
   enableNotifications: z.boolean().default(true),
   enableBudgetAlerts: z.boolean().default(true),
-  enablePriceAlerts: z.boolean().default(true),
   privacyMode: z.boolean().default(false),
   autoCategorizationEnabled: z.boolean().default(true),
   currencyDisplayFormat: z.enum(['symbol', 'code', 'both']).default('symbol'),
@@ -94,7 +93,6 @@ export function HouseholdSettings({ householdId }: HouseholdSettingsProps) {
       defaultViewType: household?.settings?.defaultViewType || 'individual',
       enableNotifications: household?.settings?.enableNotifications ?? true,
       enableBudgetAlerts: household?.settings?.enableBudgetAlerts ?? true,
-      enablePriceAlerts: household?.settings?.enablePriceAlerts ?? true,
       privacyMode: household?.settings?.privacyMode ?? false,
       autoCategorizationEnabled: household?.settings?.autoCategorizationEnabled ?? true,
       currencyDisplayFormat: household?.settings?.currencyDisplayFormat || 'symbol',
@@ -109,7 +107,6 @@ export function HouseholdSettings({ householdId }: HouseholdSettingsProps) {
         defaultViewType: household.settings?.defaultViewType || 'individual',
         enableNotifications: household.settings?.enableNotifications ?? true,
         enableBudgetAlerts: household.settings?.enableBudgetAlerts ?? true,
-        enablePriceAlerts: household.settings?.enablePriceAlerts ?? true,
         privacyMode: household.settings?.privacyMode ?? false,
         autoCategorizationEnabled: household.settings?.autoCategorizationEnabled ?? true,
         currencyDisplayFormat: household.settings?.currencyDisplayFormat || 'symbol',
@@ -361,26 +358,6 @@ export function HouseholdSettings({ householdId }: HouseholdSettingsProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="enablePriceAlerts"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Price Alerts</FormLabel>
-                      <FormDescription>
-                        Get notified about wishlist item price changes
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </div>
 
             <div className="flex justify-end">

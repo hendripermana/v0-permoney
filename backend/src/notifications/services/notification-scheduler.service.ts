@@ -191,71 +191,6 @@ export class NotificationSchedulerService {
     }
   }
 
-  // Check for price alerts every 6 hours
-  @Cron('0 */6 * * *')
-  async checkPriceAlerts() {
-    this.logger.log('Checking for price alerts...');
-
-    try {
-      const wishlistItems = await this.prisma.wishlistItem.findMany({
-        where: {
-          isPurchased: false,
-          targetPriceCents: {
-            not: null,
-          },
-        },
-        include: {
-          household: {
-            include: {
-              members: {
-                include: {
-                  user: true,
-                },
-              },
-            },
-          },
-          priceHistory: {
-            orderBy: {
-              recordedAt: 'desc',
-            },
-            take: 2,
-          },
-        },
-      });
-
-      for (const item of wishlistItems) {
-        if (item.targetPriceCents && item.currentPriceCents <= item.targetPriceCents) {
-          const priceDropPercentage = item.priceHistory.length >= 2
-            ? ((Number(item.priceHistory[1].priceCents) - Number(item.currentPriceCents)) / Number(item.priceHistory[1].priceCents)) * 100
-            : 0;
-
-          for (const member of item.household.members) {
-            await this.notificationsService.createNotification({
-              userId: member.user.id,
-              householdId: item.householdId,
-              type: NotificationType.PRICE_ALERT,
-              title: 'Price Drop Alert!',
-              message: `${item.name} has dropped to ${this.formatCurrency(item.currentPriceCents, item.currency)}${priceDropPercentage > 0 ? ` (${priceDropPercentage.toFixed(1)}% off)` : ''}`,
-              actionUrl: `/wishlist/${item.id}`,
-              actionText: 'View Item',
-              channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
-              priority: NotificationPriority.MEDIUM,
-              metadata: {
-                wishlistItemId: item.id,
-                currentPrice: item.currentPriceCents,
-                targetPrice: item.targetPriceCents,
-                priceDropPercentage,
-                merchant: item.merchant,
-              },
-            });
-          }
-        }
-      }
-    } catch (error) {
-      this.logger.error('Error checking price alerts:', error);
-    }
-  }
-
   // Generate monthly reports on the 1st of each month at 8 AM
   @Cron('0 8 1 * *')
   async generateMonthlyReports() {
@@ -395,10 +330,6 @@ export class NotificationSchedulerService {
 
   async triggerZakatReminders() {
     await this.checkZakatReminders();
-  }
-
-  async triggerPriceAlerts() {
-    await this.checkPriceAlerts();
   }
 
   async triggerMonthlyReports() {

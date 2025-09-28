@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Check, Trash2, ExternalLink, AlertCircle, DollarSign, Calendar, Shield, TrendingDown } from 'lucide-react';
+import { Check, Trash2, ExternalLink, AlertCircle, DollarSign, Calendar, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/contexts/notification-context';
@@ -30,7 +30,6 @@ const notificationIcons = {
   BUDGET_WARNING: DollarSign,
   DEBT_PAYMENT_DUE: Calendar,
   ZAKAT_REMINDER: Calendar,
-  PRICE_ALERT: TrendingDown,
   TRANSACTION_CREATED: DollarSign,
   ACCOUNT_BALANCE_LOW: AlertCircle,
   RECURRING_TRANSACTION_FAILED: AlertCircle,
