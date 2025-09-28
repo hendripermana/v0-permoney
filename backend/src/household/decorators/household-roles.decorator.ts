@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../../node_modules/.prisma/client';
 import { HOUSEHOLD_ROLES_KEY } from '../guards/household-access.guard';
 
 export const HouseholdRoles = (...roles: HouseholdRole[]) =>

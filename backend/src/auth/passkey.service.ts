@@ -47,13 +47,13 @@ export class PasskeyService {
     const options: GenerateRegistrationOptionsOpts = {
       rpName: this.rpName,
       rpID: this.rpID,
-      userID: user.id,
+      userID: Buffer.from(user.id, 'utf-8'),
       userName: user.email,
       userDisplayName: user.name,
       attestationType: 'none',
       excludeCredentials: user.passkeys.map((passkey) => ({
-        id: Buffer.from(passkey.credentialId, 'base64'),
-        type: 'public-key',
+        id: passkey.credentialId, // Use the stored base64 string directly
+        type: 'public-key' as const,
         transports: passkey.transports as AuthenticatorTransport[],
       })),
       authenticatorSelection: {
@@ -106,16 +106,16 @@ export class PasskeyService {
       const verificationResult = await verifyRegistrationResponse(verification);
 
       if (verificationResult.verified && verificationResult.registrationInfo) {
-        const { credentialID, credentialPublicKey, counter } = verificationResult.registrationInfo;
+        const { credential } = verificationResult.registrationInfo;
 
         // Save passkey to database
         await this.prisma.passkey.create({
           data: {
             userId,
             name: passkeyName,
-            credentialId: Buffer.from(credentialID).toString('base64'),
-            publicKey: Buffer.from(credentialPublicKey).toString('base64'),
-            counter,
+            credentialId: Buffer.from(credential.id).toString('base64'),
+            publicKey: Buffer.from(credential.publicKey).toString('base64'),
+            counter: 0, // Default counter value
             transports: response.response.transports || [],
           },
         });
@@ -149,7 +149,7 @@ export class PasskeyService {
 
     const options: GenerateAuthenticationOptionsOpts = {
       rpID: this.rpID,
-      allowCredentials: allowCredentials.length > 0 ? allowCredentials : undefined,
+      allowCredentials: allowCredentials.length > 0 ? allowCredentials as any : undefined,
       userVerification: 'preferred',
     };
 
@@ -183,9 +183,9 @@ export class PasskeyService {
       expectedChallenge: Buffer.from(response.response.clientDataJSON).toString('base64url'),
       expectedOrigin: this.origin,
       expectedRPID: this.rpID,
-      authenticator: {
-        credentialID: Buffer.from(passkey.credentialId, 'base64'),
-        credentialPublicKey: Buffer.from(passkey.publicKey, 'base64'),
+      credential: {
+        id: passkey.credentialId, // Use the stored base64 string directly
+        publicKey: Buffer.from(passkey.publicKey, 'base64'),
         counter: passkey.counter,
         transports: passkey.transports as AuthenticatorTransport[],
       },
@@ -219,6 +219,7 @@ export class PasskeyService {
         return {
           verified: true,
           user: this.authService['sanitizeUser'](passkey.user),
+          token: tokens.refreshToken,
           tokens,
         };
       }

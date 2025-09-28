@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccountsRepository } from './accounts.repository';
 import { PrismaService } from '../prisma/prisma.service';
-import { AccountType } from '@prisma/client';
+import { AccountType } from '../../../node_modules/.prisma/client';
 
 describe('AccountsRepository', () => {
   let repository: AccountsRepository;

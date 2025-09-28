@@ -20,7 +20,6 @@ import {
   TransactionSplitDto,
   UpdateTransactionSplitsDto,
 } from './dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { HouseholdAccessGuard } from '../household/guards/household-access.guard';
 import { HouseholdPermissions } from '../household/decorators/household-permissions.decorator';
@@ -29,7 +28,7 @@ import { TrackEvent } from '../events/decorators/track-event.decorator';
 import { EventType } from '../events/types/event.types';
 
 @Controller('transactions')
-@UseGuards(JwtAuthGuard, HouseholdAccessGuard)
+@UseGuards(HouseholdAccessGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 

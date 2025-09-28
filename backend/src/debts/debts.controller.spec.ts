@@ -3,7 +3,7 @@ import { DebtsController } from './debts.controller';
 import { DebtsService } from './debts.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdGuard } from '../household/guards/household.guard';
-import { DebtType } from '@prisma/client';
+import { DebtType } from '../../../node_modules/.prisma/client';
 import { CreateDebtDto, CreateDebtPaymentDto } from './dto';
 
 describe('DebtsController', () => {

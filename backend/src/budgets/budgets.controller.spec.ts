@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BudgetsController } from './budgets.controller';
 import { BudgetsService } from './budgets.service';
 import { CreateBudgetDto } from './dto';
-import { BudgetPeriod } from '@prisma/client';
+import { BudgetPeriod } from '../../../node_modules/.prisma/client';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
 describe('BudgetsController', () => {

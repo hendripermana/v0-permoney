@@ -20,7 +20,6 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdGuard } from '../household/guards/household.guard';
 import { RecurringTransactionService } from './recurring-transaction.service';
 import {
@@ -30,11 +29,13 @@ import {
   RecurringTransactionResponseDto,
   RecurringTransactionExecutionDto,
   ExecuteRecurringTransactionDto,
+  RecurrenceFrequency,
+  RecurringTransactionStatus
 } from './dto/recurring-transaction.dto';
 
 @ApiTags('Recurring Transactions')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, HouseholdGuard)
+@UseGuards(HouseholdGuard)
 @Controller('households/:householdId/recurring-transactions')
 export class RecurringTransactionController {
   constructor(
@@ -56,11 +57,19 @@ export class RecurringTransactionController {
     @Body() createDto: CreateRecurringTransactionDto,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    return this.recurringTransactionService.create(
+    const result = await this.recurringTransactionService.create(
       householdId,
       req.user.id,
       createDto
     );
+
+    return {
+      ...result,
+      amountCents: Number(result.amountCents),
+      frequency: result.frequency as RecurrenceFrequency,
+      status: result.status as RecurringTransactionStatus,
+      metadata: result.metadata as Record<string, any>,
+    };
   }
 
   @Get()
@@ -129,7 +138,14 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    return this.recurringTransactionService.findById(id, req.user.id);
+    const result = await this.recurringTransactionService.findById(id, req.user.id);
+    return {
+      ...result,
+      amountCents: Number(result.amountCents),
+      frequency: result.frequency as RecurrenceFrequency,
+      status: result.status as RecurringTransactionStatus,
+      metadata: result.metadata as Record<string, any>,
+    };
   }
 
   @Put(':id')
@@ -149,7 +165,14 @@ export class RecurringTransactionController {
     @Body() updateDto: UpdateRecurringTransactionDto,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    return this.recurringTransactionService.update(id, req.user.id, updateDto);
+    const result = await this.recurringTransactionService.update(id, req.user.id, updateDto);
+    return {
+      ...result,
+      amountCents: Number(result.amountCents),
+      frequency: result.frequency as RecurrenceFrequency,
+      status: result.status as RecurringTransactionStatus,
+      metadata: result.metadata as Record<string, any>,
+    };
   }
 
   @Delete(':id')
@@ -184,7 +207,13 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    return this.recurringTransactionService.pause(id, req.user.id);
+    const result = await this.recurringTransactionService.pause(id, req.user.id);
+    return {
+      ...result,
+      frequency: result.frequency as RecurrenceFrequency,
+      status: result.status as RecurringTransactionStatus,
+      metadata: result.metadata as Record<string, any>,
+    };
   }
 
   @Post(':id/resume')
@@ -201,7 +230,13 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    return this.recurringTransactionService.resume(id, req.user.id);
+    const result = await this.recurringTransactionService.resume(id, req.user.id);
+    return {
+      ...result,
+      frequency: result.frequency as RecurrenceFrequency,
+      status: result.status as RecurringTransactionStatus,
+      metadata: result.metadata as Record<string, any>,
+    };
   }
 
   @Post(':id/cancel')
@@ -218,7 +253,13 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    return this.recurringTransactionService.cancel(id, req.user.id);
+    const result = await this.recurringTransactionService.cancel(id, req.user.id);
+    return {
+      ...result,
+      frequency: result.frequency as RecurrenceFrequency,
+      status: result.status as RecurringTransactionStatus,
+      metadata: result.metadata as Record<string, any>,
+    };
   }
 
   @Post(':id/execute')

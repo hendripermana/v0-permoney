@@ -143,7 +143,7 @@ export class PerformanceMonitoringService {
       const metrics = {
         memory: this.getMemoryMetrics(),
         cpu: this.getCpuMetrics(),
-        eventLoop: this.getEventLoopMetrics(),
+        eventLoop: await this.getEventLoopMetrics(),
         gc: this.getGarbageCollectionMetrics(),
       };
 

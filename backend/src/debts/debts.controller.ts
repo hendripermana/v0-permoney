@@ -17,7 +17,6 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdAccessGuard } from '../household/guards/household-access.guard';
 import { HouseholdPermissions } from '../household/decorators/household-permissions.decorator';
 import { HOUSEHOLD_PERMISSIONS } from '../household/constants/permissions';
@@ -30,11 +29,11 @@ import {
   PaymentScheduleResponse,
   DebtSummaryResponse,
 } from './dto';
-import { Debt, DebtPayment } from '@prisma/client';
+import { Debt, DebtPayment } from '../../../node_modules/.prisma/client';
 import { DebtWithPayments } from './debts.repository';
 
 @Controller('debts')
-@UseGuards(JwtAuthGuard, HouseholdAccessGuard)
+@UseGuards(HouseholdAccessGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @UsePipes(new ValidationPipe({ 
   transform: true, 

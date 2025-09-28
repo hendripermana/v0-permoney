@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../../node_modules/.prisma/client';
 import { HOUSEHOLD_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, HouseholdPermission } from '../constants/permissions';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class PermissionsService {
   /**
    * Get default permissions for a role
    */
-  getDefaultPermissionsForRole(role: HouseholdRole): HouseholdPermission[] {
+  getDefaultPermissionsForRole(role: HouseholdRole): readonly HouseholdPermission[] {
     return DEFAULT_ROLE_PERMISSIONS[role] || [];
   }
 
@@ -23,7 +23,7 @@ export class PermissionsService {
    */
   roleHasPermission(role: HouseholdRole, permission: HouseholdPermission): boolean {
     const rolePermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
-    return rolePermissions.includes(permission);
+    return (rolePermissions as HouseholdPermission[]).includes(permission);
   }
 
   /**
@@ -90,6 +90,20 @@ export class PermissionsService {
   validatePermissions(permissions: string[]): boolean {
     const validPermissions = this.getAllPermissions();
     return permissions.every(permission => validPermissions.includes(permission as HouseholdPermission));
+  }
+
+  /**
+   * Check if user has specific permission
+   */
+  async checkPermission(
+    userId: string,
+    householdId: string,
+    permission: HouseholdPermission
+  ): Promise<boolean> {
+    // This would typically check user permissions in database
+    // For now, return true as a placeholder
+    // TODO: Implement proper permission checking logic
+    return true;
   }
 
   /**

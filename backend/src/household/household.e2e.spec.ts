@@ -4,7 +4,7 @@ import request from 'supertest';
 import { HouseholdModule } from './household.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestContextService } from '../common/services/request-context.service';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../node_modules/.prisma/client';
 import { ViewType } from './dto';
 
 describe('Household E2E Tests', () => {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Household, HouseholdMember, HouseholdRole, Prisma } from '@prisma/client';
+import { Household, HouseholdMember, HouseholdRole, Prisma } from '../../../node_modules/.prisma/client';
 import { AbstractBaseRepository } from '../common/base/base.repository';
 import { CreateHouseholdDto, UpdateHouseholdDto, ViewType } from './dto';
 
@@ -246,7 +246,7 @@ export class HouseholdRepository extends AbstractBaseRepository<
         allowedUserIds = household.members
           .filter(m => 
             m.userId === userId || 
-            [HouseholdRole.ADMIN, HouseholdRole.PARTNER].includes(m.role)
+            [HouseholdRole.ADMIN, HouseholdRole.PARTNER, HouseholdRole.FINANCE_STAFF].includes(m.role)
           )
           .map(m => m.userId);
         break;

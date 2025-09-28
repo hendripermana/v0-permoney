@@ -1,4 +1,4 @@
-import { IsOptional, IsUUID, IsString, IsDateString, IsArray, IsNumber, Min, Max, IsEnum } from 'class-validator';
+import { IsOptional, IsUUID, IsString, IsDateString, IsArray, IsNumber, Min, Max, IsEnum, IsBoolean } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export enum TransactionType {
@@ -63,6 +63,10 @@ export class TransactionFiltersDto {
   merchant?: string;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
@@ -70,6 +74,12 @@ export class TransactionFiltersDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   includeTransfers?: boolean = true;
+
+  // Back-compat: repository may use isTransfer to filter exactly transfers vs non-transfers
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => (value === 'true' || value === true ? true : value === 'false' || value === false ? false : undefined))
+  isTransfer?: boolean;
 
   @IsOptional()
   @IsNumber()

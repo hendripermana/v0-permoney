@@ -5,7 +5,7 @@ import { DebtsModule } from './debts.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { HouseholdModule } from '../household/household.module';
-import { DebtType } from '@prisma/client';
+import { DebtType } from '../../../node_modules/.prisma/client';
 import { DebtsService } from './debts.service';
 import { CreateDebtDto, CreateDebtPaymentDto } from './dto';
 import * as request from 'supertest';

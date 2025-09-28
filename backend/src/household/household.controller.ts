@@ -12,7 +12,7 @@ import {
   ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
-import { HouseholdRole } from '@prisma/client';
+import { HouseholdRole } from '../../../node_modules/.prisma/client';
 import { HouseholdService } from './household.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { HouseholdAccessGuard } from './guards/household-access.guard';
@@ -43,7 +43,7 @@ export class HouseholdController {
 
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.householdService.findById(id);
+    return this.householdService.getHouseholdById(id);
   }
 
   @Put(':id')
@@ -53,7 +53,7 @@ export class HouseholdController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateHouseholdDto: UpdateHouseholdDto,
   ) {
-    return this.householdService.update(id, updateHouseholdDto);
+    return this.householdService.updateHousehold(id, updateHouseholdDto);
   }
 
   @Delete(':id')
@@ -61,7 +61,7 @@ export class HouseholdController {
   @HouseholdRoles(HouseholdRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
-    await this.householdService.delete(id);
+    await this.householdService.deleteHousehold(id);
   }
 
   @Post(':id/members')

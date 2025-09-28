@@ -48,6 +48,52 @@ npm run astro:install     # or cd astro-frontend && npm install
 
 ---
 
+## ⚙️ **STEP 1.5: CONFIGURE ENVIRONMENT**
+
+### 🏠 **Single Source of Truth Configuration**
+
+**IMPORTANT**: This project uses a **centralized environment configuration**. All environment variables are defined in the **root `.env` file** only.
+
+**📄 Configuration Structure:**
+```
+📁 v0-permoney/
+├── .env                    # 🟢 Single source of truth
+├── .env.backup            # 🟢 Backup file
+├── backend/               # ❌ No .env files here
+├── frontend/              # ❌ No .env files here
+└── [other directories]    # ❌ No .env files here
+```
+
+### **Setup Environment Variables:**
+
+1. **Copy the example file:**
+   ```bash
+   cp .env .env.backup  # Create backup
+   ```
+
+2. **Edit the root `.env` file:**
+   ```bash
+   nano .env  # or use your preferred editor
+   ```
+
+3. **Required Configuration:**
+   ```env
+   # Database
+   DATABASE_URL="postgresql://postgres:dev123@localhost:5432/permoney"
+   DB_PASSWORD=dev123
+
+   # Clerk Authentication (get from https://dashboard.clerk.com/)
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_your-key"
+   CLERK_SECRET_KEY="sk_test_your-key"
+   ```
+
+**🚫 Remember:**
+- ❌ **Do not create** `.env` files in `backend/`, `frontend/`, or subdirectories
+- ❌ **Do not duplicate** environment variables
+- ✅ **Only modify** the root `.env` file
+
+---
+
 ## 🚀 **STEP 2: SETUP DATABASE**
 
 ### **Create Database:**

@@ -1,217 +1,282 @@
 # 💰 Permoney - Personal Finance Management System
 
-A comprehensive personal finance management system built with modern web technologies.
+Aplikasi manajemen keuangan pribadi yang powerful, mudah di-setup, dan self-hostable. Fokus pada fitur inti manajemen keuangan dengan arsitektur yang bersih dan mudah dirawat.
 
-## 🏗️ Architecture
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)
+![NestJS](https://img.shields.io/badge/NestJS-10.4.15-red.svg)
 
-```
-permoney/
-├── frontend/          # Next.js 15 + React 19 + TypeScript
-│   ├── src/
-│   │   ├── app/       # Next.js App Router pages
-│   │   ├── components/ # Reusable UI components
-│   │   ├── hooks/     # Custom React hooks
-│   │   ├── lib/       # Utilities and configurations
-│   │   └── types/     # TypeScript type definitions
-│   └── package.json
-├── backend/           # NestJS + Prisma + PostgreSQL
-│   ├── src/           # Backend source code
-│   ├── prisma/        # Database schema and migrations
-│   └── package.json
-└── package.json       # Root workspace configuration
-```
+## ✨ Fitur Utama
 
-## 🚀 Quick Start
+- 📊 **Dashboard Analytics** - Visualisasi keuangan real-time
+- 💳 **Multi-Account Management** - Kelola berbagai rekening & kartu
+- 📈 **Expense Tracking** - Tracking pengeluaran otomatis dengan kategori
+- 💵 **Multi-Currency** - Support berbagai mata uang
+- 🎯 **Budget Planning** - Perencanaan & monitoring budget
+- 🏠 **Household Management** - Kelola keuangan keluarga/rumah tangga
+- 💸 **Debt Management** - Tracking dan manajemen hutang
+- 📱 **Responsive Design** - Optimal di desktop & mobile
+- 🔒 **Secure Authentication** - Clerk authentication with JWT fallback
+
+## 🚀 Quick Start (3 Menit)
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database
-- npm or yarn
+- PostgreSQL 14+
+- Git
 
 ### Installation
 
-1. **Clone and install dependencies:**
 ```bash
-git clone <repository-url>
-cd permoney
-npm install
-```
+# 1. Clone repository
+git clone https://github.com/yourusername/v0-permoney.git
+cd v0-permoney
 
-2. **Setup environment variables:**
-```bash
-# Backend (.env)
-DATABASE_URL="postgresql://username:password@localhost:5432/permoney"
-JWT_SECRET="your-jwt-secret"
+# 2. Install dependencies
+npm run install:all
 
-# Frontend (.env.local)
-NEXT_PUBLIC_API_URL="http://localhost:3001"
+# 3. Setup environment
+cp env.example .env
+# Edit .env - cukup sesuaikan password PostgreSQL
 
-# Optional overrides
-# NEXT_PUBLIC_CF_WORKER_URL="https://your-worker.permana.icu"
-# NEXT_PUBLIC_ORACLE_API_URL="https://api.permana.icu"
-```
+# 4. Setup database (otomatis)
+npm run db:setup
 
-### Environment configuration
-
-- `frontend/src/lib/config.ts` resolves the API base URL in the following order:
-  1. `NEXT_PUBLIC_API_URL`
-  2. `NEXT_PUBLIC_CF_WORKER_URL`
-  3. `NEXT_PUBLIC_ORACLE_API_URL`
-  4. `API_URL`
-  5. Fallback to `/api` (leverages the Next.js dev rewrite to `http://localhost:3001/api`).
-- Call `apiClient.setBaseURL(...)` during app bootstrap if you need to override the base dynamically (e.g. tenant-specific endpoints).
-
-#### MacBook M1 Pro tips
-- Use an ARM build of Node 18+ (`arch -arm64 node -v`) to avoid native module issues.
-- Install dependencies from the repository root (`npm install`) so the workspace installs both `frontend` and `backend` packages—commands such as `npm run lint` expect `next` to be available.
-- If Rosetta tooling is required, force the architecture when installing: `arch -arm64 npm install`.
-
-#### Oracle Cloud VM + Cloudflare DNS
-- Set `NEXT_PUBLIC_ORACLE_API_URL` (or `NEXT_PUBLIC_API_URL`) to the public HTTPS endpoint that Cloudflare proxies to your Oracle VM (`https://api.permana.icu` recommended).
-- For the free Cloudflare Worker tier, deploy a worker that forwards traffic to the Oracle API and expose it via `NEXT_PUBLIC_CF_WORKER_URL`; the `ApiClient` will automatically use it when present.
-- Keep DNS records for `permana.icu` in Cloudflare so you can switch between direct VM traffic and the worker without code changes.
-
-3. **Setup database:**
-```bash
-npm run db:migrate
-npm run db:seed
-```
-
-4. **Start development servers:**
-```bash
+# 5. Jalankan aplikasi
 npm run dev
 ```
 
-This will start:
-- Frontend: http://localhost:3000
-- Backend: http://localhost:3001
+### Clerk Authentication Setup (Recommended)
 
-## 🎯 Features
+1. **Create Clerk Account**: [Sign up at Clerk.com](https://clerk.com)
+2. **Create Application**: Choose "Next.js" as your framework
+3. **Configure Environment**:
+   ```bash
+   # Add to your .env file
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_your-key"
+   CLERK_SECRET_KEY="sk_test_your-key"
+   ```
+4. **That's it!** Clerk handles the rest - users can now sign up/in with social providers, email/password, etc.
 
-### ✅ Core Features
-- **Multi-user Households** - Family finance management
-- **Account Management** - Multiple bank accounts and institutions
-- **Transaction Tracking** - Income, expenses, and transfers
-- **Budget Planning** - Monthly/yearly budget allocation
-- **Category Management** - Customizable transaction categories
-- **Dashboard Analytics** - Financial insights and charts
+**Benefits of Clerk:**
+- 🔐 Multi-provider authentication (Google, GitHub, email/password)
+- 📱 Passkey support
+- 🔒 Security best practices built-in
+- 📊 User management dashboard
+- 🚀 Easy integration
 
-### ✅ Advanced Features
-- **Islamic Finance** - Zakat calculation and Sharia compliance
-- **OCR Receipt Processing** - Automatic transaction extraction
-- **AI Insights** - Smart financial recommendations
-- **Notification System** - Budget alerts and reminders
-- **Multi-currency Support** - International transactions
-- **Data Import/Export** - Bank statement processing
+**Fallback Support:** The app maintains backward compatibility with existing JWT authentication for users who prefer not to use Clerk.
 
-### ✅ UI/UX Features
-- **Modern Design** - Clean, responsive interface
-- **Dark/Light Theme** - User preference support
-- **Mobile Optimized** - PWA-ready responsive design
-- **Accessibility** - WCAG compliant components
+Buka browser:
+- 🌐 **Frontend**: http://localhost:3000
+- 🔧 **API**: http://localhost:3001/api
 
-## 🛠️ Development
+## 📖 Dokumentasi
 
-### Available Scripts
+- [Quick Start Guide](./QUICK_START.md) - Panduan setup cepat
+- [Development Setup](./DEVELOPMENT_SETUP_MAC_M1.md) - Setup development lengkap
+- [Database Setup](./backend/README-DATABASE-SETUP.md) - Konfigurasi database
+- [Architecture](./docs/ARCHITECTURE.md) - Arsitektur aplikasi
+- [Design System](./docs/DESIGN_SYSTEM.md) - Design system dan patterns
+- [AI Agents Guide](./AGENTS.md) - Panduan untuk AI agents
 
-```bash
-# Development
-npm run dev              # Start both frontend and backend
-npm run dev:frontend     # Start only frontend
-npm run dev:backend      # Start only backend
+## 🛠️ Tech Stack
 
-# Building
-npm run build            # Build both applications
-npm run build:frontend   # Build frontend only
-npm run build:backend    # Build backend only
+### Frontend
+- **Next.js 15** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Shadcn/ui** - UI components
+- **React Query** - Data fetching
+- **Recharts** - Data visualization
 
-# Database
-npm run db:generate      # Generate Prisma client
-npm run db:migrate       # Run database migrations
-npm run db:seed          # Seed database with initial data
-npm run db:studio        # Open Prisma Studio
+### Backend
+- **NestJS** - Node.js framework
+- **Prisma** - ORM
+- **PostgreSQL** - Database
+- **JWT** - Authentication (fallback)
+- **TypeScript** - Type safety
 
-# Testing & Quality
-npm run lint             # Lint both applications
-npm run test             # Run all tests
+### Authentication
+- **Clerk** - Modern authentication (recommended)
+- **JWT** - Legacy authentication (fallback)
+
+## 📝 Environment Variables
+
+### 🏠 Single Source of Truth
+
+**IMPORTANT**: This project uses a **centralized environment configuration**. All environment variables are defined in the **root `.env` file** only. Do not create additional `.env` files in subdirectories.
+
+The root `.env` file serves as the single source of truth for:
+- Database configuration
+- Authentication (Clerk & JWT)
+- API endpoints
+- Security settings
+- External services
+
+### 📄 Configuration File Location
+
+```
+📁 v0-permoney/
+├── .env                    # 🟢 Single source of truth
+├── .env.backup            # 🟢 Backup file
+├── backend/               # ❌ No .env files here
+├── frontend/              # ❌ No .env files here
+└── [other directories]    # ❌ No .env files here
 ```
 
-### Project Structure
+### ⚙️ Required Environment Variables
 
-- **Frontend (Next.js 15)**
-  - App Router with TypeScript
-  - Tailwind CSS + shadcn/ui components
-  - React Query for state management
-  - React Hook Form for forms
-
-- **Backend (NestJS)**
-  - RESTful API with GraphQL support
-  - Prisma ORM with PostgreSQL
-  - JWT authentication
-  - Bull queues for background jobs
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. **Connect repository to Vercel**
-2. **Set environment variables:**
-   - `DATABASE_URL`
-   - `JWT_SECRET`
-   - `NEXTAUTH_SECRET`
-   - `NEXTAUTH_URL`
-
-3. **Deploy:**
-```bash
-npm run build
-```
-
-The project is configured for Vercel deployment with:
-- Frontend: Static/SSR pages
-- Backend: Serverless functions
-- Database: PostgreSQL (Vercel Postgres recommended)
-
-## 📊 Database Schema
-
-The system uses a comprehensive PostgreSQL schema with:
-
-- **Users & Households** - Multi-user family accounts
-- **Financial Accounts** - Bank accounts, credit cards, investments
-- **Transactions** - All financial movements with categorization
-- **Budgets** - Planning and tracking spending limits
-- **Islamic Finance** - Zakat calculations and Sharia compliance
-- **Notifications** - System alerts and reminders
-
-## 🔧 Configuration
-
-### Environment Variables
-
-**Backend (.env):**
 ```env
-DATABASE_URL="postgresql://..."
-JWT_SECRET="your-secret-key"
-REDIS_URL="redis://localhost:6379"
+# ============================================================================
+# DATABASE CONFIGURATION
+# ============================================================================
+DATABASE_URL="postgresql://postgres:your_password@localhost:5432/permoney"
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_postgres_password
+DB_NAME=permoney
+
+# ============================================================================
+# CLERK AUTHENTICATION (Recommended)
+# ============================================================================
+# Get these from https://dashboard.clerk.com/last-active?path=api-keys
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_your-clerk-publishable-key"
+CLERK_SECRET_KEY="sk_test_your-clerk-secret-key"
+
+# ============================================================================
+# BACKEND AUTHENTICATION (Fallback)
+# ============================================================================
+JWT_SECRET="dev-jwt-secret-key"
+JWT_ACCESS_EXPIRES_IN="15m"
+JWT_REFRESH_EXPIRES_IN="7d"
+
+# ============================================================================
+# APPLICATION SETTINGS
+# ============================================================================
+PORT="3001"
+NODE_ENV="development"
+API_PREFIX="api"
+CORS_ORIGINS="http://localhost:3000,http://localhost:3002"
 ```
 
-**Frontend (.env.local):**
-```env
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-nextauth-secret"
+### 🚫 Forbidden Actions
+
+- ❌ **Do not create** `.env` files in `backend/`, `frontend/`, or any subdirectories
+- ❌ **Do not duplicate** environment variables across multiple files
+- ❌ **Do not modify** `.env.local` or other variant files
+- ✅ **Only modify** the root `.env` file for configuration changes
+
+## 🎯 Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development (frontend + backend) |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run db:setup` | Setup database (create + migrate) |
+| `npm run db:seed` | Seed sample data |
+| `npm run db:studio` | Open Prisma Studio (GUI) |
+| `npm run test` | Run tests |
+
+## 🏗️ Project Structure
+
+```
+permoney/
+├── frontend/          # Next.js application
+│   ├── src/
+│   │   ├── app/       # App Router pages
+│   │   ├── components/ # React components
+│   │   ├── hooks/     # Custom React hooks
+│   │   ├── lib/       # Utilities and API clients
+│   │   └── types/     # TypeScript type definitions
+├── backend/           # NestJS application
+│   ├── src/
+│   │   ├── app/       # Main application module
+│   │   ├── auth/      # Authentication module
+│   │   ├── accounts/  # Account management
+│   │   ├── transactions/ # Transaction management
+│   │   ├── budgets/   # Budget management
+│   │   ├── debts/     # Debt management
+│   │   ├── household/ # Household management
+│   │   ├── exchange-rates/ # Exchange rate management
+│   │   └── prisma/    # Database service
+├── docs/              # Documentation
+└── scripts/           # Setup and utility scripts
 ```
 
 ## 🤝 Contributing
 
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Guidelines
+- Follow the established patterns and conventions
+- Maintain type safety with TypeScript
+- Write tests for new features
+- Update documentation when making changes
+- Keep implementations simple and maintainable
+
+### Pull Request Process
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Code Review Checklist
+- [ ] Code follows project patterns and conventions
+- [ ] TypeScript types are properly defined
+- [ ] Error handling is implemented
+- [ ] Tests are included and passing
+- [ ] Documentation is updated
+- [ ] No hardcoded values or workarounds
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+Jika mengalami masalah:
+
+1. Cek [Troubleshooting Guide](./QUICK_START.md#-troubleshooting)
+2. Buka [Issue](https://github.com/yourusername/v0-permoney/issues)
+3. Join [Discord Community](https://discord.gg/permoney)
+
+## 🎯 Current Status
+
+### ✅ Completed Features
+- User authentication and authorization
+- Household management
+- Account management
+- Transaction management
+- Budget management
+- Debt management
+- Exchange rate management
+- Database schema and migrations
+- API endpoints for all core features
+- Frontend pages and components
+- Responsive design
+- Error handling and validation
+
+### 🚧 Areas for Improvement
+- Enhanced error messages and user feedback
+- Better loading states and skeletons
+- Improved form validation and UX
+- Performance optimizations
+- Additional test coverage
+- Better mobile responsiveness
+- Enhanced accessibility features
+
+## 🙏 Acknowledgments
+
+- Tim Next.js & NestJS
+- Komunitas open source
+- Semua kontributor
 
 ---
 
-**Built with ❤️ for better financial management**
+Made with ❤️ by Permoney Team

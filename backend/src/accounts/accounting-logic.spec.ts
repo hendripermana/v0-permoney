@@ -1,5 +1,5 @@
 import { AccountsRepository } from './accounts.repository';
-import { AccountType } from '@prisma/client';
+import { AccountType } from '../../../node_modules/.prisma/client';
 
 describe('Double-Entry Accounting Logic Validation', () => {
   let repository: AccountsRepository;

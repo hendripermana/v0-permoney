@@ -211,11 +211,7 @@ export class BudgetsService {
           ) / historicalData.length;
           const varianceCoefficient = Math.sqrt(variance) / avgHistoricalSpending;
 
-          const confidence = this.budgetValidators.validateRecommendationConfidence(
-            historicalData.length,
-            varianceCoefficient,
-            0.1 // Simple seasonality factor
-          );
+          const confidence = Math.max(0, Math.min(1, 1 - varianceCoefficient));
 
           // Recommendation: Increase allocation if consistently overspending
           if (category.isOverspent && avgHistoricalSpending > category.allocatedAmountCents * 1.1) {
@@ -290,7 +286,7 @@ export class BudgetsService {
       householdId: domainEntity.householdId,
       name: domainEntity.name,
       period: domainEntity.period,
-      totalAllocatedCents: domainEntity.totalAllocatedCents,
+      totalAllocatedCents: BigInt(domainEntity.totalAllocatedCents),
       currency: domainEntity.currency,
       startDate: domainEntity.startDate,
       endDate: domainEntity.endDate,
@@ -301,9 +297,9 @@ export class BudgetsService {
         id: cat.id,
         budgetId: cat.budgetId,
         categoryId: cat.categoryId,
-        allocatedAmountCents: cat.allocatedAmountCents,
-        spentAmountCents: cat.spentAmountCents,
-        carryOverCents: cat.carryOverCents,
+        allocatedAmountCents: BigInt(cat.allocatedAmountCents),
+        spentAmountCents: BigInt(cat.spentAmountCents),
+        carryOverCents: BigInt(cat.carryOverCents),
         createdAt: cat.createdAt,
         updatedAt: cat.updatedAt,
         category: {

@@ -7,7 +7,7 @@ import { ProtectedRoute } from "@/components/protected-route"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 
-const PUBLIC_ROUTES = new Set(["/login", "/register", "/forgot-password"])
+const PUBLIC_ROUTES = new Set(["/", "/login", "/register", "/forgot-password"])
 
 interface ProtectedAppLayoutProps {
   children: ReactNode

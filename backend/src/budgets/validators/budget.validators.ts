@@ -1,7 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface
+} from 'class-validator';
 import { BudgetsRepository } from '../budgets.repository';
 import { CreateBudgetDto, UpdateBudgetDto } from '../dto';
-import { BudgetPeriod } from '@prisma/client';
+import { BudgetPeriod } from '../../../../node_modules/.prisma/client';
 
 @Injectable()
 export class BudgetValidators {
@@ -240,5 +247,126 @@ export class BudgetValidators {
     confidence += seasonalityFactor * 0.1;
 
     return Math.max(0.1, Math.min(0.95, confidence));
+  }
+}
+
+// Custom decorators used in DTOs
+export function IsValidBudgetPeriod(
+  startField: string,
+  endField: string,
+  validationOptions?: ValidationOptions,
+) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'IsValidBudgetPeriod',
+      target: object.constructor,
+      propertyName,
+      constraints: [startField, endField],
+      options: validationOptions,
+      validator: {
+        validate(_value: any, args: ValidationArguments) {
+          const [startKey, endKey] = args.constraints as [string, string];
+          const start = new Date((args.object as any)[startKey]);
+          const end = new Date((args.object as any)[endKey]);
+          return start instanceof Date && !isNaN(start.getTime()) && end instanceof Date && !isNaN(end.getTime()) && start < end;
+        },
+      },
+    });
+  };
+}
+
+export function IsValidBudgetAllocation(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'IsValidBudgetAllocation',
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: Array<{ allocatedAmountCents: number; carryOverCents?: number }>) {
+          if (!Array.isArray(value) || value.length === 0) return false;
+          return value.every((v) => v.allocatedAmountCents >= 0 && (v.carryOverCents ?? 0) >= 0);
+        },
+      },
+    });
+  };
+}
+
+export function IsFutureOrCurrentDate(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'IsFutureOrCurrentDate',
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: string) {
+          const date = new Date(value);
+          if (!(date instanceof Date) || isNaN(date.getTime())) return false;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return date >= today;
+        },
+      },
+    });
+  };
+}
+
+// Constraint classes for use in DTOs
+@ValidatorConstraint({ name: 'IsValidBudgetPeriodConstraint', async: false })
+export class IsValidBudgetPeriodConstraint implements ValidatorConstraintInterface {
+  validate(value: any, args: ValidationArguments) {
+    const [startField, endField] = args.constraints;
+    const object = args.object as any;
+
+    const startDate = object[startField];
+    const endDate = object[endField];
+
+    if (!startDate || !endDate) return false;
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
+
+    return start < end;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    const [startField, endField] = args.constraints;
+    return `${endField} must be after ${startField}`;
+  }
+}
+
+@ValidatorConstraint({ name: 'IsValidBudgetAllocationConstraint', async: false })
+export class IsValidBudgetAllocationConstraint implements ValidatorConstraintInterface {
+  validate(value: Array<{ allocatedAmountCents: number; carryOverCents?: number }>, args: ValidationArguments) {
+    if (!Array.isArray(value)) return false;
+
+    return value.every(item => {
+      return item.allocatedAmountCents > 0 &&
+             (item.carryOverCents === undefined || item.carryOverCents >= 0);
+    });
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return 'Budget allocation must have positive allocated amounts and non-negative carry over amounts';
+  }
+}
+
+@ValidatorConstraint({ name: 'IsFutureOrCurrentDateConstraint', async: false })
+export class IsFutureOrCurrentDateConstraint implements ValidatorConstraintInterface {
+  validate(value: string, args: ValidationArguments) {
+    const date = new Date(value);
+    if (!(date instanceof Date) || isNaN(date.getTime())) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return date >= today;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return 'Date must be today or in the future';
   }
 }

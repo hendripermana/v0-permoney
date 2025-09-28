@@ -21,7 +21,7 @@ import {
   DebtSummaryItem,
   DebtType
 } from './dto';
-import { Debt, DebtPayment } from '@prisma/client';
+import { Debt, DebtPayment } from '../../../node_modules/.prisma/client';
 
 @Injectable()
 export class DebtsService {

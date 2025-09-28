@@ -13,6 +13,7 @@ import {
   RecurringTransactionStatus,
   ExecuteRecurringTransactionDto,
 } from './dto/recurring-transaction.dto';
+import { HOUSEHOLD_PERMISSIONS } from '../household/constants/permissions';
 import { RecurringTransactionRepository } from './recurring-transaction.repository';
 import { TransactionsService } from './transactions.service';
 import { PermissionsService } from '../household/services/permissions.service';
@@ -36,7 +37,7 @@ export class RecurringTransactionService {
     await this.permissionsService.checkPermission(
       userId,
       householdId,
-      'CREATE_TRANSACTIONS'
+      HOUSEHOLD_PERMISSIONS.CREATE_TRANSACTIONS
     );
 
     // Validate dates
@@ -93,7 +94,7 @@ export class RecurringTransactionService {
     await this.permissionsService.checkPermission(
       userId,
       recurringTransaction.householdId,
-      'VIEW_TRANSACTIONS'
+      HOUSEHOLD_PERMISSIONS.VIEW_ALL_TRANSACTIONS
     );
 
     return recurringTransaction;
@@ -108,7 +109,7 @@ export class RecurringTransactionService {
     await this.permissionsService.checkPermission(
       userId,
       householdId,
-      'VIEW_TRANSACTIONS'
+      HOUSEHOLD_PERMISSIONS.VIEW_ALL_TRANSACTIONS
     );
 
     return this.recurringTransactionRepository.findByHousehold(
@@ -133,7 +134,7 @@ export class RecurringTransactionService {
     await this.permissionsService.checkPermission(
       userId,
       recurringTransaction.householdId,
-      'UPDATE_TRANSACTIONS'
+      HOUSEHOLD_PERMISSIONS.MANAGE_TRANSACTIONS
     );
 
     // Validate dates if provided
@@ -162,7 +163,7 @@ export class RecurringTransactionService {
 
       nextExecutionDate = this.calculateNextExecutionDate(
         recurringTransaction.lastExecutionDate || startDate,
-        frequency,
+        frequency as RecurrenceFrequency,
         intervalValue
       );
     }
@@ -204,7 +205,7 @@ export class RecurringTransactionService {
     await this.permissionsService.checkPermission(
       userId,
       recurringTransaction.householdId,
-      'DELETE_TRANSACTIONS'
+      HOUSEHOLD_PERMISSIONS.DELETE_TRANSACTIONS
     );
 
     await this.recurringTransactionRepository.delete(id);
@@ -240,7 +241,7 @@ export class RecurringTransactionService {
     await this.permissionsService.checkPermission(
       userId,
       recurringTransaction.householdId,
-      'UPDATE_TRANSACTIONS'
+      HOUSEHOLD_PERMISSIONS.MANAGE_TRANSACTIONS
     );
 
     const updated = await this.recurringTransactionRepository.updateStatus(
@@ -249,7 +250,10 @@ export class RecurringTransactionService {
     );
 
     this.logger.log(`Updated recurring transaction status: ${id} -> ${status}`);
-    return updated;
+    return {
+      ...updated,
+      amountCents: Number(updated.amountCents),
+    };
   }
 
   async executeRecurringTransaction(
@@ -316,12 +320,11 @@ export class RecurringTransactionService {
 
     try {
       // Create the actual transaction
-      const transaction = await this.transactionsService.create(
+      const transaction = await this.transactionsService.createTransaction(
         recurringTransaction.householdId,
-        userId || recurringTransaction.createdBy,
         {
           description: `${recurringTransaction.name} - ${recurringTransaction.description}`,
-          amountCents: recurringTransaction.amountCents,
+          amountCents: Number(recurringTransaction.amountCents),
           currency: recurringTransaction.currency,
           accountId: recurringTransaction.accountId,
           transferAccountId: recurringTransaction.transferAccountId,
@@ -329,11 +332,12 @@ export class RecurringTransactionService {
           merchant: recurringTransaction.merchant,
           date: executionDate.toISOString().split('T')[0],
           metadata: {
-            ...recurringTransaction.metadata,
+            ...(recurringTransaction.metadata as Record<string, any> || {}),
             recurringTransactionId: recurringTransaction.id,
             executionId: execution.id,
           },
-        }
+        },
+        userId || recurringTransaction.createdBy
       );
 
       // Update execution record with success
@@ -346,7 +350,7 @@ export class RecurringTransactionService {
       // Calculate next execution date
       const nextExecutionDate = this.calculateNextExecutionDate(
         executionDate,
-        recurringTransaction.frequency,
+        recurringTransaction.frequency as RecurrenceFrequency,
         recurringTransaction.intervalValue
       );
 
@@ -413,7 +417,7 @@ export class RecurringTransactionService {
     await this.permissionsService.checkPermission(
       userId,
       recurringTransaction.householdId,
-      'VIEW_TRANSACTIONS'
+      HOUSEHOLD_PERMISSIONS.VIEW_ALL_TRANSACTIONS
     );
 
     return this.recurringTransactionRepository.findExecutionsByRecurringTransaction(

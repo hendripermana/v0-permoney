@@ -1,4 +1,4 @@
-import { BudgetPeriod } from '@prisma/client';
+import { BudgetPeriod } from '../../../../node_modules/.prisma/client';
 
 export interface BudgetEntity {
   id: string;
@@ -51,17 +51,19 @@ export class BudgetDomainEntity {
   ) {}
 
   static fromPersistence(data: BudgetEntity): BudgetDomainEntity {
+    const coerceNumber = (value: any): number =>
+      typeof value === 'bigint' ? Number(value) : (value as number);
     return new BudgetDomainEntity(
       data.id,
       data.householdId,
       data.name,
       data.period,
-      data.totalAllocatedCents,
+      coerceNumber((data as any).totalAllocatedCents),
       data.currency,
       data.startDate,
       data.endDate,
       data.isActive,
-      data.categories.map(cat => BudgetCategoryDomainEntity.fromPersistence(cat)),
+      data.categories.map(cat => BudgetCategoryDomainEntity.fromPersistence(cat as any)),
       data.createdAt,
       data.updatedAt
     );
@@ -128,13 +130,15 @@ export class BudgetCategoryDomainEntity {
   ) {}
 
   static fromPersistence(data: BudgetCategoryEntity): BudgetCategoryDomainEntity {
+    const coerceNumber = (value: any): number =>
+      typeof value === 'bigint' ? Number(value) : (value as number);
     return new BudgetCategoryDomainEntity(
       data.id,
       data.budgetId,
       data.categoryId,
-      data.allocatedAmountCents,
-      data.spentAmountCents,
-      data.carryOverCents,
+      coerceNumber((data as any).allocatedAmountCents),
+      coerceNumber((data as any).spentAmountCents),
+      coerceNumber((data as any).carryOverCents),
       data.category,
       data.createdAt,
       data.updatedAt

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DebtsService } from './debts.service';
 import { DebtsRepository } from './debts.repository';
 import { PrismaService } from '../prisma/prisma.service';
-import { DebtType } from '@prisma/client';
+import { DebtType } from '../../../node_modules/.prisma/client';
 import { CreateDebtDto, CreateDebtPaymentDto } from './dto';
 
 describe('Debts Performance Testing', () => {

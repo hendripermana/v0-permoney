@@ -13,7 +13,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
-import { DebtType } from '@prisma/client';
+import { DebtType } from '../../../../node_modules/.prisma/client';
 
 export { DebtType };
 

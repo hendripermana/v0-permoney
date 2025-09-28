@@ -12,6 +12,7 @@ import { BudgetAnalyticsService } from './services/budget-analytics.service';
 import { BudgetDomainService } from './domain/budget-domain.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CacheModule } from '../cache/cache.module';
+import { AuthModule } from '../auth/auth.module';
 import { 
   IsValidBudgetPeriodConstraint, 
   IsValidBudgetAllocationConstraint, 
@@ -20,7 +21,7 @@ import {
 
 @Module({
   imports: [
-    PrismaModule, 
+    PrismaModule,
     CacheModule,
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot({
@@ -32,6 +33,7 @@ import {
       verboseMemoryLeak: false,
       ignoreErrors: false,
     }),
+    AuthModule,
   ],
   controllers: [BudgetsController],
   providers: [

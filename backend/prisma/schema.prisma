@@ -16,11 +16,16 @@ datasource db {
 
 model User {
   id           String    @id @default(uuid()) @db.Uuid
+  clerkId      String?   @unique // Clerk user ID for authentication
   email        String    @unique
-  passwordHash String?   // Optional for passkey-only users
+  passwordHash String?   // Optional for passkey-only users or Clerk users
   name         String
   avatarUrl    String?
   isActive     Boolean   @default(true)
+  emailVerified Boolean  @default(false)
+  lastLoginAt  DateTime?
+  failedLoginAttempts Int @default(0)
+  lockedUntil  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -28,6 +33,8 @@ model User {
   householdMembers HouseholdMember[]
   passkeys         Passkey[]
   sessions         Session[]
+  emailVerifications EmailVerification[]
+  passwordResets   PasswordReset[]
   createdTransactions Transaction[] @relation("TransactionCreator")
   createdWishlistItems WishlistItem[] @relation("WishlistCreator")
   createdGratitudeEntries GratitudeEntry[] @relation("GratitudeCreator")
@@ -365,6 +372,8 @@ model BudgetCategory {
   budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id])
 
+  // Composite unique constraint for budget-category relationship
+  @@unique([budgetId, categoryId])
   @@map("budget_categories")
 }
 
@@ -483,15 +492,47 @@ model Session {
   id        String    @id @default(uuid()) @db.Uuid
   userId    String    @db.Uuid
   token     String    @unique
+  refreshToken String? @unique
   expiresAt DateTime
+  refreshExpiresAt DateTime?
   userAgent String?
   ipAddress String?
+  isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
+  lastUsedAt DateTime @default(now())
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model EmailVerification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  token     String    @unique
+  expiresAt DateTime
+  isUsed    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  token     String    @unique
+  expiresAt DateTime
+  isUsed    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
 }
 
 // ============================================================================

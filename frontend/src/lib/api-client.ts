@@ -95,7 +95,8 @@ class ApiClient {
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = normalizeBaseUrl(baseURL)
-    this.token = isBrowser ? localStorage.getItem(STORAGE_KEYS.authToken) : null
+    // Do not read or persist any custom auth token; Clerk is the single source of auth
+    this.token = null
   }
 
   public setBaseURL(baseURL: string) {
@@ -109,13 +110,26 @@ class ApiClient {
   public async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = this.buildUrl(endpoint)
 
+    // Resolve Clerk token on demand (client-side)
+    let authToken: string | null = null
+    try {
+      // Prefer ClerkJS if available in browser
+      if (isBrowser && (window as any)?.Clerk?.session?.getToken) {
+        authToken = await (window as any).Clerk.session.getToken()
+      }
+    } catch (_) {
+      // Swallow token resolution errors; request will proceed without Authorization
+    }
+
     // Build headers conditionally to support multipart uploads (FormData)
     const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData
     const baseHeaders: Record<string, string> = {
-      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     }
 
     const config: RequestInit = {
+      cache: 'no-store',
+      credentials: 'include',
       ...options,
       headers: {
         ...baseHeaders,
@@ -148,18 +162,24 @@ class ApiClient {
       const response = await fetch(url, {
         ...config,
         signal: controller.signal,
+        cache: 'no-store',
+        credentials: 'include',
       })
 
       clearTimeout(timeoutId)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw this.createApiError(
+        const error = this.createApiError(
           errorData.message || `HTTP ${response.status}: ${response.statusText}`,
           errorData.code || this.getErrorCodeFromStatus(response.status),
           response.status,
           errorData
         )
+
+        // No custom refresh token flow. Authorization must come from Clerk per request.
+
+        throw error
       }
 
       if (response.status === 204) {
@@ -278,20 +298,18 @@ class ApiClient {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-  // Authentication methods
-  setToken(token: string) {
-    this.token = token
-    if (isBrowser) {
-      localStorage.setItem(STORAGE_KEYS.authToken, token)
-    }
+  // Authentication methods (kept for backward compatibility; no-ops)
+  setToken(_token: string) {
+    // No-op: Clerk provides tokens on demand; do not persist custom tokens
+    this.token = null
   }
 
   clearToken() {
+    // No-op: nothing to clear; Clerk manages its own session
     this.token = null
-    if (isBrowser) {
-      localStorage.removeItem(STORAGE_KEYS.authToken)
-    }
   }
+
+  // Removed: no custom refresh token flow. Clerk is the single source of authentication.
 
   // Accounts API
   async getAccounts(arg?: string | Record<string, unknown>): Promise<any[]> {

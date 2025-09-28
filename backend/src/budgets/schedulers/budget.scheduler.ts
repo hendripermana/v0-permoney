@@ -197,11 +197,9 @@ export class BudgetScheduler {
   }
 
   private async getAllHouseholdsWithActiveBudgets() {
-    // This is a simplified query - in a real implementation, you'd optimize this
-    const budgets = await this.budgetsRepository.findByHousehold('', { isActive: true });
-    const householdIds = Array.from(new Set(budgets.map(b => b.householdId)));
-    
-    return householdIds.map(id => ({ id }));
+    // Query households that have at least one active budget
+    const households = await this.budgetsRepository.getActiveHouseholdsWithBudgets();
+    return households.map(h => ({ id: h.id }));
   }
 
   private async getEndedBudgets(today: Date) {

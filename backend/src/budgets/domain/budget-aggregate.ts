@@ -1,5 +1,5 @@
 import { BudgetDomainEntity, BudgetCategoryDomainEntity } from './budget.entity';
-import { BudgetPeriod } from '@prisma/client';
+import { BudgetPeriod } from '../../../../node_modules/.prisma/client';
 
 export interface BudgetCreationData {
   name: string;

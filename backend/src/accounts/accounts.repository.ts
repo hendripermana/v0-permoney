@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../../node_modules/.prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { Account, AccountType, AccountWhereInput } from '../types/database.types';
+import { AccountType } from '../../../node_modules/.prisma/client';
+import type { Account } from '../../../node_modules/.prisma/client';
 import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto, ViewType } from './dto';
 
 export interface AccountWithBalance extends Account {
@@ -68,7 +69,7 @@ export class AccountsRepository {
     filters: AccountFiltersDto,
     userId?: string,
   ): Promise<AccountWithBalance[]> {
-    const where: Prisma.AccountWhereInput = {
+    const where: any = {
       householdId,
       ...(filters.type && { type: filters.type }),
       ...(filters.subtype && { subtype: filters.subtype }),

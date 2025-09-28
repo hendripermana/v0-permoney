@@ -12,10 +12,9 @@ import {
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto } from './dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdAccessGuard } from '../household/guards/household-access.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { AccountType } from '../types/database.types';
+import { AccountType } from '../../../node_modules/.prisma/client';
 
 interface UserPayload {
   sub: string;
@@ -24,7 +23,7 @@ interface UserPayload {
 }
 
 @Controller('accounts')
-@UseGuards(JwtAuthGuard, HouseholdAccessGuard)
+@UseGuards(HouseholdAccessGuard)
 export class AccountsController {
   constructor(private accountsService: AccountsService) {}
 

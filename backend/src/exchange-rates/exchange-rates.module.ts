@@ -7,6 +7,7 @@ import { ExchangeRatesRepository } from './exchange-rates.repository';
 import { CurrencyService } from './currency.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CacheModule } from '../cache/cache.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CacheModule } from '../cache/cache.module';
     CacheModule,
     HttpModule,
     ScheduleModule,
+    AuthModule,
   ],
   controllers: [ExchangeRatesController],
   providers: [

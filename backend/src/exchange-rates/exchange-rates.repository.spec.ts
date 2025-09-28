@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExchangeRatesRepository, CreateExchangeRateData } from './exchange-rates.repository';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../../node_modules/.prisma/client';
 
 describe('ExchangeRatesRepository', () => {
   let repository: ExchangeRatesRepository;
