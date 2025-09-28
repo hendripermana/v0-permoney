@@ -1,6 +1,5 @@
 import { Resolver, Query, Mutation, Args, ID, Context, ResolveField, Parent, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { TransactionsService } from '../../transactions/transactions.service';
 import { TransactionsDataLoader } from '../dataloaders/transactions.dataloader';
 import { AccountsDataLoader } from '../dataloaders/accounts.dataloader';
@@ -21,7 +20,6 @@ import {
 import { Money } from '../types/common.types';
 
 @Resolver(() => Transaction)
-@UseGuards(JwtAuthGuard)
 export class TransactionsResolver {
   constructor(
     private transactionsService: TransactionsService,
@@ -110,7 +108,7 @@ export class TransactionsResolver {
     @Args('input') input: CreateTransactionInput,
     @Context() context: any,
   ): Promise<Transaction> {
-    const userId = context.req.user.id;
+    const userId = context.req.user?.userId ?? context.req.user?.sub ?? context.req.user?.id;
     const transaction = await this.transactionsService.createTransaction(
       householdId,
       {

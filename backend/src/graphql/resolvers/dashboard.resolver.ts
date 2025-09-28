@@ -1,6 +1,5 @@
 import { Resolver, Query, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AccountsService } from '../../accounts/accounts.service';
 import { TransactionsService } from '../../transactions/transactions.service';
 import { AIInsightsService } from '../../ai-insights/ai-insights.service';
@@ -18,7 +17,6 @@ import { Insight } from '../types/analytics.types';
 import { Money } from '../types/common.types';
 
 @Resolver(() => Dashboard)
-@UseGuards(JwtAuthGuard)
 export class DashboardResolver {
   constructor(
     private accountsService: AccountsService,

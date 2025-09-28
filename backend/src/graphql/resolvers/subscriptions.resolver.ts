@@ -1,7 +1,6 @@
 import { Resolver, Subscription, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { PubSub } from 'graphql-subscriptions';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Transaction } from '../types/transaction.types';
 import { Insight } from '../types/analytics.types';
 
@@ -13,7 +12,6 @@ export const BUDGET_EXCEEDED = 'budgetExceeded';
 export const NEW_INSIGHT = 'newInsight';
 
 @Resolver()
-@UseGuards(JwtAuthGuard)
 export class SubscriptionsResolver {
   @Subscription(() => Transaction, {
     filter: (payload, variables) => {

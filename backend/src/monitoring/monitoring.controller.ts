@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Param, Put, Body, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { PerformanceMonitoringService, AlertRule } from '../common/monitoring/performance.service';
@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as os from 'os';
 
 @Controller('monitoring')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Roles('ADMIN') // Only admins can access monitoring endpoints
 export class MonitoringController {
   constructor(

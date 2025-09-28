@@ -11,7 +11,6 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { 
@@ -64,17 +63,17 @@ export class AuthController {
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async logout(@Req() request: any): Promise<{ success: boolean; message: string }> {
-    return this.authService.logout(request.sessionId);
+    // Legacy endpoint retained for compatibility; Clerk handles sign-out on the client.
+    return { success: true, message: 'Logout handled by Clerk on the client' };
   }
 
   @Post('logout-all')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async logoutAll(@CurrentUser() user: any): Promise<{ success: boolean; message: string }> {
-    return this.authService.logoutAll(user.id);
+    const userId = user?.userId ?? user?.sub ?? user?.id;
+    return this.authService.logoutAll(userId);
   }
 
   @Public()
@@ -99,19 +98,19 @@ export class AuthController {
   }
 
   @Post('change-password')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async changePassword(
     @CurrentUser() user: any,
     @Body() changePasswordDto: ChangePasswordDto
   ): Promise<{ success: boolean; message: string }> {
-    return this.authService.changePassword(user.id, changePasswordDto);
+    const userId = user?.userId ?? user?.sub ?? user?.id;
+    return this.authService.changePassword(userId, changePasswordDto);
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: any) {
-    return this.authService.getProfile(user.id);
+    const userId = user?.userId ?? user?.sub ?? user?.id;
+    return this.authService.getProfile(userId);
   }
 
   @Public()

@@ -13,11 +13,9 @@ import { BehaviorAnalysisService } from './services/behavior-analysis.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { QueryEventsDto } from './dto/query-events.dto';
 import { BehaviorAnalysisDto } from './dto/behavior-analysis.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HouseholdGuard } from '../household/guards/household.guard';
 
 @Controller('events')
-@UseGuards(JwtAuthGuard)
 export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
@@ -27,7 +25,7 @@ export class EventsController {
   @Post()
   async trackEvent(@Request() req, @Body() createEventDto: CreateEventDto) {
     await this.eventsService.trackEvent({
-      userId: req.user.id,
+      userId: (req.user?.userId ?? req.user?.sub ?? req.user?.id),
       householdId: req.user.householdId,
       ...createEventDto,
     });

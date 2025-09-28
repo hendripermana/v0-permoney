@@ -12,7 +12,7 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
 import { NotificationsService } from './notifications.service';
 import { PushNotificationService } from './services/push-notification.service';
 import { NotificationSchedulerService } from './services/notification-scheduler.service';
@@ -25,7 +25,6 @@ import {
 import { NotificationStatus, NotificationType } from './types/notification.types';
 
 @Controller('notifications')
-@UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
@@ -40,7 +39,7 @@ export class NotificationsController {
     @Body() createNotificationDto: CreateNotificationDto
   ) {
     // Ensure the notification is created for the authenticated user
-    createNotificationDto.userId = req.user.id;
+    createNotificationDto.userId = (req.user?.userId ?? req.user?.sub ?? req.user?.id);
     
     return await this.notificationsService.createNotification(createNotificationDto);
   }
@@ -60,12 +59,12 @@ export class NotificationsController {
       type,
     };
 
-    return await this.notificationsService.getUserNotifications(req.user.id, options);
+    return await this.notificationsService.getUserNotifications((req.user?.userId ?? req.user?.sub ?? req.user?.id), options);
   }
 
   @Get('unread-count')
   async getUnreadCount(@Request() req: any) {
-    const count = await this.notificationsService.getUnreadCount(req.user.id);
+    const count = await this.notificationsService.getUnreadCount((req.user?.userId ?? req.user?.sub ?? req.user?.id));
     return { count };
   }
 
@@ -75,7 +74,7 @@ export class NotificationsController {
     @Request() req: any,
     @Param('id') notificationId: string
   ) {
-    return await this.notificationsService.markAsRead(req.user.id, {
+    return await this.notificationsService.markAsRead((req.user?.userId ?? req.user?.sub ?? req.user?.id), {
       notificationId,
     });
   }
@@ -83,7 +82,7 @@ export class NotificationsController {
   @Put('mark-all-read')
   @HttpCode(HttpStatus.OK)
   async markAllAsRead(@Request() req: any) {
-    return await this.notificationsService.markAllAsRead(req.user.id);
+    return await this.notificationsService.markAllAsRead((req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Delete(':id')
@@ -92,12 +91,12 @@ export class NotificationsController {
     @Request() req: any,
     @Param('id') notificationId: string
   ) {
-    return await this.notificationsService.deleteNotification(req.user.id, notificationId);
+    return await this.notificationsService.deleteNotification((req.user?.userId ?? req.user?.sub ?? req.user?.id), notificationId);
   }
 
   @Get('preferences')
   async getUserPreferences(@Request() req: any) {
-    return await this.notificationsService.getUserPreferences(req.user.id);
+    return await this.notificationsService.getUserPreferences((req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Put('preferences')
@@ -106,7 +105,7 @@ export class NotificationsController {
     @Request() req: any,
     @Body() updateDto: UpdateNotificationPreferencesDto
   ) {
-    return await this.notificationsService.updateUserPreferences(req.user.id, updateDto);
+    return await this.notificationsService.updateUserPreferences((req.user?.userId ?? req.user?.sub ?? req.user?.id), updateDto);
   }
 
   @Post('push/subscribe')
@@ -123,7 +122,7 @@ export class NotificationsController {
   ) {
     const userAgent = req.headers['user-agent'];
     return await this.pushNotificationService.subscribeToPush(
-      req.user.id,
+      (req.user?.userId ?? req.user?.sub ?? req.user?.id),
       subscription,
       userAgent
     );
@@ -136,14 +135,14 @@ export class NotificationsController {
     @Body() body: { endpoint: string }
   ) {
     return await this.pushNotificationService.unsubscribeFromPush(
-      req.user.id,
+      (req.user?.userId ?? req.user?.sub ?? req.user?.id),
       body.endpoint
     );
   }
 
   @Get('push/subscriptions')
   async getPushSubscriptions(@Request() req: any) {
-    return await this.pushNotificationService.getUserSubscriptions(req.user.id);
+    return await this.pushNotificationService.getUserSubscriptions((req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Post('test')

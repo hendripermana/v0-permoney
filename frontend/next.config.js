@@ -36,6 +36,20 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/login',
+        destination: '/sign-in',
+        permanent: false,
+      },
+      {
+        source: '/register',
+        destination: '/sign-up',
+        permanent: false,
+      },
+    ];
+  },
   output: 'standalone',
 }
 

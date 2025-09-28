@@ -13,7 +13,7 @@ import {
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
 import { AnalyticsService } from './analytics.service';
 import {
   AnalyticsFiltersDto,
@@ -39,7 +39,6 @@ import {
 } from './types/analytics.types';
 
 @Controller('analytics')
-@UseGuards(JwtAuthGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 

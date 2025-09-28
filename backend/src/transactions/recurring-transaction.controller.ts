@@ -59,7 +59,7 @@ export class RecurringTransactionController {
   ): Promise<RecurringTransactionResponseDto> {
     const result = await this.recurringTransactionService.create(
       householdId,
-      req.user.id,
+      req.user?.userId ?? req.user?.sub ?? req.user?.id,
       createDto
     );
 
@@ -118,7 +118,7 @@ export class RecurringTransactionController {
   ) {
     return this.recurringTransactionService.findByHousehold(
       householdId,
-      req.user.id,
+      (req.user?.userId ?? req.user?.sub ?? req.user?.id),
       filters
     );
   }
@@ -138,7 +138,7 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    const result = await this.recurringTransactionService.findById(id, req.user.id);
+    const result = await this.recurringTransactionService.findById(id, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
     return {
       ...result,
       amountCents: Number(result.amountCents),
@@ -165,7 +165,7 @@ export class RecurringTransactionController {
     @Body() updateDto: UpdateRecurringTransactionDto,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    const result = await this.recurringTransactionService.update(id, req.user.id, updateDto);
+    const result = await this.recurringTransactionService.update(id, (req.user?.userId ?? req.user?.sub ?? req.user?.id), updateDto);
     return {
       ...result,
       amountCents: Number(result.amountCents),
@@ -190,7 +190,7 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<void> {
-    await this.recurringTransactionService.delete(id, req.user.id);
+    await this.recurringTransactionService.delete(id, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Post(':id/pause')
@@ -207,7 +207,7 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    const result = await this.recurringTransactionService.pause(id, req.user.id);
+    const result = await this.recurringTransactionService.pause(id, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
     return {
       ...result,
       frequency: result.frequency as RecurrenceFrequency,
@@ -230,7 +230,7 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    const result = await this.recurringTransactionService.resume(id, req.user.id);
+    const result = await this.recurringTransactionService.resume(id, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
     return {
       ...result,
       frequency: result.frequency as RecurrenceFrequency,
@@ -253,7 +253,7 @@ export class RecurringTransactionController {
     @Param('id') id: string,
     @Request() req: any
   ): Promise<RecurringTransactionResponseDto> {
-    const result = await this.recurringTransactionService.cancel(id, req.user.id);
+    const result = await this.recurringTransactionService.cancel(id, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
     return {
       ...result,
       frequency: result.frequency as RecurrenceFrequency,
@@ -281,7 +281,7 @@ export class RecurringTransactionController {
         recurringTransactionId: id,
         ...executeDto,
       },
-      req.user.id
+      (req.user?.userId ?? req.user?.sub ?? req.user?.id)
     );
   }
 
@@ -301,7 +301,7 @@ export class RecurringTransactionController {
   ): Promise<RecurringTransactionExecutionDto[]> {
     return this.recurringTransactionService.getExecutionHistory(
       id,
-      req.user.id
+      (req.user?.userId ?? req.user?.sub ?? req.user?.id)
     );
   }
 }

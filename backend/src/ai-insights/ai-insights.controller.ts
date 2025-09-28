@@ -14,7 +14,7 @@ import {
   Query,
 } from '@nestjs/common';
 // import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
 import { AIInsightsService } from './ai-insights.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ApiQuery } from '@nestjs/swagger';
@@ -36,7 +36,6 @@ import {
 @ApiTags('AI Insights')
 @ApiBearerAuth()
 @Controller('ai-insights')
-@UseGuards(JwtAuthGuard)
 export class AIInsightsController {
   constructor(private readonly aiInsightsService: AIInsightsService) {}
 

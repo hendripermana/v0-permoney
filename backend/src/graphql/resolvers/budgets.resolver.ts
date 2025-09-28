@@ -1,6 +1,5 @@
 import { Resolver, Query, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { BudgetsService } from '../../budgets/budgets.service';
 import { ObjectType, Field } from '@nestjs/graphql';
 
@@ -17,7 +16,6 @@ export class Budget {
 }
 
 @Resolver(() => Budget)
-@UseGuards(JwtAuthGuard)
 export class BudgetsResolver {
   constructor(private budgetsService: BudgetsService) {}
 
