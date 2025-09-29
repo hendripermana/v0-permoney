@@ -1,12 +1,8 @@
 const path = require('path')
-const fs = require('fs')
-const dotenv = require('dotenv')
+const { loadEnvConfig } = require('@next/env')
 
-// Load root-level .env so Next (running inside frontend/) picks up shared env
-const rootEnvPath = path.resolve(__dirname, '..', '.env')
-if (fs.existsSync(rootEnvPath)) {
-  dotenv.config({ path: rootEnvPath })
-}
+// Ensure Next loads env from the monorepo root (single source of truth)
+loadEnvConfig(path.resolve(__dirname, '..'), process.env.NODE_ENV !== 'production')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
