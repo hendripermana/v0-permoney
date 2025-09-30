@@ -1,17 +1,18 @@
 {
   "/api/hello/route": "app/api/hello/route.js",
-  "/accounts/page": "app/accounts/page.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/(onboarding)/onboarding/page": "app/(onboarding)/onboarding/page.js",
+  "/(public)/sign-in/page": "app/(public)/sign-in/page.js",
+  "/(public)/page": "app/(public)/page.js",
   "/analytics/page": "app/analytics/page.js",
+  "/(public)/sign-up/page": "app/(public)/sign-up/page.js",
   "/gratitude/page": "app/gratitude/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/login/page": "app/login/page.js",
   "/goals/page": "app/goals/page.js",
   "/ux-demo/page": "app/ux-demo/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/transactions/page": "app/transactions/page.js",
-  "/budgets/page": "app/budgets/page.js",
-  "/page": "app/page.js",
-  "/register/page": "app/register/page.js",
-  "/wishlist/page": "app/wishlist/page.js"
+  "/(app)/budgets/page": "app/(app)/budgets/page.js",
+  "/(app)/settings/page": "app/(app)/settings/page.js",
+  "/(app)/transactions/page": "app/(app)/transactions/page.js",
+  "/(app)/profile/page": "app/(app)/profile/page.js",
+  "/(app)/accounts/page": "app/(app)/accounts/page.js",
+  "/(app)/dashboard/page": "app/(app)/dashboard/page.js"
 }

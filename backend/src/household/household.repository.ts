@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Household, HouseholdMember, HouseholdRole, Prisma } from '../../../node_modules/.prisma/client';
+import { Household, HouseholdMember, Prisma, $Enums } from '@prisma/client';
 import { AbstractBaseRepository } from '../common/base/base.repository';
 import { CreateHouseholdDto, UpdateHouseholdDto, ViewType } from './dto';
 
@@ -112,7 +112,7 @@ export class HouseholdRepository extends AbstractBaseRepository<
   async addMember(
     householdId: string,
     userId: string,
-    role: HouseholdRole,
+    role: $Enums.HouseholdRole,
     permissions: string[] = []
   ): Promise<HouseholdMember> {
     return this.prisma.householdMember.create({
@@ -128,7 +128,7 @@ export class HouseholdRepository extends AbstractBaseRepository<
   async updateMember(
     householdId: string,
     userId: string,
-    data: { role?: HouseholdRole; permissions?: string[] }
+    data: { role?: $Enums.HouseholdRole; permissions?: string[] }
   ): Promise<HouseholdMember> {
     return this.prisma.householdMember.update({
       where: {
@@ -192,7 +192,7 @@ export class HouseholdRepository extends AbstractBaseRepository<
     });
   }
 
-  async getUserRole(householdId: string, userId: string): Promise<HouseholdRole | null> {
+  async getUserRole(householdId: string, userId: string): Promise<$Enums.HouseholdRole | null> {
     const member = await this.findMember(householdId, userId);
     return member?.role || null;
   }
@@ -206,7 +206,7 @@ export class HouseholdRepository extends AbstractBaseRepository<
     if (!member) return false;
 
     // ADMIN has all permissions
-    if (member.role === HouseholdRole.ADMIN) return true;
+    if (member.role === $Enums.HouseholdRole.ADMIN) return true;
 
     // Check specific permissions
     const permissions = Array.isArray(member.permissions) 
@@ -246,7 +246,7 @@ export class HouseholdRepository extends AbstractBaseRepository<
         allowedUserIds = household.members
           .filter(m => 
             m.userId === userId || 
-            [HouseholdRole.ADMIN, HouseholdRole.PARTNER, HouseholdRole.FINANCE_STAFF].includes(m.role)
+            [$Enums.HouseholdRole.ADMIN, $Enums.HouseholdRole.PARTNER, $Enums.HouseholdRole.FINANCE_STAFF].includes(m.role)
           )
           .map(m => m.userId);
         break;

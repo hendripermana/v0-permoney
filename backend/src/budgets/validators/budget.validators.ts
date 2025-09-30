@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { BudgetsRepository } from '../budgets.repository';
 import { CreateBudgetDto, UpdateBudgetDto } from '../dto';
-import { BudgetPeriod } from '../../../../node_modules/.prisma/client';
+import { BudgetPeriod } from '@prisma/client';
 
 @Injectable()
 export class BudgetValidators {

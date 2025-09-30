@@ -1,32 +1,54 @@
 {
+  "../../node_modules/@clerk/nextjs/dist/esm/app-router/client/ClerkProvider.js -> ./keyless-creator-reader.js": {
+    "id": 55046,
+    "files": [
+      "static/chunks/5046.41bdf468b967bf12.js"
+    ]
+  },
+  "../../node_modules/@clerk/nextjs/dist/esm/app-router/client/keyless-cookie-sync.js -> ../keyless-actions.js": {
+    "id": 46159,
+    "files": []
+  },
+  "../../node_modules/@tanstack/query-devtools/build/index.js -> ./DevtoolsComponent/NCMVHL6D.js": {
+    "id": null,
+    "files": []
+  },
+  "../../node_modules/@tanstack/query-devtools/build/index.js -> ./DevtoolsPanelComponent/2AITGKQY.js": {
+    "id": null,
+    "files": []
+  },
   "components/forms/transaction-form.tsx -> @/components/ocr/receipt-ocr-upload": {
     "id": 55799,
     "files": [
-      "static/chunks/799.505fbec859516ec4.js"
+      "static/chunks/2861-316babecc17aef5f.js",
+      "static/chunks/5799.25cf9b7d9e3150cc.js"
     ]
   },
   "components/modals/account-modal.tsx -> @/components/insights/ai-insights-panel": {
     "id": 11374,
     "files": [
-      "static/chunks/374.966bad8aba61d708.js"
+      "static/chunks/2861-316babecc17aef5f.js",
+      "static/chunks/1374.7b75a92437768a26.js"
     ]
   },
   "components/modals/account-modal.tsx -> @/components/islamic/sharia-compliance-panel": {
     "id": 99115,
     "files": [
-      "static/chunks/115.cbf85032c28f44b3.js"
+      "static/chunks/9115.10c2abe826617b8f.js"
     ]
   },
   "components/modals/account-modal.tsx -> @/components/islamic/zakat-quick-calculator": {
     "id": 63645,
     "files": [
-      "static/chunks/26.b357e59b985da105.js"
+      "static/chunks/2861-316babecc17aef5f.js",
+      "static/chunks/6026.0e808324f8b67ee8.js"
     ]
   },
   "components/modals/account-modal.tsx -> @/components/ocr/receipt-ocr-upload": {
     "id": 55799,
     "files": [
-      "static/chunks/180.077ad6e61462380b.js"
+      "static/chunks/2861-316babecc17aef5f.js",
+      "static/chunks/8180.1aa6d396d14603f6.js"
     ]
   }
 }

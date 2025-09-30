@@ -29,7 +29,7 @@ import {
   PaymentScheduleResponse,
   DebtSummaryResponse,
 } from './dto';
-import { Debt, DebtPayment } from '../../../node_modules/.prisma/client';
+import { Debt, DebtPayment } from '@prisma/client';
 import { DebtWithPayments } from './debts.repository';
 
 @Controller('debts')

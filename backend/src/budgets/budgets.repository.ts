@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Budget, BudgetCategory, Prisma } from '../../../node_modules/.prisma/client';
+import { Budget, BudgetCategory, Prisma } from '@prisma/client';
 import { CreateBudgetDto, UpdateBudgetDto, BudgetFiltersDto } from './dto';
 
 export type BudgetWithCategories = Budget & {

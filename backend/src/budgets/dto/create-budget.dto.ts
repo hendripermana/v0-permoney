@@ -15,7 +15,7 @@ import {
   ArrayMaxSize
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { BudgetPeriod } from '../../../../node_modules/.prisma/client';
+import { BudgetPeriod } from '@prisma/client';
 import { IsValidBudgetPeriod, IsValidBudgetAllocation, IsFutureOrCurrentDate } from '../validators/budget.validators';
 
 export class BudgetCategoryAllocationDto {
