@@ -220,6 +220,11 @@ export function NotificationPreferences({ onClose }: NotificationPreferencesProp
           )}
         </div>
         <Separator />
+
+        {/* Zakat Reminders */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
               <Label className="text-base font-medium">Zakat Reminders</Label>
               <p className="text-sm text-muted-foreground">
                 Get reminded about Zakat calculations and payments
@@ -227,12 +232,12 @@ export function NotificationPreferences({ onClose }: NotificationPreferencesProp
             </div>
             <Switch
               checked={localPreferences.zakatReminders.enabled}
-              onCheckedChange={(enabled) => 
+              onCheckedChange={(enabled) =>
                 updatePreferenceSection('zakatReminders', { enabled })
               }
             />
           </div>
-          
+
           {localPreferences.zakatReminders.enabled && (
             <div className="ml-4 space-y-3">
               <div>
@@ -242,15 +247,15 @@ export function NotificationPreferences({ onClose }: NotificationPreferencesProp
                   min="1"
                   max="90"
                   value={localPreferences.zakatReminders.daysBefore}
-                  onChange={(e) => 
-                    updatePreferenceSection('zakatReminders', { 
-                      daysBefore: parseInt(e.target.value) 
+                  onChange={(e) =>
+                    updatePreferenceSection('zakatReminders', {
+                      daysBefore: parseInt(e.target.value),
                     })
                   }
                   className="w-20"
                 />
               </div>
-              
+
               <div>
                 <Label className="text-sm">Notification Channels</Label>
                 <div className="flex gap-4 mt-2">
@@ -268,7 +273,7 @@ export function NotificationPreferences({ onClose }: NotificationPreferencesProp
                   ))}
                 </div>
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -280,16 +285,19 @@ export function NotificationPreferences({ onClose }: NotificationPreferencesProp
             </div>
           )}
         </div>
+
         <Separator />
+
+        {/* Push Notifications */}
+        <div className="space-y-4">
+          <div>
+            <Label className="text-base font-medium">Push Notifications</Label>
             <p className="text-sm text-muted-foreground">
               Enable browser push notifications for real-time alerts
             </p>
           </div>
-          
-          <Button
-            variant="outline"
-            onClick={handleEnablePushNotifications}
-          >
+
+          <Button variant="outline" onClick={handleEnablePushNotifications}>
             <Smartphone className="h-4 w-4 mr-2" />
             Enable Push Notifications
           </Button>

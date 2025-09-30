@@ -5,6 +5,8 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/pricing(.*)',
+  '/features(.*)',
   '/api/webhooks(.*)',
   // Static files and Next.js internals
   '/favicon.ico',
@@ -33,6 +35,11 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Allow public routes to pass through
   if (isPublicRoute(req)) {
+    // If authenticated user hits root '/', redirect to dashboard
+    if (pathname === '/' && userId) {
+      const url = new URL('/dashboard', req.url)
+      return Response.redirect(url)
+    }
     return
   }
 
