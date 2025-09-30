@@ -1,6 +1,5 @@
 import { Resolver, Query, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import { 
   SpendingAnalytics,
@@ -14,7 +13,6 @@ import {
 import { Money, DateRange, GroupBy, TimeInterval } from '../types/common.types';
 
 @Resolver()
-@UseGuards(JwtAuthGuard)
 export class AnalyticsResolver {
   constructor(private prisma: PrismaService) {}
 

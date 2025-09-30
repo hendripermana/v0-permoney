@@ -14,7 +14,7 @@ interface ProtectedRouteProps {
   redirectTo?: string
 }
 
-export function ProtectedRoute({ children, redirectTo = "/login" }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, redirectTo = "/sign-in" }: ProtectedRouteProps) {
   const { user, loading, error, retryAuth } = useAuth()
   const { isLoaded: clerkLoaded, isSignedIn } = useUser()
   const router = useRouter()

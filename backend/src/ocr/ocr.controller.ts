@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
 import { OcrService } from './ocr.service';
 import { UploadDocumentDto, ProcessDocumentDto, ValidateOcrResultDto } from './dto/upload-document.dto';
 import { ApproveTransactionSuggestionDto } from './dto/create-transaction-suggestion.dto';
@@ -23,7 +23,6 @@ import type { Express } from 'express';
 
 @ApiTags('OCR & Document Processing')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('ocr')
 export class OcrController {
   private readonly logger = new Logger(OcrController.name);
@@ -46,13 +45,13 @@ export class OcrController {
     @Body() uploadDto: UploadDocumentDto,
     @Request() req: any,
   ): Promise<DocumentUpload> {
-    this.logger.log(`Upload document request from user: ${req.user.id}`);
+    this.logger.log(`Upload document request from user: ${req.user?.userId ?? req.user?.sub ?? req.user?.id}`);
 
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
 
-    return this.ocrService.uploadDocument(file, uploadDto, req.user.id);
+    return this.ocrService.uploadDocument(file, uploadDto, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Post('process')
@@ -112,7 +111,7 @@ export class OcrController {
     @Request() req: any,
   ): Promise<any> {
     this.logger.log(`Approve transaction suggestion request: ${approveDto.suggestionId}`);
-    return this.ocrService.approveTransactionSuggestion(approveDto, req.user.id);
+    return this.ocrService.approveTransactionSuggestion(approveDto, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Get('documents/:householdId')
@@ -127,7 +126,7 @@ export class OcrController {
     @Request() req: any,
   ): Promise<DocumentUpload[]> {
     this.logger.log(`Get documents request for household: ${householdId}`);
-    return this.ocrService.getDocumentsByHousehold(householdId, req.user.id);
+    return this.ocrService.getDocumentsByHousehold(householdId, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Get('documents/:documentId')
@@ -143,7 +142,7 @@ export class OcrController {
     @Request() req: any,
   ): Promise<DocumentUpload> {
     this.logger.log(`Get document request: ${documentId}`);
-    return this.ocrService.getDocument(documentId, req.user.id);
+    return this.ocrService.getDocument(documentId, (req.user?.userId ?? req.user?.sub ?? req.user?.id));
   }
 
   @Get('health')

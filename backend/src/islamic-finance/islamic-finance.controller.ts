@@ -13,7 +13,6 @@ import {
   HttpCode
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { IslamicFinanceService } from './islamic-finance.service';
 import { 
   CalculateZakatDto, 
@@ -28,7 +27,6 @@ import { ZakatAssetType, ZakatReminderType, IslamicReportType } from './types/is
 
 @ApiTags('Islamic Finance')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('islamic-finance')
 export class IslamicFinanceController {
   constructor(private readonly islamicFinanceService: IslamicFinanceService) {}
@@ -121,7 +119,7 @@ export class IslamicFinanceController {
     @Body() dto: UpdateShariaComplianceDto,
     @Request() req: any
   ) {
-    return this.islamicFinanceService.updateAccountCompliance(dto, req.user.id);
+    return this.islamicFinanceService.updateAccountCompliance(dto, req.user?.userId ?? req.user?.sub ?? req.user?.id);
   }
 
   @Get('compliance/accounts/:accountId')
@@ -171,7 +169,7 @@ export class IslamicFinanceController {
     @Body() dto: GenerateIslamicReportDto,
     @Request() req: any
   ) {
-    return this.islamicFinanceService.generateIslamicReport(dto, req.user.id);
+    return this.islamicFinanceService.generateIslamicReport(dto, req.user?.userId ?? req.user?.sub ?? req.user?.id);
   }
 
   @Get('reports/:householdId')

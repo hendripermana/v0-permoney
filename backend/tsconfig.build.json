@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "include": [
+    "src/main.ts",
     "src/app/**/*.ts",
     "src/auth/**/*.ts",
     "src/common/**/*.ts",

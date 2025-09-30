@@ -1,6 +1,5 @@
 import { Resolver, Query, Mutation, Args, ID, Context, ResolveField, Parent } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AccountsService } from '../../accounts/accounts.service';
 import { AccountsDataLoader } from '../dataloaders/accounts.dataloader';
 import { 
@@ -18,7 +17,6 @@ import { Money, GraphQLDateTime } from '../types/common.types';
 import { AccountWithBalance } from '../../accounts/accounts.repository';
 
 @Resolver(() => Account)
-@UseGuards(JwtAuthGuard)
 export class AccountsResolver {
   constructor(
     private accountsService: AccountsService,
@@ -31,7 +29,7 @@ export class AccountsResolver {
     @Args('filters', { type: () => AccountFilters, nullable: true }) filters?: AccountFilters,
     @Context() context?: any,
   ): Promise<Account[]> {
-    const userId = context.req.user?.id;
+    const userId = context.req.user?.userId ?? context.req.user?.sub ?? context.req.user?.id;
     const accountsData = await this.accountsService.getAccountsByHousehold(
       householdId,
       filters || {},
@@ -110,7 +108,7 @@ export class AccountsResolver {
     @Args('input') input: CreateAccountInput,
     @Context() context: any,
   ): Promise<Account> {
-    const userId = context.req.user.id;
+    const userId = context.req.user?.userId ?? context.req.user?.sub ?? context.req.user?.id;
     const account = await this.accountsService.createAccount(householdId, input, userId);
     
     // Clear cache

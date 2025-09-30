@@ -1,12 +1,10 @@
 import { Resolver, Query, Args, ID, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AIInsightsService } from '../../ai-insights/ai-insights.service';
 import { Insight, MonthlyReport } from '../types/analytics.types';
 import { InsightType } from '../types/common.types';
 
 @Resolver()
-@UseGuards(JwtAuthGuard)
 export class AIInsightsResolver {
   constructor(private aiInsightsService: AIInsightsService) {}
 

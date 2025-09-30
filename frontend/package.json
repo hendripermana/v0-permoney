@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p ${FRONTEND_PORT:-3000}",
-    "build": "next build",
-    "start": "next start -p ${FRONTEND_PORT:-3000}",
+    "dev": "cross-env NODE_OPTIONS=\"-r ./scripts/preload-env.js\" next dev -p ${FRONTEND_PORT:-3000}",
+    "build": "cross-env NODE_OPTIONS=\"-r ./scripts/preload-env.js\" next build",
+    "start": "cross-env NODE_OPTIONS=\"-r ./scripts/preload-env.js\" next start -p ${FRONTEND_PORT:-3000}",
     "lint": "cross-env ESLINT_USE_FLAT_CONFIG=true eslint --max-warnings=0 .",
     "type-check": "tsc --noEmit",
     "test": "jest",

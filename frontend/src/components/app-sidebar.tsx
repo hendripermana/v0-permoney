@@ -63,11 +63,11 @@ const bottomItems = [
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, logout } = useAuth()
+  const { user, signOut } = useAuth()
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await signOut()
     } catch (error) {
       console.error("Logout failed:", error)
     }
