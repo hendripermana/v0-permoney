@@ -243,7 +243,7 @@ class OfflineQueue {
 
   private async syncAction(action: QueuedAction): Promise<void> {
     // This would integrate with your actual API
-    const apiEndpoint = this.getApiEndpoint(action.type);
+    const apiEndpoint = this.getApiEndpoint(action.type, action.data);
     const method = this.getHttpMethod(action.type);
 
     // Add timeout to prevent hanging requests
@@ -279,20 +279,26 @@ class OfflineQueue {
     }
   }
 
-  private getApiEndpoint(type: QueuedAction['type']): string {
+  private getApiEndpoint(type: QueuedAction['type'], data?: unknown): string {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    
+
+    // Attempt to extract id for update/delete actions
+    const id = (data as any)?.id as string | undefined;
+
     switch (type) {
       case 'CREATE_TRANSACTION':
         return `${baseUrl}/transactions`;
       case 'UPDATE_TRANSACTION':
-        return `${baseUrl}/transactions/${type}`;
+        if (!id) throw new Error('Missing ID for UPDATE_TRANSACTION');
+        return `${baseUrl}/transactions/${id}`;
       case 'DELETE_TRANSACTION':
-        return `${baseUrl}/transactions/${type}`;
+        if (!id) throw new Error('Missing ID for DELETE_TRANSACTION');
+        return `${baseUrl}/transactions/${id}`;
       case 'CREATE_ACCOUNT':
         return `${baseUrl}/accounts`;
       case 'UPDATE_ACCOUNT':
-        return `${baseUrl}/accounts/${type}`;
+        if (!id) throw new Error('Missing ID for UPDATE_ACCOUNT');
+        return `${baseUrl}/accounts/${id}`;
       default:
         throw new Error(`Unknown action type: ${type}`);
     }

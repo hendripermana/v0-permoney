@@ -22,9 +22,7 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <ClerkProvider
+    <ClerkProvider
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
           signInFallbackRedirectUrl="/onboarding"
@@ -59,7 +57,9 @@ export default function RootLayout({
               alertText: "text-destructive",
             },
           }}
-        >
+    >
+      <html lang="en">
+        <body className="min-h-screen bg-background font-sans antialiased">
           <ErrorBoundary>
             <NotificationProvider>
               <OnboardingProvider>
@@ -72,8 +72,8 @@ export default function RootLayout({
               </OnboardingProvider>
             </NotificationProvider>
           </ErrorBoundary>
-        </ClerkProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
