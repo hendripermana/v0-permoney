@@ -116,7 +116,7 @@ export default function OnboardingPage() {
 
   const nextStep = async () => {
     const fields = FIELDS_BY_STEP[currentStep] ?? []
-    const isValid = await form.trigger(fields as FieldPath[], { shouldFocus: true })
+    const isValid = await form.trigger(fields as FieldPath<OnboardingFormValues>[], { shouldFocus: true })
     if (!isValid) {
       toast({
         title: "Missing Information",
