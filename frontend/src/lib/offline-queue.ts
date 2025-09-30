@@ -280,7 +280,7 @@ class OfflineQueue {
   }
 
   private getApiEndpoint(type: QueuedAction['type']): string {
-    const baseUrl = process.env['NEXT_PUBLIC_API_URL'] || '/api';
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     
     switch (type) {
       case 'CREATE_TRANSACTION':
