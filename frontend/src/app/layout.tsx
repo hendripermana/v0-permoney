@@ -6,6 +6,7 @@ import { ErrorBoundary } from "@/components/error-boundary"
 import { Toaster } from "@/components/ui/toaster"
 import { ClerkProvider } from "@clerk/nextjs"
 import { NotificationProvider } from "@/components/notifications"
+import { OnboardingProvider } from "@/components/onboarding"
 
 export const metadata: Metadata = {
   title: "Permoney - Personal Finance Intelligence",
@@ -60,10 +61,12 @@ export default function RootLayout({
         >
           <ErrorBoundary>
             <NotificationProvider>
-              <AuthProvider>
-                {children}
-                <Toaster />
-              </AuthProvider>
+              <OnboardingProvider>
+                <AuthProvider>
+                  {children}
+                  <Toaster />
+                </AuthProvider>
+              </OnboardingProvider>
             </NotificationProvider>
           </ErrorBoundary>
         </ClerkProvider>
