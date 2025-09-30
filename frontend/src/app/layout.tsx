@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ClerkProvider } from "@clerk/nextjs"
 import { NotificationProvider } from "@/components/notifications"
 import { OnboardingProvider } from "@/components/onboarding"
+import { QueryProvider } from "@/components/query-provider"
 
 export const metadata: Metadata = {
   title: "Permoney - Personal Finance Intelligence",
@@ -62,10 +63,12 @@ export default function RootLayout({
           <ErrorBoundary>
             <NotificationProvider>
               <OnboardingProvider>
-                <AuthProvider>
-                  {children}
-                  <Toaster />
-                </AuthProvider>
+                <QueryProvider>
+                  <AuthProvider>
+                    {children}
+                    <Toaster />
+                  </AuthProvider>
+                </QueryProvider>
               </OnboardingProvider>
             </NotificationProvider>
           </ErrorBoundary>
