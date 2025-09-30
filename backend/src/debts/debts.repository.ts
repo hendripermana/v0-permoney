@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Debt, DebtPayment, Prisma } from '../../../node_modules/.prisma/client';
+import { Debt, DebtPayment, Prisma } from '@prisma/client';
 import { CreateDebtDto, UpdateDebtDto, DebtFiltersDto, CreateDebtPaymentDto, DebtType } from './dto';
 
 export interface DebtWithPayments extends Debt {

@@ -26,7 +26,8 @@
     "loaderFile": "",
     "domains": [
       "localhost",
-      "vercel.app"
+      "vercel.app",
+      "flagcdn.com"
     ],
     "disableStaticImages": false,
     "minimumCacheTTL": 60,

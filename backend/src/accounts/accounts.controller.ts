@@ -14,7 +14,7 @@ import { AccountsService } from './accounts.service';
 import { CreateAccountDto, UpdateAccountDto, AccountFiltersDto } from './dto';
 import { HouseholdAccessGuard } from '../household/guards/household-access.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { AccountType } from '../../../node_modules/.prisma/client';
+import { AccountType } from '@prisma/client';
 
 interface UserPayload {
   sub: string;

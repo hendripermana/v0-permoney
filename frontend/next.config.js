@@ -2,7 +2,12 @@ const path = require('path')
 const { loadEnvConfig } = require('@next/env')
 
 // Ensure Next loads env from the monorepo root (single source of truth)
-loadEnvConfig(path.resolve(__dirname, '..'), process.env.NODE_ENV !== 'production')
+// Preserve the NODE_ENV that Next sets (production during build, development during dev)
+const originalNodeEnv = process.env.NODE_ENV
+loadEnvConfig(path.resolve(__dirname, '..'), originalNodeEnv !== 'production')
+if (originalNodeEnv) {
+  process.env.NODE_ENV = originalNodeEnv
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

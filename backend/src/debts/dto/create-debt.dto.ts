@@ -12,10 +12,7 @@ import {
   IsISO8601
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-
-import { DebtType } from '../../../../node_modules/.prisma/client';
-
-export { DebtType };
+import { DebtType } from '@prisma/client';
 
 export class CreateDebtDto {
   @IsEnum(DebtType, {

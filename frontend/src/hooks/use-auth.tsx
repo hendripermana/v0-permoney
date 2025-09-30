@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     user,
     loading,
-    isSignedIn,
+    isSignedIn: !!isSignedIn,
     signOut,
     error,
     retryAuth,

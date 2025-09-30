@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { HouseholdService } from '../household.service';
-import { HouseholdRole } from '../../../../node_modules/.prisma/client';
+import { $Enums } from '@prisma/client';
 
 export const HOUSEHOLD_ROLES_KEY = 'household_roles';
 export const HOUSEHOLD_PERMISSIONS_KEY = 'household_permissions';
@@ -14,7 +14,7 @@ export class HouseholdAccessGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<HouseholdRole[]>(
+    const requiredRoles = this.reflector.getAllAndOverride<$Enums.HouseholdRole[]>(
       HOUSEHOLD_ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );

@@ -51,7 +51,8 @@
       "loaderFile": "",
       "domains": [
         "localhost",
-        "vercel.app"
+        "vercel.app",
+        "flagcdn.com"
       ],
       "disableStaticImages": false,
       "minimumCacheTTL": 60,
@@ -158,7 +159,7 @@
       "middlewarePrefetch": "flexible",
       "optimisticClientCache": true,
       "manualClientBasePath": false,
-      "cpus": 1,
+      "cpus": 9,
       "memoryBasedWorkersCount": false,
       "imgOptConcurrency": null,
       "imgOptTimeoutInSeconds": 7,
@@ -292,11 +293,23 @@
       "afterFiles": [
         {
           "source": "/api/:path*",
-          "destination": "/api/:path*"
+          "destination": "http://localhost:3001/api/:path*"
         }
       ],
       "fallback": []
-    }
+    },
+    "_originalRedirects": [
+      {
+        "source": "/login",
+        "destination": "/sign-in",
+        "permanent": false
+      },
+      {
+        "source": "/register",
+        "destination": "/sign-up",
+        "permanent": false
+      }
+    ]
   },
   "appDir": "/Users/p/Project/v0-permoney/frontend",
   "relativeAppDir": "frontend",

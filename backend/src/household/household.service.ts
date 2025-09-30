@@ -6,7 +6,7 @@ import {
   ConflictException,
   Logger
 } from '@nestjs/common';
-import { HouseholdRole } from '../../../node_modules/.prisma/client';
+import { $Enums } from '@prisma/client';
 import { AbstractBaseService } from '../common/base/base.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestContextService } from '../common/services/request-context.service';
@@ -48,7 +48,7 @@ export class HouseholdService {
         data: {
           householdId: newHousehold.id,
           userId,
-          role: HouseholdRole.ADMIN,
+          role: $Enums.HouseholdRole.ADMIN,
           permissions: [], // ADMIN has all permissions by default
         },
       });
@@ -140,11 +140,11 @@ export class HouseholdService {
     await this.validateAdminPermission(householdId, userId);
 
     // Prevent self-demotion from ADMIN if they're the only admin
-    if (memberId === userId && updateData.role && updateData.role !== HouseholdRole.ADMIN) {
+    if (memberId === userId && updateData.role && updateData.role !== $Enums.HouseholdRole.ADMIN) {
       const adminCount = await this.prisma.householdMember.count({
         where: {
           householdId,
-          role: HouseholdRole.ADMIN,
+          role: $Enums.HouseholdRole.ADMIN,
         },
       });
 
@@ -170,11 +170,11 @@ export class HouseholdService {
 
     // Prevent removing the last admin
     const member = await this.householdRepository.findMember(householdId, memberId);
-    if (member?.role === HouseholdRole.ADMIN) {
+    if (member?.role === $Enums.HouseholdRole.ADMIN) {
       const adminCount = await this.prisma.householdMember.count({
         where: {
           householdId,
-          role: HouseholdRole.ADMIN,
+          role: $Enums.HouseholdRole.ADMIN,
         },
       });
 
@@ -241,7 +241,7 @@ export class HouseholdService {
     return this.householdRepository.hasPermission(householdId, targetUserId, permission);
   }
 
-  async getUserRole(householdId: string, userId?: string): Promise<HouseholdRole | null> {
+  async getUserRole(householdId: string, userId?: string): Promise<$Enums.HouseholdRole | null> {
     const targetUserId = userId || this.requestContext.getUserId();
     if (!targetUserId) {
       return null;
@@ -295,7 +295,7 @@ export class HouseholdService {
 
   private async validateAdminPermission(householdId: string, userId: string): Promise<void> {
     const role = await this.householdRepository.getUserRole(householdId, userId);
-    if (role !== HouseholdRole.ADMIN) {
+    if (role !== $Enums.HouseholdRole.ADMIN) {
       throw new ForbiddenException('Access denied: Admin role required');
     }
   }
@@ -330,7 +330,7 @@ export class HouseholdService {
 
     // Only allow deletion if user is the sole admin
     const members = await this.householdRepository.getMembersByHousehold(id);
-    const admins = members.filter(m => m.role === HouseholdRole.ADMIN);
+    const admins = members.filter(m => m.role === $Enums.HouseholdRole.ADMIN);
     
     if (admins.length !== 1 || admins[0].userId !== userId) {
       throw new ForbiddenException('Only the sole admin can delete a household');

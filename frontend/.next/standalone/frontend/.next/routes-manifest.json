@@ -10,6 +10,18 @@
       "internal": true,
       "statusCode": 308,
       "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    },
+    {
+      "source": "/login",
+      "destination": "/sign-in",
+      "statusCode": 307,
+      "regex": "^(?!/_next)/login(?:/)?$"
+    },
+    {
+      "source": "/register",
+      "destination": "/sign-up",
+      "statusCode": 307,
+      "regex": "^(?!/_next)/register(?:/)?$"
     }
   ],
   "headers": [],
@@ -64,22 +76,34 @@
       "namedRegex": "^/gratitude(?:/)?$"
     },
     {
-      "page": "/login",
-      "regex": "^/login(?:/)?$",
+      "page": "/onboarding",
+      "regex": "^/onboarding(?:/)?$",
       "routeKeys": {},
-      "namedRegex": "^/login(?:/)?$"
+      "namedRegex": "^/onboarding(?:/)?$"
     },
     {
-      "page": "/register",
-      "regex": "^/register(?:/)?$",
+      "page": "/profile",
+      "regex": "^/profile(?:/)?$",
       "routeKeys": {},
-      "namedRegex": "^/register(?:/)?$"
+      "namedRegex": "^/profile(?:/)?$"
     },
     {
       "page": "/settings",
       "regex": "^/settings(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/settings(?:/)?$"
+    },
+    {
+      "page": "/sign-in",
+      "regex": "^/sign\\-in(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sign\\-in(?:/)?$"
+    },
+    {
+      "page": "/sign-up",
+      "regex": "^/sign\\-up(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sign\\-up(?:/)?$"
     },
     {
       "page": "/transactions",
@@ -92,12 +116,6 @@
       "regex": "^/ux\\-demo(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/ux\\-demo(?:/)?$"
-    },
-    {
-      "page": "/wishlist",
-      "regex": "^/wishlist(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/wishlist(?:/)?$"
     }
   ],
   "dataRoutes": [],
@@ -120,7 +138,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/api/:path*",
+      "destination": "http://localhost:3001/api/:path*",
       "regex": "^/api(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
     }
   ]

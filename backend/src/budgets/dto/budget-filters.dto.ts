@@ -1,5 +1,5 @@
 import { IsOptional, IsEnum, IsDateString, IsBoolean, IsString } from 'class-validator';
-import { BudgetPeriod } from '../../../../node_modules/.prisma/client';
+import { BudgetPeriod } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
 export class BudgetFiltersDto {

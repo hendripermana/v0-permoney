@@ -1,4 +1,4 @@
-import { Prisma } from '../../../../node_modules/.prisma/client';
+import { Prisma } from '@prisma/client';
 
 // Comprehensive transaction type with all relations
 export type TransactionWithDetails = Prisma.TransactionGetPayload<{

@@ -1,10 +1,10 @@
 import { IsEnum, IsOptional, IsArray } from 'class-validator';
-import { HouseholdRole } from '../../../../node_modules/.prisma/client';
+import { $Enums } from '@prisma/client';
 
 export class UpdateMemberDto {
   @IsOptional()
-  @IsEnum(HouseholdRole)
-  role?: HouseholdRole;
+  @IsEnum($Enums.HouseholdRole)
+  role?: $Enums.HouseholdRole;
 
   @IsOptional()
   @IsArray()

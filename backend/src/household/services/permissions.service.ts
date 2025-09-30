@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HouseholdRole } from '../../../../node_modules/.prisma/client';
+import { $Enums } from '@prisma/client';
 import { HOUSEHOLD_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, HouseholdPermission } from '../constants/permissions';
 
 @Injectable()
@@ -14,14 +14,14 @@ export class PermissionsService {
   /**
    * Get default permissions for a role
    */
-  getDefaultPermissionsForRole(role: HouseholdRole): readonly HouseholdPermission[] {
+  getDefaultPermissionsForRole(role: $Enums.HouseholdRole): readonly HouseholdPermission[] {
     return DEFAULT_ROLE_PERMISSIONS[role] || [];
   }
 
   /**
    * Check if a role has a specific permission by default
    */
-  roleHasPermission(role: HouseholdRole, permission: HouseholdPermission): boolean {
+  roleHasPermission(role: $Enums.HouseholdRole, permission: HouseholdPermission): boolean {
     const rolePermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
     return (rolePermissions as HouseholdPermission[]).includes(permission);
   }

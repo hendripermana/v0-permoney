@@ -12,7 +12,7 @@ import {
   ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
-import { HouseholdRole } from '../../../node_modules/.prisma/client';
+import { $Enums } from '@prisma/client';
 import { HouseholdService } from './household.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { HouseholdAccessGuard } from './guards/household-access.guard';
@@ -48,7 +48,7 @@ export class HouseholdController {
 
   @Put(':id')
   @UseGuards(HouseholdAccessGuard)
-  @HouseholdRoles(HouseholdRole.ADMIN)
+  @HouseholdRoles($Enums.HouseholdRole.ADMIN)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateHouseholdDto: UpdateHouseholdDto,
@@ -58,7 +58,7 @@ export class HouseholdController {
 
   @Delete(':id')
   @UseGuards(HouseholdAccessGuard)
-  @HouseholdRoles(HouseholdRole.ADMIN)
+  @HouseholdRoles($Enums.HouseholdRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.householdService.deleteHousehold(id);
@@ -66,7 +66,7 @@ export class HouseholdController {
 
   @Post(':id/members')
   @UseGuards(HouseholdAccessGuard)
-  @HouseholdRoles(HouseholdRole.ADMIN)
+  @HouseholdRoles($Enums.HouseholdRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async inviteMember(
     @Param('id', ParseUUIDPipe) householdId: string,
@@ -83,7 +83,7 @@ export class HouseholdController {
 
   @Put(':id/members/:memberId')
   @UseGuards(HouseholdAccessGuard)
-  @HouseholdRoles(HouseholdRole.ADMIN)
+  @HouseholdRoles($Enums.HouseholdRole.ADMIN)
   async updateMember(
     @Param('id', ParseUUIDPipe) householdId: string,
     @Param('memberId', ParseUUIDPipe) memberId: string,
@@ -95,7 +95,7 @@ export class HouseholdController {
 
   @Delete(':id/members/:memberId')
   @UseGuards(HouseholdAccessGuard)
-  @HouseholdRoles(HouseholdRole.ADMIN)
+  @HouseholdRoles($Enums.HouseholdRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeMember(
     @Param('id', ParseUUIDPipe) householdId: string,
@@ -106,7 +106,7 @@ export class HouseholdController {
 
   @Put(':id/settings')
   @UseGuards(HouseholdAccessGuard)
-  @HouseholdRoles(HouseholdRole.ADMIN)
+  @HouseholdRoles($Enums.HouseholdRole.ADMIN)
   async updateSettings(
     @Param('id', ParseUUIDPipe) householdId: string,
     @Body() settings: Record<string, any>,
