@@ -6,7 +6,8 @@ Aplikasi manajemen keuangan pribadi yang powerful, mudah di-setup, dan self-host
 ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)
-![NestJS](https://img.shields.io/badge/NestJS-10.4.15-red.svg)
+![React](https://img.shields.io/badge/React-19-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
 
 ## ✨ Fitur Utama
 
@@ -35,16 +36,17 @@ git clone https://github.com/yourusername/v0-permoney.git
 cd v0-permoney
 
 # 2. Install dependencies
-npm run install:all
+npm install
 
 # 3. Setup environment
 cp env.example .env
-# Edit .env - cukup sesuaikan password PostgreSQL
+# Edit .env - configure Clerk keys and database
 
-# 4. Setup database (otomatis)
-npm run db:setup
+# 4. Setup database
+npx prisma generate
+npx prisma migrate dev
 
-# 5. Jalankan aplikasi
+# 5. Start development server
 npm run dev
 ```
 
@@ -70,8 +72,8 @@ npm run dev
 **Fallback Support:** The app maintains backward compatibility with existing JWT authentication for users who prefer not to use Clerk.
 
 Buka browser:
-- 🌐 **Frontend**: http://localhost:3000
-- 🔧 **API**: http://localhost:3001/api
+- 🌐 **Application**: http://localhost:3000
+- 🔧 **API**: http://localhost:3000/api
 
 ## 📖 Dokumentasi
 
@@ -84,20 +86,25 @@ Buka browser:
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **Next.js 15** - React framework
+### Fullstack Framework
+- **Next.js 15.2.4** - React fullstack framework
+- **React 19** - UI library
 - **TypeScript** - Type safety
+- **App Router** - Modern Next.js routing
+
+### Frontend
 - **Tailwind CSS** - Styling
-- **Shadcn/ui** - UI components
-- **React Query** - Data fetching
+- **Shadcn/ui** - UI component library
+- **TanStack Query v5** - Data fetching & caching
 - **Recharts** - Data visualization
+- **Clerk** - Authentication
 
 ### Backend
-- **NestJS** - Node.js framework
-- **Prisma** - ORM
+- **Next.js API Routes** - RESTful API endpoints
+- **Prisma ORM** - Database client
 - **PostgreSQL** - Database
-- **JWT** - Authentication (fallback)
-- **TypeScript** - Type safety
+- **Redis** - Caching layer
+- **Clerk** - Authentication (JWT fallback available)
 
 ### Authentication
 - **Clerk** - Modern authentication (recommended)
