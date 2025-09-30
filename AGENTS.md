@@ -6,34 +6,38 @@ This document provides comprehensive guidelines for AI agents working on the Per
 ## 🏗️ Project Architecture
 
 ### Tech Stack
-- **Frontend**: Next.js 15.2.4, React 19, TypeScript, Tailwind CSS
-- **Backend**: NestJS, TypeScript, Prisma ORM
-- **Database**: PostgreSQL
-- **Authentication**: JWT-based
-- **Styling**: Tailwind CSS with shadcn/ui components
+- **Framework**: Next.js 15.2.4 (Fullstack)
+- **Frontend**: React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API Routes, TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Clerk (primary), JWT (fallback)
+- **Caching**: Redis
+- **Data Fetching**: TanStack Query v5
 
-### Project Structure
+### Project Structure (Fullstack Next.js)
 ```
-permoney/
-├── frontend/          # Next.js application
-│   ├── src/
-│   │   ├── app/       # App Router pages
-│   │   ├── components/ # React components
-│   │   ├── hooks/     # Custom React hooks
-│   │   ├── lib/       # Utilities and API clients
-│   │   └── types/     # TypeScript type definitions
-├── backend/           # NestJS application
-│   ├── src/
-│   │   ├── app/       # Main application module
-│   │   ├── auth/      # Authentication module
-│   │   ├── accounts/  # Account management
-│   │   ├── transactions/ # Transaction management
-│   │   ├── budgets/   # Budget management
-│   │   ├── debts/     # Debt management
-│   │   ├── household/ # Household management
-│   │   ├── exchange-rates/ # Exchange rate management
-│   │   └── prisma/    # Database service
-└── docs/              # Documentation
+v0-permoney/
+├── src/                    # Main application source
+│   ├── app/               # Next.js App Router
+│   │   ├── (app)/        # Protected pages (dashboard, accounts, budgets, etc)
+│   │   ├── (public)/     # Public pages (landing, sign-in/up)
+│   │   ├── (onboarding)/ # Onboarding flow
+│   │   ├── api/          # API Routes (replaces NestJS backend)
+│   │   ├── analytics/    # Analytics pages
+│   │   ├── goals/        # Goals pages
+│   │   └── gratitude/    # Gratitude pages
+│   ├── components/        # React components (UI, forms, modals, etc)
+│   ├── services/         # Business logic services (accounts, transactions, etc)
+│   ├── hooks/            # Custom React hooks (TanStack Query hooks)
+│   ├── lib/              # Utilities (API client, Prisma, Redis, etc)
+│   ├── types/            # TypeScript type definitions
+│   ├── contexts/         # React contexts
+│   ├── data/             # Static data (countries, currencies)
+│   └── middleware.ts     # Clerk authentication middleware
+├── prisma/               # Database schema & migrations
+├── public/               # Static assets
+├── scripts/              # Utility scripts
+└── docs/                 # Documentation
 ```
 
 ## 🎯 Core Features
@@ -75,8 +79,9 @@ permoney/
 ## 🚫 What NOT to Do
 
 ### ❌ Forbidden Actions
-1. **DO NOT** create new frontend frameworks (no Astro, Vue, etc.)
-2. **DO NOT** add complex features like:
+1. **DO NOT** create separate frontend/backend folders (we use fullstack Next.js)
+2. **DO NOT** create new frontend frameworks (no Astro, Vue, etc.)
+3. **DO NOT** add complex features like:
    - AI/ML integrations
    - OCR functionality
    - Islamic finance modules
@@ -146,42 +151,58 @@ export function Component({ prop1, prop2 }: ComponentProps) {
 }
 ```
 
-#### Backend Patterns
+#### Backend Patterns (Next.js API Routes)
 ```typescript
-// Service Structure
-@Injectable()
-export class EntityService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly logger: Logger,
-  ) {}
+// Service Structure (src/services/entity.service.ts)
+import { BaseService } from './base.service';
+import { prisma } from '@/lib/prisma';
 
-  async create(data: CreateEntityDto): Promise<Entity> {
+class EntityService extends BaseService {
+  async create(householdId: string, data: CreateEntityDto): Promise<Entity> {
     try {
-      const entity = await this.prisma.entity.create({
-        data,
+      const entity = await prisma.entity.create({
+        data: {
+          ...data,
+          householdId,
+        },
       });
+      
+      await this.invalidateCache(`household:${householdId}:entities`);
       return entity;
     } catch (error) {
-      this.logger.error('Failed to create entity', error);
-      throw new BadRequestException('Failed to create entity');
+      this.logError('Failed to create entity', error);
+      throw error;
     }
   }
 }
+
+export const entityService = new EntityService();
 ```
 
-#### API Patterns
+#### API Route Patterns
 ```typescript
-// Controller Structure
-@Controller('entities')
-@UseGuards(JwtAuthGuard)
-export class EntityController {
-  constructor(private readonly entityService: EntityService) {}
+// Route Structure (src/app/api/entities/route.ts)
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { entityService } from '@/services/entity.service';
 
-  @Post()
-  @UsePipes(new ValidationPipe({ transform: true }))
-  async create(@Body() createEntityDto: CreateEntityDto): Promise<Entity> {
-    return this.entityService.create(createEntityDto);
+export async function POST(req: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const entity = await entityService.create(userId, body);
+    
+    return NextResponse.json(entity);
+  } catch (error) {
+    console.error('Entity creation failed:', error);
+    return NextResponse.json(
+      { error: 'Failed to create entity' },
+      { status: 500 }
+    );
   }
 }
 ```
@@ -228,19 +249,23 @@ export class EntityController {
 
 #### File Organization
 ```
-frontend/src/
+src/
 ├── app/                 # Next.js App Router
-│   ├── (auth)/         # Auth route group
-│   ├── dashboard/      # Dashboard pages
-│   ├── transactions/   # Transaction pages
+│   ├── (app)/          # Protected route group (dashboard, accounts, etc)
+│   ├── (public)/       # Public route group (landing, auth)
+│   ├── (onboarding)/   # Onboarding route group
+│   ├── api/            # API Routes (backend endpoints)
 │   └── layout.tsx      # Root layout
 ├── components/         # Reusable components
-│   ├── ui/            # Base UI components
+│   ├── ui/            # Base UI components (shadcn/ui)
 │   ├── forms/         # Form components
+│   ├── dashboard/     # Dashboard components
 │   └── layout/        # Layout components
-├── hooks/             # Custom React hooks
-├── lib/               # Utilities and configurations
-└── types/             # TypeScript type definitions
+├── services/          # Business logic services
+├── hooks/             # Custom React hooks (TanStack Query)
+├── lib/               # Utilities (API client, Prisma, Redis)
+├── types/             # TypeScript type definitions
+└── middleware.ts      # Clerk authentication
 ```
 
 #### Naming Conventions
