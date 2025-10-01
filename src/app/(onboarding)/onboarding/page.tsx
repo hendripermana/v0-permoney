@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { UploadCloud, User, CheckCircle, ArrowRight, ArrowLeft, Globe } from "lucide-react"
+import { UploadCloud, Upload, User, CheckCircle, ArrowRight, ArrowLeft, Globe } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { CountrySelect, CurrencySelect } from "@/components/country/country-select"
 import { findCountry, listCountries } from "@/data/countries"
@@ -450,61 +450,104 @@ function ProfileStep({ form, uploadedPreview, onAvatarChange }: ProfileStepProps
         <p className="text-muted-foreground">Introduce yourself and name the household you manage.</p>
       </header>
 
-      {/* Avatar Upload Section - Moved to Top */}
-      <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/20 p-6">
-        <Avatar className="h-24 w-24 border-2 border-green-500">
-          {uploadedPreview ? (
-            <AvatarImage src={uploadedPreview} alt={`${firstName} ${lastName}`.trim() || "Profile preview"} />
-          ) : (
-            <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-          )}
-        </Avatar>
-        <div className="text-center">
-          <p className="text-sm font-medium mb-2">Profile Picture</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const input = document.createElement("input")
-              input.type = "file"
-              input.accept = "image/*"
-              input.onchange = (event) => {
-                const file = (event.target as HTMLInputElement).files?.[0]
-                if (!file) {
-                  onAvatarChange({ preview: null })
-                  form.setValue("avatarFile", undefined)
-                  return
-                }
-
-                const reader = new FileReader()
-                reader.onload = () => {
-                  const preview = typeof reader.result === "string" ? reader.result : null
-                  onAvatarChange({ file, preview })
-                  form.setValue("avatarFile", file)
-                }
-                reader.readAsDataURL(file)
-              }
-              input.click()
-            }}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            {uploadedPreview ? "Change Photo" : "Upload Photo"}
-          </Button>
+      {/* Avatar Upload Section - Prominent at Top */}
+      <div className="flex flex-col items-center gap-4 rounded-lg border bg-gradient-to-br from-muted/30 to-muted/10 p-6 shadow-sm">
+        <div className="relative group">
+          <Avatar className="h-28 w-28 border-2 border-green-500 shadow-md transition-all group-hover:scale-105">
+            {uploadedPreview ? (
+              <AvatarImage 
+                src={uploadedPreview} 
+                alt={`${firstName} ${lastName}`.trim() || "Profile preview"} 
+                className="object-cover"
+              />
+            ) : (
+              <AvatarFallback className="text-3xl font-semibold bg-gradient-to-br from-green-50 to-green-100 text-green-700">
+                {initials}
+              </AvatarFallback>
+            )}
+          </Avatar>
           {uploadedPreview && (
+            <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-green-500 flex items-center justify-center border-2 border-background shadow-sm">
+              <CheckCircle className="h-4 w-4 text-white" />
+            </div>
+          )}
+        </div>
+        
+        <div className="text-center space-y-2">
+          <p className="text-sm font-medium text-foreground">Profile Picture</p>
+          <p className="text-xs text-muted-foreground">Optional • JPG, PNG or GIF • Max 5MB</p>
+          
+          <div className="flex items-center gap-2 pt-1">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="ml-2"
+              className="shadow-sm"
               onClick={() => {
-                onAvatarChange({ preview: null })
-                form.setValue("avatarFile", undefined)
+                const input = document.createElement("input")
+                input.type = "file"
+                input.accept = "image/jpeg,image/png,image/gif,image/webp"
+                input.onchange = (event) => {
+                  const file = (event.target as HTMLInputElement).files?.[0]
+                  if (!file) {
+                    onAvatarChange({ preview: null })
+                    form.setValue("avatarFile", undefined)
+                    return
+                  }
+
+                  // Validate file size (5MB)
+                  if (file.size > 5 * 1024 * 1024) {
+                    toast({
+                      title: "File too large",
+                      description: "Please select an image smaller than 5MB.",
+                      variant: "destructive",
+                    })
+                    return
+                  }
+
+                  const reader = new FileReader()
+                  reader.onload = () => {
+                    const preview = typeof reader.result === "string" ? reader.result : null
+                    onAvatarChange({ file, preview })
+                    form.setValue("avatarFile", file)
+                    toast({
+                      title: "Photo uploaded",
+                      description: "Your profile picture has been updated.",
+                    })
+                  }
+                  reader.onerror = () => {
+                    toast({
+                      title: "Upload failed",
+                      description: "Failed to read the image file. Please try again.",
+                      variant: "destructive",
+                    })
+                  }
+                  reader.readAsDataURL(file)
+                }
+                input.click()
               }}
             >
-              Remove
+              <Upload className="h-4 w-4 mr-2" />
+              {uploadedPreview ? "Change Photo" : "Upload Photo"}
             </Button>
-          )}
+            {uploadedPreview && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onAvatarChange({ preview: null })
+                  form.setValue("avatarFile", undefined)
+                  toast({
+                    title: "Photo removed",
+                    description: "Your profile picture has been removed.",
+                  })
+                }}
+              >
+                Remove
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
