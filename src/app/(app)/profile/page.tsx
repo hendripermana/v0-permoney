@@ -1,45 +1,27 @@
 "use client"
 
-import { UserProfile } from "@clerk/nextjs"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
+/**
+ * Profile page redirect
+ * 
+ * This page redirects to /settings for a unified settings experience.
+ * All profile and account settings are now consolidated in the Settings page.
+ */
 export default function ProfilePage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
-          {/* Icon retained for visual consistency */}
-          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20 21a8 8 0 10-16 0"></path>
-            <path d="M12 11a4 4 0 100-8 4 4 0 000 8z"></path>
-          </svg>
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-          <p className="text-muted-foreground">
-            Your account is powered by Clerk. Changes here are synced with your Clerk user.
-          </p>
-        </div>
-      </div>
+  const router = useRouter()
 
-      <div className="rounded-lg border bg-background p-2">
-        <UserProfile
-          appearance={{
-            variables: {
-              colorPrimary: "#16a34a",
-              borderRadius: "0.5rem",
-              fontFamily: "inherit",
-            },
-            elements: {
-              card: "bg-background border shadow-sm",
-              formButtonPrimary: "bg-green-600 hover:bg-green-700 text-white",
-              headerTitle: "text-foreground",
-              headerSubtitle: "text-muted-foreground",
-              formFieldInput: "bg-background border-input text-foreground focus:border-green-500 focus:ring-green-500",
-              footerActionLink: "text-green-600 hover:text-green-700",
-            },
-          }}
-          routing="hash"
-        />
+  useEffect(() => {
+    // Redirect to settings page
+    router.replace("/settings")
+  }, [router])
+
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center space-y-2">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+        <p className="text-sm text-muted-foreground">Redirecting to Settings...</p>
       </div>
     </div>
   )
