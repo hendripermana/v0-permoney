@@ -100,12 +100,15 @@ export default function DashboardPage() {
       }
     }
 
-    const incomeCents = transactions.reduce((sum: number, transaction: any) => {
+    // Ensure transactions is an array with defensive check
+    const transactionsArray = Array.isArray(transactions) ? transactions : []
+    
+    const incomeCents = transactionsArray.reduce((sum: number, transaction: any) => {
       const amountCents = safeNumber(transaction.amountCents, 0)
       return amountCents > 0 ? sum + amountCents : sum
     }, 0)
 
-    const expenseCents = transactions.reduce((sum: number, transaction: any) => {
+    const expenseCents = transactionsArray.reduce((sum: number, transaction: any) => {
       const amountCents = safeNumber(transaction.amountCents, 0)
       return amountCents < 0 ? sum + amountCents : sum
     }, 0)
