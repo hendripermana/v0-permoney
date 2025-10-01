@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6 w-full max-w-7xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>

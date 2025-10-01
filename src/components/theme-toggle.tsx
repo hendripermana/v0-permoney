@@ -40,30 +40,30 @@ export function ThemeToggle() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40 bg-popover/95 backdrop-blur-sm border-border shadow-lg">
+      <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem
           onClick={() => setTheme('light')}
-          className="gap-2 cursor-pointer hover:bg-accent focus:bg-accent"
+          className="gap-2 cursor-pointer"
         >
           <Sun className="h-4 w-4" />
           <span>Light</span>
-          {theme === 'light' && <span className="ml-auto text-xs">✓</span>}
+          {theme === 'light' && <span className="ml-auto text-xs text-green-600">✓</span>}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme('dark')}
-          className="gap-2 cursor-pointer hover:bg-accent focus:bg-accent"
+          className="gap-2 cursor-pointer"
         >
           <Moon className="h-4 w-4" />
           <span>Dark</span>
-          {theme === 'dark' && <span className="ml-auto text-xs">✓</span>}
+          {theme === 'dark' && <span className="ml-auto text-xs text-green-600">✓</span>}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme('system')}
-          className="gap-2 cursor-pointer hover:bg-accent focus:bg-accent"
+          className="gap-2 cursor-pointer"
         >
           <Monitor className="h-4 w-4" />
           <span>System</span>
-          {theme === 'system' && <span className="ml-auto text-xs">✓</span>}
+          {theme === 'system' && <span className="ml-auto text-xs text-green-600">✓</span>}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
