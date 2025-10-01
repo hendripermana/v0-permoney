@@ -75,7 +75,9 @@ export default function TransactionsPage() {
         orderDirection: "desc",
       })
 
-      const transformedTransactions = apiTransactions.map(normalizeTransaction)
+      // Defensive check: ensure apiTransactions is an array
+      const transactionsArray = Array.isArray(apiTransactions) ? apiTransactions : []
+      const transformedTransactions = transactionsArray.map(normalizeTransaction)
 
       setTransactions(transformedTransactions)
     } catch (err) {

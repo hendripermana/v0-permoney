@@ -8,6 +8,7 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { NotificationProvider } from "@/components/notifications"
 import { OnboardingProvider } from "@/components/onboarding"
 import { QueryProvider } from "@/components/query-provider"
+import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
   title: "Permoney - Personal Finance Intelligence",
@@ -54,20 +55,22 @@ export default function RootLayout({
             },
           }}
     >
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body className="min-h-screen bg-background font-sans antialiased">
-          <ErrorBoundary>
-            <NotificationProvider>
-              <OnboardingProvider>
-                <QueryProvider>
-                  <AuthProvider>
-                    {children}
-                    <Toaster />
-                  </AuthProvider>
-                </QueryProvider>
-              </OnboardingProvider>
-            </NotificationProvider>
-          </ErrorBoundary>
+          <ThemeProvider defaultTheme="system" enableSystem>
+            <ErrorBoundary>
+              <NotificationProvider>
+                <OnboardingProvider>
+                  <QueryProvider>
+                    <AuthProvider>
+                      {children}
+                      <Toaster />
+                    </AuthProvider>
+                  </QueryProvider>
+                </OnboardingProvider>
+              </NotificationProvider>
+            </ErrorBoundary>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
