@@ -35,6 +35,16 @@ const nextConfig = {
         hostname: 'localhost',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.ngrok-free.app',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.ngrok.io',
+        pathname: '/**',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
   },
