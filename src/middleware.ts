@@ -35,10 +35,21 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Allow public routes to pass through
   if (isPublicRoute(req)) {
-    // If authenticated user hits root '/', redirect to dashboard
+    // If authenticated user hits root '/', check onboarding status
     if (pathname === '/' && userId) {
-      const url = new URL('/dashboard', req.url)
-      return Response.redirect(url)
+      // Check if user has completed onboarding via Clerk metadata
+      const { sessionClaims } = await auth()
+      const metadata = sessionClaims?.unsafeMetadata as Record<string, any> | undefined
+      const hasCompletedOnboarding = metadata?.onboardingComplete === true
+      
+      // Redirect based on onboarding status
+      if (hasCompletedOnboarding) {
+        const url = new URL('/dashboard', req.url)
+        return Response.redirect(url)
+      } else {
+        const url = new URL('/onboarding', req.url)
+        return Response.redirect(url)
+      }
     }
     return
   }

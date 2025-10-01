@@ -20,6 +20,7 @@ export async function getAuthContext(): Promise<AuthContext> {
   const user = await currentUser();
 
   // Get user's household from database
+  // Note: dbUser might be null for new users who haven't completed onboarding
   const dbUser = await prisma.user.findUnique({
     where: { clerkId: userId },
     include: {

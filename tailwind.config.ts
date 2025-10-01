@@ -3,17 +3,11 @@ import type { Config } from 'tailwindcss';
 export default {
   darkMode: ['class'],
   content: [
-    './app/**/*.{js,jsx,ts,tsx}',
-    './components/**/*.{js,jsx,ts,tsx}',
-    './hooks/**/*.{js,jsx,ts,tsx}',
-    './lib/**/*.{js,jsx,ts,tsx}',
-    './client/index.html',
-    './client/src/**/*.{js,jsx,ts,tsx}',
-    './frontend/src/**/*.{js,jsx,ts,tsx}',
-    './frontend/src/app/**/*.{js,jsx,ts,tsx}',
-    './frontend/src/pages/**/*.{js,jsx,ts,tsx}',
-    './frontend/src/components/**/*.{js,jsx,ts,tsx}',
-    './backend/src/**/*.{js,jsx,ts,tsx}'
+    './src/**/*.{js,jsx,ts,tsx}',
+    './src/app/**/*.{js,jsx,ts,tsx}',
+    './src/components/**/*.{js,jsx,ts,tsx}',
+    './src/hooks/**/*.{js,jsx,ts,tsx}',
+    './src/lib/**/*.{js,jsx,ts,tsx}',
   ],
   theme: {
     extend: {

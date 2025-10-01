@@ -25,10 +25,6 @@ export default function RootLayout({
     <ClerkProvider
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
-          signInFallbackRedirectUrl="/onboarding"
-          signUpFallbackRedirectUrl="/onboarding"
-          afterSignInUrl="/onboarding"
-          afterSignUpUrl="/onboarding"
           appearance={{
             baseTheme: undefined,
             variables: {

@@ -15,61 +15,14 @@ export function OnboardingCheck({ children }: OnboardingCheckProps) {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const pathname = usePathname()
-  const [isChecking, setIsChecking] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const reconciliationAttempted = useRef(false)
-
-  useEffect(() => {
-    reconciliationAttempted.current = false
-  }, [user?.id])
-
-  const updateClerkMetadata = useCallback(
-    async (primaryHouseholdId: string) => {
-      if (!user) return
-
-      try {
-        await user.update({
-          unsafeMetadata: {
-            ...user.unsafeMetadata,
-            onboardingComplete: true,
-            primaryHouseholdId,
-          },
-        })
-        await user.reload()
-      } catch (metadataError) {
-        console.error("Failed to sync Clerk metadata:", metadataError)
-      }
-    },
-    [user],
-  )
-
-  const reconcileHouseholdMembership = useCallback(
-    async (): Promise<boolean> => {
-      if (!user || reconciliationAttempted.current) {
-        return false
-      }
-
-      reconciliationAttempted.current = true
-
-      try {
-        const households = await apiClient.getHouseholds()
-        if (households && households.length > 0) {
-          const primaryHouseholdId = households[0].id
-          await updateClerkMetadata(primaryHouseholdId)
-          return true
-        }
-      } catch (reconciliationError) {
-        console.error("Failed to reconcile household membership:", reconciliationError)
-      }
-
-      return false
-    },
-    [updateClerkMetadata, user],
-  )
+  const checkPerformed = useRef(false)
 
   const checkOnboardingStatus = useCallback(async () => {
-    if (!user) return
+    if (!user || checkPerformed.current) return
 
+    checkPerformed.current = true
     setError(null)
 
     try {
@@ -80,37 +33,61 @@ export function OnboardingCheck({ children }: OnboardingCheckProps) {
           ? metadata.primaryHouseholdId
           : null
 
-      if (!hasCompletedOnboarding || !primaryHouseholdId) {
-        const reconciled = await reconcileHouseholdMembership()
-
-        if (reconciled) {
-          setIsChecking(false)
-          return
-        }
-
-        if (pathname !== "/onboarding") {
-          setIsChecking(true)
-          router.replace("/onboarding")
-        }
+      // If onboarding is complete and has household, allow access
+      if (hasCompletedOnboarding && primaryHouseholdId) {
+        setIsChecking(false)
         return
       }
 
-      setIsChecking(false)
+      // For users on onboarding page, don't check reconciliation yet
+      // Let them complete the onboarding flow normally
+      if (pathname === "/onboarding") {
+        setIsChecking(false)
+        return
+      }
+
+      // Try to reconcile with existing household (for old/migrated users only)
+      // This handles users who completed onboarding before Clerk migration
+      try {
+        const households = await apiClient.getHouseholds()
+        if (households && households.length > 0) {
+          const primaryHouseholdId = households[0].id
+          
+          console.log("Reconciling existing household for migrated user:", primaryHouseholdId)
+          
+          // Update Clerk metadata
+          await user.update({
+            unsafeMetadata: {
+              ...user.unsafeMetadata,
+              onboardingComplete: true,
+              primaryHouseholdId,
+            },
+          })
+          await user.reload()
+          
+          setIsChecking(false)
+          return
+        }
+      } catch (reconciliationError) {
+        // Ignore reconciliation errors for new users
+        // They don't have households yet - it's expected
+        console.log("No existing household found (expected for new users)")
+      }
+
+      // Need onboarding - redirect to onboarding page
+      router.replace("/onboarding")
     } catch (error) {
       console.error("Error checking onboarding status:", error)
       setError("Failed to verify account setup. Please try refreshing the page.")
-      toast({
-        title: "Setup Check Failed",
-        description: "Unable to verify your account setup. Please try again.",
-        variant: "destructive",
-      })
       setIsChecking(false)
     }
-  }, [pathname, reconcileHouseholdMembership, router, user])
+  }, [pathname, router, user])
 
   useEffect(() => {
     if (isLoaded && user) {
       checkOnboardingStatus()
+    } else if (isLoaded && !user) {
+      setIsChecking(false)
     }
   }, [checkOnboardingStatus, isLoaded, user])
 

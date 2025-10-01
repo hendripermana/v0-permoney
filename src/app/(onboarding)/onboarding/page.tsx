@@ -108,8 +108,9 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (isLoaded && user) {
       const hasCompletedOnboarding = user.unsafeMetadata?.onboardingComplete === true
-      if (hasCompletedOnboarding) {
-        router.push("/dashboard")
+      const primaryHouseholdId = user.unsafeMetadata?.primaryHouseholdId
+      if (hasCompletedOnboarding && primaryHouseholdId) {
+        router.replace("/dashboard")
       }
     }
   }, [isLoaded, user, router])
