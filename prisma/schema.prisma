@@ -20,6 +20,17 @@ model User {
   email               String    @unique
   passwordHash        String? // Optional for passkey-only users or Clerk users
   name                String
+  
+  // Profile fields from onboarding
+  firstName           String?
+  lastName            String?
+  countryCode         String?   @db.VarChar(2) // ISO 3166-1 alpha-2 (e.g., ID, US, SG)
+  preferredCurrency   String?   @db.VarChar(3) // ISO 4217 (e.g., IDR, USD, EUR)
+  locale              String?   @default("id-ID") @db.VarChar(10) // e.g., id-ID, en-US
+  timezone            String?   @default("Asia/Jakarta") @db.VarChar(50) // e.g., Asia/Jakarta
+  phoneNumber         String?
+  dateOfBirth         DateTime? @db.Date
+  
   avatarUrl           String?
   isActive            Boolean   @default(true)
   emailVerified       Boolean   @default(false)
@@ -46,6 +57,11 @@ model User {
   notificationPreferences      NotificationPreference?
   pushSubscriptions            PushSubscription[]
 
+  @@index([countryCode])
+  @@index([firstName])
+  @@index([lastName])
+  @@index([preferredCurrency])
+  @@index([locale])
   @@map("users")
 }
 
@@ -53,6 +69,13 @@ model Household {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
   baseCurrency String   @default("IDR") @db.VarChar(3)
+  
+  // Location and preferences
+  countryCode  String?  @db.VarChar(2) // ISO 3166-1 alpha-2
+  timezone     String?  @default("Asia/Jakarta") @db.VarChar(50)
+  locale       String?  @default("id-ID") @db.VarChar(10)
+  description  String?
+  
   settings     Json     @default("{}")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

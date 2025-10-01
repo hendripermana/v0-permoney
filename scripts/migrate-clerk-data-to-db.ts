@@ -10,12 +10,25 @@
  *   ts-node scripts/migrate-clerk-data-to-db.ts
  *   or
  *   npm run migrate:clerk-data
+ * 
+ * Requirements:
+ *   - CLERK_SECRET_KEY must be set in .env
+ *   - Database must be accessible
  */
 
 import { PrismaClient } from '@prisma/client';
-import { clerkClient } from '@clerk/nextjs/server';
+import { createClerkClient } from '@clerk/backend';
 
 const prisma = new PrismaClient();
+
+// Initialize Clerk client
+const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+if (!clerkSecretKey) {
+  console.error('❌ CLERK_SECRET_KEY is not set in environment variables');
+  process.exit(1);
+}
+
+const clerkClient = createClerkClient({ secretKey: clerkSecretKey });
 
 interface ClerkMetadata {
   onboardingComplete?: boolean;

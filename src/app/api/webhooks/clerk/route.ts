@@ -105,6 +105,7 @@ async function handleUserCreated(data: any) {
   const lastName = data.last_name || '';
   const name = `${firstName} ${lastName}`.trim() || email.split('@')[0] || 'User';
   const avatarUrl = data.image_url;
+  const phoneNumber = data.phone_numbers?.[0]?.phone_number || null;
 
   console.log(`[Webhook] Creating user in database: ${clerkId} (${email})`);
 
@@ -117,10 +118,15 @@ async function handleUserCreated(data: any) {
     if (existingUser) {
       console.log(`[Webhook] User already exists: ${clerkId} (${existingUser.email})`);
       
-      // Update lastLoginAt
+      // Update user data and lastLoginAt
       await prisma.user.update({
         where: { clerkId },
         data: { 
+          name,
+          firstName: firstName || existingUser.firstName,
+          lastName: lastName || existingUser.lastName,
+          avatarUrl: avatarUrl || existingUser.avatarUrl,
+          phoneNumber: phoneNumber || existingUser.phoneNumber,
           lastLoginAt: new Date(),
           emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
         },
@@ -129,19 +135,23 @@ async function handleUserCreated(data: any) {
       return;
     }
 
-    // Create user in database
+    // Create user in database with profile fields
     const newUser = await prisma.user.create({
       data: {
         clerkId,
         email,
         name,
+        firstName: firstName || null,
+        lastName: lastName || null,
         avatarUrl,
+        phoneNumber,
         emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
         lastLoginAt: new Date(),
       },
     });
 
     console.log(`[Webhook] ✅ User created successfully: ${clerkId} (${email}) [DB ID: ${newUser.id}]`);
+    console.log(`[Webhook]    Profile: ${firstName} ${lastName}`);
   } catch (error) {
     console.error(`[Webhook] ❌ Error creating user ${clerkId}:`, error);
     throw error;
@@ -161,6 +171,7 @@ async function handleUserUpdated(data: any) {
   const lastName = data.last_name || '';
   const name = `${firstName} ${lastName}`.trim() || email.split('@')[0] || 'User';
   const avatarUrl = data.image_url;
+  const phoneNumber = data.phone_numbers?.[0]?.phone_number || null;
 
   console.log(`[Webhook] Updating user in database: ${clerkId} (${email})`);
 
@@ -171,7 +182,10 @@ async function handleUserUpdated(data: any) {
       update: {
         email,
         name,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
         avatarUrl,
+        phoneNumber,
         emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
         lastLoginAt: new Date(),
       },
@@ -179,13 +193,17 @@ async function handleUserUpdated(data: any) {
         clerkId,
         email,
         name,
+        firstName: firstName || null,
+        lastName: lastName || null,
         avatarUrl,
+        phoneNumber,
         emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
         lastLoginAt: new Date(),
       },
     });
 
     console.log(`[Webhook] ✅ User updated successfully: ${clerkId} (${email}) [DB ID: ${user.id}]`);
+    console.log(`[Webhook]    Profile: ${firstName} ${lastName}`);
   } catch (error) {
     console.error(`[Webhook] ❌ Error updating user ${clerkId}:`, error);
     throw error;

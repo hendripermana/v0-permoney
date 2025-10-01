@@ -239,6 +239,41 @@ export default function OnboardingPage() {
         }
       }
 
+      // Save user profile data to database
+      try {
+        const profileResponse = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: trimmedFirstName,
+            lastName: trimmedLastName,
+            countryCode: normalizedCountryCode,
+            preferredCurrency: normalizedCurrencyCode,
+          }),
+        })
+
+        if (!profileResponse.ok) {
+          throw new Error('Failed to save profile data')
+        }
+
+        console.log("✅ User profile saved to database")
+      } catch (profileError) {
+        console.error("Failed to save profile to database:", profileError)
+        // Don't block onboarding completion, but log the error
+      }
+
+      // Update household with country data
+      try {
+        await apiClient.updateHousehold(primaryHouseholdId, {
+          name: trimmedHouseholdName,
+          baseCurrency: normalizedCurrencyCode,
+          countryCode: normalizedCountryCode,
+        })
+        console.log("✅ Household location data saved")
+      } catch (householdUpdateError) {
+        console.error("Failed to update household location:", householdUpdateError)
+      }
+
       const metadata = {
         ...user.unsafeMetadata,
         onboardingComplete: true,

@@ -5,12 +5,20 @@ import { CACHE_TTL } from '@/lib/redis';
 export interface CreateHouseholdData {
   name: string;
   baseCurrency?: string;
+  countryCode?: string;
+  timezone?: string;
+  locale?: string;
+  description?: string;
   settings?: Record<string, any>;
 }
 
 export interface UpdateHouseholdData {
   name?: string;
   baseCurrency?: string;
+  countryCode?: string;
+  timezone?: string;
+  locale?: string;
+  description?: string;
   settings?: Record<string, any>;
 }
 
