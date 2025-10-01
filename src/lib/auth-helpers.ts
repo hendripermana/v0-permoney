@@ -2,7 +2,8 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from './prisma';
 
 export interface AuthContext {
-  userId: string;
+  userId: string;        // Clerk user ID
+  dbUserId: string | null; // Database user ID
   user: any;
   householdId: string | null;
 }
@@ -36,7 +37,8 @@ export async function getAuthContext(): Promise<AuthContext> {
   const householdId = dbUser?.householdMembers[0]?.householdId || null;
 
   return {
-    userId,
+    userId,           // Clerk ID
+    dbUserId: dbUser?.id || null,  // Database ID
     user,
     householdId,
   };

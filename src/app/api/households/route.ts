@@ -17,8 +17,13 @@ import { requireAuth, jsonResponse, errorResponse, handleApiError } from '@/lib/
  */
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await requireAuth();
-    const households = await householdService.getUserHouseholds(userId);
+    const { dbUserId } = await requireAuth();
+    
+    if (!dbUserId) {
+      return errorResponse('User not found in database. Please complete sign-up.', 404);
+    }
+    
+    const households = await householdService.getUserHouseholds(dbUserId);
     return jsonResponse(households);
   } catch (error) {
     return handleApiError(error);
@@ -31,14 +36,19 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await requireAuth();
+    const { dbUserId } = await requireAuth();
+    
+    if (!dbUserId) {
+      return errorResponse('User not found in database. Please complete sign-up.', 404);
+    }
+    
     const body = await request.json();
 
     if (!body.name) {
       return errorResponse('Missing required field: name', 400);
     }
 
-    const household = await householdService.createHousehold(userId, body);
+    const household = await householdService.createHousehold(dbUserId, body);
     return jsonResponse(household, 201);
   } catch (error) {
     return handleApiError(error);

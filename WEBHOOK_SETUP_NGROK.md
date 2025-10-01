@@ -76,7 +76,7 @@ Connections                   ttl     opn     rt1     rt5     p50     p90
 
 2. **Enter URL:**
    ```
-   Endpoint URL: https://abc123xyz.ngrok.io/api/webhooks/clerk
+   Endpoint URL: https://357a1d5a94cd.ngrok-free.app/api/webhooks/clerk
                  ^^^^^^^^^^^^^^^^^^^^^^^^
                  (Your ngrok URL from step 3)
    ```

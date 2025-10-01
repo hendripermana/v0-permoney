@@ -450,6 +450,64 @@ function ProfileStep({ form, uploadedPreview, onAvatarChange }: ProfileStepProps
         <p className="text-muted-foreground">Introduce yourself and name the household you manage.</p>
       </header>
 
+      {/* Avatar Upload Section - Moved to Top */}
+      <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/20 p-6">
+        <Avatar className="h-24 w-24 border-2 border-green-500">
+          {uploadedPreview ? (
+            <AvatarImage src={uploadedPreview} alt={`${firstName} ${lastName}`.trim() || "Profile preview"} />
+          ) : (
+            <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+          )}
+        </Avatar>
+        <div className="text-center">
+          <p className="text-sm font-medium mb-2">Profile Picture</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const input = document.createElement("input")
+              input.type = "file"
+              input.accept = "image/*"
+              input.onchange = (event) => {
+                const file = (event.target as HTMLInputElement).files?.[0]
+                if (!file) {
+                  onAvatarChange({ preview: null })
+                  form.setValue("avatarFile", undefined)
+                  return
+                }
+
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const preview = typeof reader.result === "string" ? reader.result : null
+                  onAvatarChange({ file, preview })
+                  form.setValue("avatarFile", file)
+                }
+                reader.readAsDataURL(file)
+              }
+              input.click()
+            }}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {uploadedPreview ? "Change Photo" : "Upload Photo"}
+          </Button>
+          {uploadedPreview && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ml-2"
+              onClick={() => {
+                onAvatarChange({ preview: null })
+                form.setValue("avatarFile", undefined)
+              }}
+            >
+              Remove
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <FormField
           control={control}
@@ -493,60 +551,6 @@ function ProfileStep({ form, uploadedPreview, onAvatarChange }: ProfileStepProps
             </FormItem>
           )}
         />
-      </div>
-
-      <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/20 p-6">
-        <Avatar className="h-20 w-20 border">
-          {uploadedPreview ? (
-            <AvatarImage src={uploadedPreview} alt={`${firstName} ${lastName}`.trim() || "Profile preview"} />
-          ) : (
-            <AvatarFallback>{initials}</AvatarFallback>
-          )}
-        </Avatar>
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full max-w-xs justify-center"
-          onClick={() => {
-            const input = document.createElement("input")
-            input.type = "file"
-            input.accept = "image/*"
-            input.onchange = (event) => {
-              const file = (event.target as HTMLInputElement).files?.[0]
-              if (!file) {
-                onAvatarChange({ preview: null })
-                form.setValue("avatarFile", undefined)
-                return
-              }
-
-              const reader = new FileReader()
-              reader.onload = () => {
-                const preview = typeof reader.result === "string" ? reader.result : null
-                onAvatarChange({ file, preview })
-                form.setValue("avatarFile", file)
-              }
-              reader.readAsDataURL(file)
-            }
-            input.click()
-          }}
-        >
-          <UploadCloud className="mr-2 h-4 w-4" />
-          Upload profile photo
-        </Button>
-        {uploadedPreview && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground"
-            onClick={() => {
-              onAvatarChange({ preview: null })
-              form.setValue("avatarFile", undefined)
-            }}
-          >
-            Remove photo
-          </Button>
-        )}
       </div>
     </section>
   )

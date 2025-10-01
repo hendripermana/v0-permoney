@@ -21,11 +21,11 @@ interface RouteParams {
  */
 export async function GET(_request: NextRequest, props: RouteParams) {
   try {
-    const { userId } = await requireAuth();
+    await requireAuth(); // Verify auth
     const params = await props.params;
     const { id } = params;
     
-    const household = await householdService.getHouseholdById(id, userId);
+    const household = await householdService.getHouseholdById(id);
     return jsonResponse(household);
   } catch (error) {
     return handleApiError(error);
@@ -38,12 +38,12 @@ export async function GET(_request: NextRequest, props: RouteParams) {
  */
 export async function PUT(request: NextRequest, props: RouteParams) {
   try {
-    const { userId } = await requireAuth();
+    await requireAuth(); // Verify auth
     const params = await props.params;
     const { id } = params;
     const body = await request.json();
 
-    const household = await householdService.updateHousehold(id, userId, body);
+    const household = await householdService.updateHousehold(id, body);
     return jsonResponse(household);
   } catch (error) {
     return handleApiError(error);
@@ -56,11 +56,11 @@ export async function PUT(request: NextRequest, props: RouteParams) {
  */
 export async function DELETE(_request: NextRequest, props: RouteParams) {
   try {
-    const { userId } = await requireAuth();
+    await requireAuth(); // Verify auth
     const params = await props.params;
     const { id } = params;
 
-    await householdService.deleteHousehold(id, userId);
+    await householdService.deleteHousehold(id);
     return jsonResponse({ success: true });
   } catch (error) {
     return handleApiError(error);
