@@ -56,6 +56,10 @@ export const queryKeys = {
   transactionCategoryBreakdown: (filters?: any) => 
     [...queryKeys.transactions(), 'category-breakdown', filters] as const,
   
+  // Budgets
+  budgets: (filters?: any) => [...queryKeys.all, 'budgets', filters] as const,
+  budget: (id: string) => [...queryKeys.all, 'budgets', id] as const,
+  
   // Dashboard
   dashboard: () => [...queryKeys.all, 'dashboard'] as const,
   dashboardSummary: (householdId: string, viewType: string) => 
@@ -67,4 +71,12 @@ export const queryKeys = {
     [...queryKeys.analytics(), 'spending', householdId, period] as const,
   netWorth: (householdId: string, period: string) => 
     [...queryKeys.analytics(), 'net-worth', householdId, period] as const,
+  
+  // Categories
+  categories: () => [...queryKeys.all, 'categories'] as const,
+  category: (id: string) => [...queryKeys.categories(), id] as const,
+  
+  // Goals
+  goals: (filters?: any) => [...queryKeys.all, 'goals', filters] as const,
+  goal: (id: string) => [...queryKeys.all, 'goals', id] as const,
 } as const;

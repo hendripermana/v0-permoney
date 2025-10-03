@@ -3,9 +3,9 @@ import { budgetsService } from '@/services/budgets.service';
 import { requireHousehold, jsonResponse, handleApiError } from '@/lib/auth-helpers';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -15,7 +15,7 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { householdId } = await requireHousehold();
-    const { id } = params;
+    const { id } = await params;
 
     const budget = await budgetsService.recalculateBudget(id, householdId);
 

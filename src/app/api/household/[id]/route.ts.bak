@@ -9,7 +9,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     await requireAuth();
-    const household = await householdService.getHouseholdById(resolvedParams.id);
+    const household = await householdService.getHouseholdById(params.id);
     return jsonResponse(household);
   } catch (error) {
     return handleApiError(error);
@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     await requireAuth();
     const body = await request.json();
-    const household = await householdService.updateHousehold(resolvedParams.id, body);
+    const household = await householdService.updateHousehold(params.id, body);
     return jsonResponse(household);
   } catch (error) {
     return handleApiError(error);
@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     await requireAuth();
-    await householdService.deleteHousehold(resolvedParams.id);
+    await householdService.deleteHousehold(params.id);
     return new Response(null, { status: 204 });
   } catch (error) {
     return handleApiError(error);

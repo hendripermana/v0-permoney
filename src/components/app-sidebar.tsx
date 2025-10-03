@@ -86,8 +86,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <DollarSign className="h-6 w-6 text-green-600" />
-          <span className="font-bold text-lg">PerMoney</span>
+          <DollarSign className="h-6 w-6 text-green-600 shrink-0" />
+          <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">PerMoney</span>
         </div>
       </SidebarHeader>
       <SidebarContent>

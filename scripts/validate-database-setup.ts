@@ -169,7 +169,7 @@ async function validateDatabaseSetup(): Promise<ValidationResult[]> {
       }
 
       // Test enhanced category features
-      const sampleCategoryWithEnhancements = await prisma.category.findFirst({
+      const sampleCategory = await prisma.category.findFirst({
         select: {
           isEditable: true,
           isArchived: true,
@@ -307,7 +307,7 @@ async function validateDatabaseSetup(): Promise<ValidationResult[]> {
     // Test 9: Double-Entry Accounting Structure
     try {
       // Check if ledger entries table has proper structure
-      const ledgerSample = await prisma.ledgerEntry.findFirst({
+      await prisma.ledgerEntry.findFirst({
         select: {
           id: true,
           transactionId: true,
@@ -333,7 +333,7 @@ async function validateDatabaseSetup(): Promise<ValidationResult[]> {
 
     // Test 10: Multi-Currency Support
     try {
-      const sampleTransaction = await prisma.transaction.findFirst({
+      await prisma.transaction.findFirst({
         select: {
           currency: true,
           originalCurrency: true,
@@ -360,7 +360,8 @@ async function validateDatabaseSetup(): Promise<ValidationResult[]> {
       const merchantCount = await prisma.merchant.count();
       
       // Check if transactions have merchant enrichment fields
-      const sampleTransactionWithMerchant = await prisma.transaction.findFirst({
+      // Checking merchant enrichment fields
+      const sampleCategory = await prisma.transaction.findFirst({
         select: {
           merchantId: true,
           merchantName: true,
@@ -398,7 +399,7 @@ async function validateDatabaseSetup(): Promise<ValidationResult[]> {
 
     // Test 12: Gratitude-Transaction Linking
     try {
-      const sampleGratitudeEntry = await prisma.gratitudeEntry.findFirst({
+      const sampleCategory = await prisma.gratitudeEntry.findFirst({
         select: {
           id: true,
           transactionId: true,

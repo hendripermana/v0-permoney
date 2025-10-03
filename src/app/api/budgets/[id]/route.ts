@@ -3,9 +3,9 @@ import { budgetsService } from '@/services/budgets.service';
 import { requireHousehold, jsonResponse, handleApiError } from '@/lib/auth-helpers';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -15,7 +15,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { householdId } = await requireHousehold();
-    const { id } = params;
+    const { id } = await params;
 
     const budget = await budgetsService.getBudgetById(id, householdId);
 
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { householdId } = await requireHousehold();
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Parse data
@@ -62,7 +62,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { householdId } = await requireHousehold();
-    const { id } = params;
+    const { id } = await params;
 
     await budgetsService.deleteBudget(id, householdId);
 
