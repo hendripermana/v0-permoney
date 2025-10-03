@@ -1,12 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { AccountModal } from "@/components/modals/account-modal"
 import { 
   Plus, 
   CreditCard, 
@@ -17,13 +13,21 @@ import {
   Edit,
   Eye,
   Trash2,
-  Loader2,
-  AlertCircle,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { toast } from "@/hooks/use-toast"
 import { formatCurrency, fromCents, safeNumber } from "@/lib/utils"
+import { AccountModal } from "@/components/modals/account-modal"
+import {
+  PageContainer,
+  PageHeader,
+  ContentSection,
+  LoadingState,
+  ErrorState,
+  AccountCard,
+  EmptyState,
+} from "@/components/ui/enhanced"
 
 const getAccountIcon = (type: string, subtype: string) => {
   if (type === "LIABILITY") return CreditCard
@@ -61,7 +65,6 @@ export default function AccountsPage() {
       setError(null)
       const accountsData = await apiClient.getAccounts({ isActive: true })
 
-      // Transform API data to include normalized balances and icons
       const transformedAccounts = accountsData.map((account: any) => {
         const balanceCents = safeNumber(
           account.balanceCents ?? account.currentBalanceCents ?? account.calculatedBalance,
@@ -157,10 +160,15 @@ export default function AccountsPage() {
     setRefreshing(true)
     await fetchAccounts()
     setRefreshing(false)
+    toast({
+      title: "Refreshed",
+      description: "Accounts have been updated",
+    })
   }
 
   const handleAccountSuccess = () => {
     fetchAccounts()
+    setIsAccountModalOpen(false)
   }
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
@@ -169,190 +177,172 @@ export default function AccountsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64 mt-2" />
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <PageContainer>
+        <LoadingState message="Loading accounts..." fullPage />
+      </PageContainer>
+    )
+  }
+
+  if (error && accounts.length === 0) {
+    return (
+      <PageContainer>
+        <ErrorState
+          message={error}
+          onRetry={fetchAccounts}
+          fullPage
+        />
+      </PageContainer>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>
-          <p className="text-muted-foreground">Manage your financial accounts and track balances</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
-            {refreshing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            Refresh
-          </Button>
-          <Button onClick={handleAddAccount}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Account
-          </Button>
-        </div>
-      </div>
+    <PageContainer size="xl">
+      <ContentSection spacing="lg">
+        <PageHeader
+          title="Accounts"
+          description="Manage your financial accounts and track balances"
+          actions={
+            <>
+              <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
+                {refreshing ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Refresh
+              </Button>
+              <Button onClick={handleAddAccount}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Account
+              </Button>
+            </>
+          }
+        />
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <ErrorState
+            variant="inline"
+            title="Warning"
+            message={`Using offline data - ${error}`}
+          />
+        )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(assetAccounts.reduce((sum, acc) => sum + acc.balance, 0))}
-            </div>
-            <p className="text-xs text-muted-foreground">{assetAccounts.length} asset accounts</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Liabilities</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(liabilityAccounts.reduce((sum, acc) => sum + acc.balance, 0))}
-            </div>
-            <p className="text-xs text-muted-foreground">{liabilityAccounts.length} liability accounts</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalBalance)}</div>
-            <p className="text-xs text-muted-foreground">Across {accounts.length} accounts</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{accounts.filter(acc => acc.isActive).length}</div>
-            <p className="text-xs text-muted-foreground">of {accounts.length} total</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {accounts.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Wallet className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No accounts found</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Get started by adding your first financial account
-            </p>
-            <Button onClick={handleAddAccount}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Your First Account
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {accounts.map((account) => {
-            const IconComponent = account.icon
-            const isAsset = account.type === "ASSET"
-            return (
-              <Card key={account.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-lg ${
-                        isAsset ? "bg-green-100" : "bg-red-100"
-                      }`}>
-                        <IconComponent className={`h-6 w-6 ${
-                          isAsset ? "text-green-600" : "text-red-600"
-                        }`} />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{account.name}</CardTitle>
-                        <CardDescription>
-                          {account.subtype || account.type} • {account.currency}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Badge variant={account.isActive ? "default" : "secondary"}>
-                      {account.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-2xl font-bold ${
-                        isAsset ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {formatCurrency(account.balance, account.currency ?? "IDR")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Current Balance</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="mr-1 h-3 w-3" />
-                        View
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditAccount(account)}
-                      >
-                        <Edit className="mr-1 h-3 w-3" />
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDeleteAccount(account.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+        {/* Summary Cards */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-body font-medium">Total Assets</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-h3 font-bold text-green-600 dark:text-green-400">
+                {formatCurrency(assetAccounts.reduce((sum, acc) => sum + acc.balance, 0))}
+              </div>
+              <p className="text-caption text-muted-foreground">
+                {assetAccounts.length} asset account{assetAccounts.length !== 1 ? "s" : ""}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-body font-medium">Total Liabilities</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-h3 font-bold text-red-600 dark:text-red-400">
+                {formatCurrency(liabilityAccounts.reduce((sum, acc) => sum + acc.balance, 0))}
+              </div>
+              <p className="text-caption text-muted-foreground">
+                {liabilityAccounts.length} liability account{liabilityAccounts.length !== 1 ? "s" : ""}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-body font-medium">Net Worth</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-h3 font-bold text-blue-600 dark:text-blue-400">
+                {formatCurrency(totalBalance)}
+              </div>
+              <p className="text-caption text-muted-foreground">
+                Across {accounts.length} accounts
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-body font-medium">Active Accounts</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-h3 font-bold">
+                {accounts.filter(acc => acc.isActive).length}
+              </div>
+              <p className="text-caption text-muted-foreground">
+                of {accounts.length} total
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      )}
+
+        {/* Accounts List */}
+        {accounts.length === 0 ? (
+          <EmptyState
+            icon={Wallet}
+            title="No accounts found"
+            description="Get started by adding your first financial account"
+            action={{
+              label: "Add Your First Account",
+              onClick: handleAddAccount,
+            }}
+            variant="card"
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {accounts.map((account) => (
+              <AccountCard
+                key={account.id}
+                {...account}
+                actions={
+                  <>
+                    <Button variant="outline" size="sm">
+                      <Eye className="mr-1 h-3 w-3" />
+                      View
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditAccount(account)
+                      }}
+                    >
+                      <Edit className="mr-1 h-3 w-3" />
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteAccount(account.id)
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </>
+                }
+              />
+            ))}
+          </div>
+        )}
+      </ContentSection>
       
       <AccountModal
         open={isAccountModalOpen}
@@ -360,6 +350,6 @@ export default function AccountsPage() {
         account={selectedAccount}
         onSuccess={handleAccountSuccess}
       />
-    </div>
+    </PageContainer>
   )
 }

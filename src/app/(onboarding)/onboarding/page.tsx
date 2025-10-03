@@ -13,10 +13,10 @@ import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { UploadCloud, Upload, User, CheckCircle, ArrowRight, ArrowLeft, Globe } from "lucide-react"
+import { Upload, User, CheckCircle, ArrowRight, ArrowLeft, Globe } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { CountrySelect, CurrencySelect } from "@/components/country/country-select"
-import { findCountry, listCountries } from "@/data/countries"
+import { findCountry } from "@/data/countries"
 import { OnboardingSummary } from "@/components/onboarding/onboarding-summary"
 import { apiClient } from "@/lib/api-client"
 import type { Household } from "@/types/household"
@@ -88,7 +88,6 @@ export default function OnboardingPage() {
   const countryCode = watch("countryCode")
   const currencyCode = watch("currencyCode")
 
-  const availableCountries = useMemo(() => listCountries(), [])
   const defaultCountry = useMemo(() => findCountry(DEFAULT_COUNTRY_CODE), [])
 
   useEffect(() => {
@@ -267,7 +266,9 @@ export default function OnboardingPage() {
         await apiClient.updateHousehold(primaryHouseholdId, {
           name: trimmedHouseholdName,
           baseCurrency: normalizedCurrencyCode,
-          countryCode: normalizedCountryCode,
+          settings: {
+            countryCode: normalizedCountryCode,
+          },
         })
         console.log("✅ Household location data saved")
       } catch (householdUpdateError) {
@@ -435,7 +436,6 @@ function ProfileStep({ form, uploadedPreview, onAvatarChange }: ProfileStepProps
   const { control, watch } = form
   const firstName = watch("firstName")
   const lastName = watch("lastName")
-  const householdName = watch("householdName")
   const initials = [firstName, lastName]
     .filter(Boolean)
     .map((part) => part[0]?.toUpperCase())
@@ -673,13 +673,4 @@ function PreferencesStep({ form, selectedCountryCode, selectedCurrencyCode, hous
       )}
     </section>
   )
-}
-
-interface HouseholdStepProps {
-  form: UseFormReturn<OnboardingFormValues>
-  summaryPreview: string | null
-}
-
-function HouseholdStep() {
-  return null
 }

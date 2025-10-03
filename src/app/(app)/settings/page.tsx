@@ -4,19 +4,24 @@ import { UserProfile } from "@clerk/nextjs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { User, Shield, Bell, Palette, Globe, CreditCard } from "lucide-react"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { Separator } from "@/components/ui/separator"
+import { useTheme, type Theme } from "@/components/theme-provider"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { PageContainer, ContentSection } from "@/components/ui/enhanced"
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme()
   return (
-    <div className="space-y-6 w-full">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account, preferences, and application settings
-        </p>
-      </div>
+    <PageContainer size="xl">
+      <ContentSection spacing="lg">
+        {/* Header */}
+        <div>
+          <h1 className="text-h2 font-bold tracking-tight">Settings</h1>
+          <p className="text-body-sm text-muted-foreground">
+            Manage your account, preferences, and application settings
+          </p>
+        </div>
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
@@ -99,15 +104,69 @@ export default function SettingsPage() {
                     Select your preferred theme or sync with system settings
                   </p>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div>
-                    <p className="font-medium">Color Mode</p>
-                    <p className="text-sm text-muted-foreground">
-                      Choose Light, Dark, or System theme
-                    </p>
+                
+                <RadioGroup value={theme} onValueChange={(value) => setTheme(value as Theme)} className="gap-4">
+                  <div className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent transition-colors">
+                    <RadioGroupItem value="light" id="light" />
+                    <Label htmlFor="light" className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-amber-100">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 2v2"/>
+                            <path d="M12 20v2"/>
+                            <path d="m4.93 4.93 1.41 1.41"/>
+                            <path d="m17.66 17.66 1.41 1.41"/>
+                            <path d="M2 12h2"/>
+                            <path d="M20 12h2"/>
+                            <path d="m6.34 17.66-1.41 1.41"/>
+                            <path d="m19.07 4.93-1.41 1.41"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium">Light</p>
+                          <p className="text-sm text-muted-foreground">Bright and clear interface</p>
+                        </div>
+                      </div>
+                    </Label>
                   </div>
-                  <ThemeToggle />
-                </div>
+                  
+                  <div className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent transition-colors">
+                    <RadioGroupItem value="dark" id="dark" />
+                    <Label htmlFor="dark" className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-950">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 dark:text-indigo-400">
+                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium">Dark</p>
+                          <p className="text-sm text-muted-foreground">Easy on the eyes at night</p>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent transition-colors">
+                    <RadioGroupItem value="system" id="system" />
+                    <Label htmlFor="system" className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600 dark:text-slate-400">
+                            <rect width="20" height="14" x="2" y="3" rx="2"/>
+                            <line x1="8" x2="16" y1="21" y2="21"/>
+                            <line x1="12" x2="12" y1="17" y2="21"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium">System</p>
+                          <p className="text-sm text-muted-foreground">Match your device settings</p>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
 
               <Separator />
@@ -316,6 +375,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </ContentSection>
+    </PageContainer>
   )
 }

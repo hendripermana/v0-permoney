@@ -11,12 +11,21 @@ import {
   AlertTriangle,
   CheckCircle,
   PieChart,
-  Loader2,
-  AlertCircle,
+  RefreshCw,
 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { BudgetModal } from "@/components/modals/budget-modal"
 import { formatCurrency, fromCents } from "@/lib/utils"
+import {
+  PageContainer,
+  PageHeader,
+  ContentSection,
+  LoadingState,
+  ErrorState,
+  BudgetItem,
+  EmptyState,
+} from "@/components/ui/enhanced"
+import { toast } from "@/hooks/use-toast"
 
 export default function BudgetsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("month")
@@ -24,6 +33,7 @@ export default function BudgetsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   function resolveBudgetBadge(percentage: number) {
     if (percentage >= 90) return { severity: "danger" as const, color: "text-red-600", bg: "bg-red-100" }
@@ -131,6 +141,16 @@ export default function BudgetsPage() {
   const totalRemaining = totalBudget - totalSpent
   const overallProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0
 
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await fetchBudgets()
+    setRefreshing(false)
+    toast({
+      title: "Refreshed",
+      description: "Budgets have been updated",
+    })
+  }
+
   const handleBudgetCreated = () => {
     fetchBudgets()
     setIsBudgetModalOpen(false)
@@ -138,209 +158,203 @@ export default function BudgetsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <div className="w-full px-4 py-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span>Loading budgets...</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageContainer>
+        <LoadingState message="Loading budgets..." fullPage />
+      </PageContainer>
+    )
+  }
+
+  if (error && budgets.length === 0) {
+    return (
+      <PageContainer>
+        <ErrorState
+          message={error}
+          onRetry={fetchBudgets}
+          fullPage
+        />
+      </PageContainer>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="w-full px-4 py-6 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Budget Management</h1>
-            <p className="text-muted-foreground">Track your spending and stay within your budget limits</p>
-            {error && (
-              <div className="flex items-center space-x-2 text-red-600 text-sm mt-1">
-                <AlertCircle className="h-4 w-4" />
-                <span>Using offline data - {error}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={selectedPeriod === "week" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod("week")}
-            >
-              Week
-            </Button>
-            <Button
-              variant={selectedPeriod === "month" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod("month")}
-            >
-              Month
-            </Button>
-            <Button
-              variant={selectedPeriod === "year" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod("year")}
-            >
-              Year
-            </Button>
-            <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => setIsBudgetModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Budget
-            </Button>
-          </div>
-        </div>
+    <PageContainer size="xl">
+      <ContentSection spacing="lg">
+        <PageHeader
+          title="Budget Management"
+          description="Track your spending and stay within your budget limits"
+          actions={
+            <>
+              <Button
+                variant={selectedPeriod === "week" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedPeriod("week")}
+              >
+                Week
+              </Button>
+              <Button
+                variant={selectedPeriod === "month" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedPeriod("month")}
+              >
+                Month
+              </Button>
+              <Button
+                variant={selectedPeriod === "year" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedPeriod("year")}
+              >
+                Year
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+                {refreshing ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
+              </Button>
+              <Button size="sm" onClick={() => setIsBudgetModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Budget
+              </Button>
+            </>
+          }
+        />
 
+        {error && (
+          <ErrorState
+            variant="inline"
+            title="Warning"
+            message={`Using offline data - ${error}`}
+          />
+        )}
+
+        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="border-blue-200">
+          <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
+              <CardTitle className="text-body font-medium">Total Budget</CardTitle>
               <Target className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalBudget)}</div>
-              <p className="text-xs text-muted-foreground">This month</p>
+              <div className="text-h3 font-bold text-blue-600 dark:text-blue-400">
+                {formatCurrency(totalBudget)}
+              </div>
+              <p className="text-caption text-muted-foreground">This {selectedPeriod}</p>
             </CardContent>
           </Card>
 
-          <Card className="border-red-200">
+          <Card className="border-l-4 border-l-red-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+              <CardTitle className="text-body font-medium">Total Spent</CardTitle>
               <PieChart className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalSpent)}</div>
-              <p className="text-xs text-muted-foreground">{overallProgress.toFixed(1)}% of budget</p>
+              <div className="text-h3 font-bold text-red-600 dark:text-red-400">
+                {formatCurrency(totalSpent)}
+              </div>
+              <p className="text-caption text-muted-foreground">
+                {overallProgress.toFixed(1)}% of budget
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-green-200">
+          <Card className="border-l-4 border-l-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Remaining</CardTitle>
+              <CardTitle className="text-body font-medium">Remaining</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalRemaining)}</div>
-              <p className="text-xs text-muted-foreground">{(100 - overallProgress).toFixed(1)}% remaining</p>
+              <div className="text-h3 font-bold text-green-600 dark:text-green-400">
+                {formatCurrency(totalRemaining)}
+              </div>
+              <p className="text-caption text-muted-foreground">
+                {(100 - overallProgress).toFixed(1)}% remaining
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-yellow-200">
+          <Card className="border-l-4 border-l-yellow-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Categories</CardTitle>
+              <CardTitle className="text-body font-medium">Categories</CardTitle>
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{budgets.length}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-h3 font-bold">{budgets.length}</div>
+              <p className="text-caption text-muted-foreground">
                 {budgets.filter((b) => b.percentage >= 90).length} over 90%
               </p>
             </CardContent>
           </Card>
         </div>
 
+        {/* Overall Progress */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Overall Budget Progress</CardTitle>
-                <CardDescription>Your total spending across all categories</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={fetchBudgets} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
-              </Button>
-            </div>
+            <CardTitle>Overall Budget Progress</CardTitle>
+            <CardDescription>Your total spending across all categories</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Total Progress</span>
-                <span className="text-sm text-muted-foreground">
+              <div className="flex justify-between items-center text-body-sm">
+                <span className="font-medium">Total Progress</span>
+                <span className="text-muted-foreground">
                   {formatCurrency(totalSpent)} / {formatCurrency(totalBudget)}
                 </span>
               </div>
-              <Progress value={overallProgress} className="h-3" />
+
+              <Progress value={Math.min(overallProgress, 100)} className="h-3" />
+
               <div className="flex justify-between items-center">
-                <Badge variant={overallProgress > 90 ? "destructive" : overallProgress > 75 ? "default" : "secondary"}>
+                <Badge
+                  variant={overallProgress > 90 ? "destructive" : "default"}
+                  className={
+                    overallProgress > 90
+                      ? ""
+                      : overallProgress > 75
+                        ? "bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
+                        : "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800"
+                  }
+                >
                   {overallProgress.toFixed(1)}% used
                 </Badge>
-                <span className="text-sm text-muted-foreground">{formatCurrency(totalRemaining)} remaining</span>
+                <span className="text-body-sm text-muted-foreground">
+                  {formatCurrency(totalRemaining)} remaining
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Budget Items */}
         {budgets.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No budgets found</p>
-              <Button className="bg-green-500 hover:bg-green-600" onClick={() => setIsBudgetModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create your first budget
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Target}
+            title="No budgets found"
+            description="Get started by creating your first budget to track spending"
+            action={{
+              label: "Create Your First Budget",
+              onClick: () => setIsBudgetModalOpen(true),
+            }}
+            variant="card"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {budgets.map((budget) => {
-              const percentage = budget.percentage
-              const remaining = budget.remaining
-              const status = budget.severity
-              const statusLabel =
-                status.severity === "danger" ? "Over target" : status.severity === "warning" ? "Monitor usage" : "On track"
-
-              return (
-                <Card key={budget.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <div>
-                      <CardTitle className="text-lg">{budget.category}</CardTitle>
-                      <CardDescription>{budget.transactions} transactions this month</CardDescription>
-                    </div>
-                    <div className={`p-2 rounded-full ${status.bg}`}>
-                      <Target className={`h-4 w-4 ${status.color}`} />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Progress</span>
-                      <span className="text-sm text-muted-foreground">
-                        {formatCurrency(budget.spent, budget.currency ?? "IDR")} / {formatCurrency(budget.budgeted, budget.currency ?? "IDR")}
-                      </span>
-                    </div>
-
-                    <Progress value={percentage} className="h-2" />
-
-                    <div className="flex justify-between items-center">
-                      <Badge variant={percentage > 90 ? "destructive" : percentage > 75 ? "default" : "secondary"}>
-                        {percentage.toFixed(1)}% used
-                      </Badge>
-                      <span className={`text-xs font-medium ${status.color}`}>{statusLabel}</span>
-                    </div>
-
-                    <div className="pt-2 border-t">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Remaining</span>
-                        <span className={`font-semibold ${remaining >= 0 ? "text-green-600" : "text-red-600"}`}>
-                          {formatCurrency(remaining, budget.currency ?? "IDR")}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+            {budgets.map((budget) => (
+              <BudgetItem
+                key={budget.id}
+                {...budget}
+              />
+            ))}
           </div>
         )}
-      </div>
+      </ContentSection>
 
       <BudgetModal
         open={isBudgetModalOpen}
         onOpenChange={setIsBudgetModalOpen}
         onSuccess={handleBudgetCreated}
       />
-    </div>
+    </PageContainer>
   )
 }
