@@ -303,7 +303,7 @@ export default function AccountsPage() {
             variant="card"
           />
         ) : (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="w-full grid grid-cols-1 gap-6">
             {accounts.map((account) => (
               <AccountCard
                 key={account.id}
