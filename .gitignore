@@ -70,3 +70,6 @@ Thumbs.db
 **/*.pack
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# clerk configuration (can include secrets)
+/.clerk/
