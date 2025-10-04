@@ -569,7 +569,7 @@ export default function DashboardPage() {
             </TabsContent>
 
             <TabsContent value="trends" className="space-y-6">
-              <div className="grid grid-cols-1 gap-6">
+              <div className="w-full grid grid-cols-1 gap-6">
                 <NetWorthChart
                   data={netWorthData}
                   period={chartPeriod as any}
