@@ -589,7 +589,7 @@ export default function DashboardPage() {
                     <CardDescription>Overall assessment of your financial wellness</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="text-center">
                         <div className="text-3xl font-bold text-green-600 mb-2">85</div>
                         <p className="text-sm font-medium">Health Score</p>
