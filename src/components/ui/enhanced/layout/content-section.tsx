@@ -26,7 +26,7 @@ export function ContentSection({
   spacing = "lg",
 }: ContentSectionProps) {
   return (
-    <div className={cn(spacingStyles[spacing], className)}>
+    <div className={cn("w-full", spacingStyles[spacing], className)}>
       {children}
     </div>
   )
