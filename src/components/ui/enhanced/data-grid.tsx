@@ -36,7 +36,7 @@ export function DataGrid({
   return (
     <div
       className={cn(
-        "grid",
+        "w-full grid",
         responsive ? columnStyles[columns] : `grid-cols-${columns}`,
         gapStyles[gap],
         className
