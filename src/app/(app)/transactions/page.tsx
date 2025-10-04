@@ -230,7 +230,7 @@ export default function TransactionsPage() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-l-4 border-l-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-body font-medium">Total Income</CardTitle>
