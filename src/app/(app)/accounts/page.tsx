@@ -228,7 +228,7 @@ export default function AccountsPage() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="w-full grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-l-4 border-l-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-body font-medium">Total Assets</CardTitle>
