@@ -348,7 +348,7 @@ export default function DashboardPage() {
           />
         </DataGrid>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Transactions */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
