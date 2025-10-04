@@ -339,7 +339,7 @@ export default function BudgetsPage() {
             variant="card"
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             {budgets.map((budget) => (
               <BudgetItem
                 key={budget.id}
